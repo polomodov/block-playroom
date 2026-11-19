@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#28203c" />
+    <title>Семейная игротека</title>
+    <meta
+      name="description"
+      content="Четыре приключения для всей семьи. Играйте на одном устройстве и берите игры в дорогу."
+    />
+    <meta property="og:title" content="Семейная игротека" />
+    <meta
+      property="og:description"
+      content="Кооперативные головоломки, мини-гольф, детектив и гитара Паши."
+    />
+    <meta
+      property="og:image"
+      content="https://games.polomodov.tech/block-playroom/assets/playroom-covers.webp"
+    />
+    <link rel="icon" href="./assets/mark.svg" />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./coop.css" />
+    <link rel="stylesheet" href="./golf.css" />
+    <link rel="stylesheet" href="./mystery.css" />
+    <link rel="stylesheet" href="./rhythm.css" />
+    <script type="module" src="./playroom.js"></script>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./assets/app-192.png" />
+    <meta name="apple-mobile-web-app-title" content="Игротека" />
+    <link rel="stylesheet" href="./offline.css" />
+    <script type="module" src="./offline.js"></script>
+  </head>
+  <body>
+    <main id="lobby">
+      <header class="mast">
+        <div class="logo-mark" aria-hidden="true">✦</div>
+        <div>
+          <p class="overline">Блок Аркада</p>
+          <h1>Семейная игротека</h1>
+        </div>
+      </header>
+      <div class="catalog" aria-label="Выберите игру">
+        <button type="button" class="cover-card" data-mode="coop" aria-pressed="true">
+          <span class="art art-coop"></span
+          ><span class="card-copy"
+            ><small>Головоломка вдвоём</small><strong>Два ключа</strong
+            ><span>Держите плиты и стройте переправы друг для друга.</span></span
+          >
+        </button>
+        <button type="button" class="cover-card" data-mode="golf" aria-pressed="false">
+          <span class="art art-golf"></span
+          ><span class="card-copy"
+            ><small>Мини-гольф · 1–4 игрока</small><strong>Гольф семи миров</strong
+            ><span>Проведите мяч через тайфун и порталы до флажка.</span></span
+          >
+        </button>
+        <button type="button" class="cover-card" data-mode="mystery" aria-pressed="false">
+          <span class="art art-mystery"></span
+          ><span class="card-copy"
+            ><small>Детектив</small><strong>Куда делся изумруд?</strong
+            ><span>Осмотрите магазин, соберите улики и раскройте тайник.</span></span
+          >
+        </button>
+        <button type="button" class="cover-card" data-mode="rhythm" aria-pressed="false">
+          <span class="art art-rhythm"></span
+          ><span class="card-copy"
+            ><small>Музыка и ритм</small><strong>Гитарная репетиция</strong
+            ><span>Послушайте рифф монстра и ответьте на гитаре Паши.</span></span
+          >
+        </button>
+      </div>
+      <section class="setup" id="setup" aria-labelledby="mode-title">
+        <h2 id="mode-title">Два ключа</h2>
+        <p id="party-hint"></p>
+        <div id="party" role="group" aria-label="Герои"></div>
+        <div class="launch">
+          <button id="start-mode" class="primary" type="button">Играть</button
+          ><button id="resume-mode" type="button" hidden>Продолжить эту игру</button>
+        </div>
+      </section>
+      <section id="offline-tools" aria-label="Офлайн и сохранения">
+        <div class="offline-line">
+          <span id="offline-status" role="status">Подготовка к игре офлайн…</span>
+          <button type="button" id="offline-retry" hidden>Повторить загрузку</button>
+          <button type="button" id="install-game" hidden>Установить игру</button>
+        </div>
+        <button type="button" id="continue-saved" hidden>Продолжить партию</button>
+        <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
+        <details>
+          <summary>История игр на этом устройстве</summary>
+          <ol id="game-history"></ol>
+        </details>
+        <details>
+          <summary>Как взять игру в дорогу</summary>
+          <p>
+            Добавь игру на экран «Домой» через меню браузера. На iPhone открой «Поделиться» → «На экран
+            Домой». Пока есть интернет, запусти игру с новой иконки и дождись надписи «Готово к игре офлайн».
+          </p>
+        </details>
+      </section>
+
+      <nav class="siblings" aria-label="Другие семейные игры">
+        <a href="../block-maze/">Лабиринт</a><a href="../block-jump/">Платформер</a
+        ><a href="../block-dash/">Блок Экспресс</a>
+      </nav>
+    </main>
+    <main id="arena" hidden>
+      <header class="playbar">
+        <button id="go-lobby" type="button">‹ В игротеку</button>
+        <h1 id="game-title"></h1>
+        <button id="pause-game" type="button">Пауза</button>
+      </header>
+      <div id="mode-host"></div>
+    </main>
+    <dialog id="sheet">
+      <h2 id="sheet-title"></h2>
+      <p id="sheet-copy"></p>
+      <div class="launch">
+        <button class="primary" id="sheet-action" type="button">Продолжить</button
+        ><button id="sheet-lobby" type="button">В игротеку</button>
+      </div>
+    </dialog>
+  </body>
+</html>

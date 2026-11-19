@@ -1,0 +1,228 @@
+.case {
+  --gold: #ffd090;
+  --edge: #73605c;
+  background: #252633;
+  border: 1px solid #62585f;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.case-banner {
+  min-height: 145px;
+  display: flex;
+  align-items: end;
+  padding: 16px 22px;
+  background:
+    linear-gradient(90deg, #1c222bf2, #22232ac9 60%, #24243260),
+    url('./assets/world-panoramas.webp') center bottom/auto 400%;
+}
+.case-banner small,
+.case-line span {
+  color: #ffcf8d;
+  font-weight: 700;
+}
+.case-banner h2 {
+  font: 700 clamp(19px, 3vw, 30px)/1.18 system-ui;
+  margin: 0.25em 0;
+}
+.case p {
+  line-height: 1.4;
+}
+.case-banner p,
+.case aside > p {
+  margin: 0;
+  font-size: 0.89rem;
+  color: #e5d9cb;
+}
+.case-layout {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: clamp(13px, 2vw, 26px);
+  padding: clamp(12px, 2.2vw, 24px);
+}
+.case-line,
+.case-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.case-line {
+  margin: 0 0 7px;
+  font-size: 0.9rem;
+}
+.case-map {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+  background: #28202b;
+  border: 2px solid #91795e;
+  border-radius: 8px;
+}
+.case-room {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  min-height: 65px;
+  aspect-ratio: 1.55;
+  padding: 3px 1px;
+  color: #fff3d7;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 13px, #51413a5c 13px 15px),
+    linear-gradient(140deg, #a98a68, #6c5360);
+  border: 2px solid #b79c7959;
+  border-radius: 3px;
+  isolation: isolate;
+  overflow: hidden;
+}
+.case-room.here {
+  border-color: #96ffe3;
+  background-color: #437763;
+}
+.case-room.watch {
+  box-shadow: inset 0 0 0 2px #df99f1;
+}
+.case-label {
+  width: 100%;
+  background: #322d37c7;
+  font-size: clamp(0.64rem, 1.7vw, 0.87rem);
+  font-weight: 650;
+  z-index: 2;
+  text-align: center;
+}
+.case-furniture {
+  position: absolute;
+  inset: 4% 12% 12%;
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  z-index: -1;
+}
+.case-clue {
+  position: absolute;
+  top: 1px;
+  right: 5px;
+  color: #ffe4a2;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+.watch .case-clue {
+  color: #efbaff;
+}
+.case-figure {
+  display: none;
+  position: absolute;
+  width: 28%;
+  height: 69%;
+  left: 0;
+  bottom: 12%;
+  background: url('./assets/maze-figures.webp') no-repeat;
+  background-size: 500% 200%;
+  filter: drop-shadow(1px 2px 1px #302339);
+  z-index: 1;
+}
+.here .case-figure {
+  display: block;
+}
+.case-patrol,
+.case-msg {
+  font-size: 0.89rem;
+  color: #ded1e4;
+  margin: 8px 0;
+}
+.case-msg {
+  color: #ffe2a6;
+  min-height: 2.5em;
+}
+.case-actions {
+  justify-content: flex-start;
+}
+.case-actions button,
+.case-suspect {
+  background: #50434b;
+  border: 1px solid #978174;
+  border-radius: 7px;
+  padding: 7px 10px;
+  min-height: 38px;
+}
+.case-actions .case-search {
+  background: #e1b782;
+  color: #2d2934;
+  font-weight: 700;
+}
+.case-actions button:disabled {
+  opacity: 0.7;
+}
+.case aside {
+  align-self: start;
+  padding: 14px;
+  border: 1px solid #756253;
+  background: #342e34;
+  border-radius: 8px;
+}
+.case aside h3 {
+  margin: 0 0 5px;
+  color: #ffdaaa;
+}
+.case-notes {
+  padding-left: 19px;
+  margin: 0 0 16px;
+  line-height: 1.5;
+  color: #e4dacb;
+  font-size: 0.9rem;
+}
+.case-suspects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+.case-suspect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  color: #faf0e0;
+}
+.case-suspect:disabled {
+  cursor: default;
+}
+.case-suspect small {
+  font-size: 0.72rem;
+  color: #e8d4bd;
+}
+.case-suspect.solved {
+  border-color: #95e0b1;
+  background: #3b574a;
+}
+.case-beast {
+  width: 36px;
+  height: 36px;
+  background-image: url('./assets/runner-monsters.webp');
+  background-size: 1600% 1700%;
+  background-repeat: no-repeat;
+}
+@media (max-width: 700px) {
+  .case-layout {
+    grid-template-columns: 1fr;
+  }
+  .case aside {
+    padding: 10px;
+  }
+  .case-banner {
+    min-height: 96px;
+    padding: 13px;
+  }
+  .case-banner p {
+    font-size: 0.8rem;
+  }
+  .case-suspects {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .case-suspect strong {
+    font-size: 0.8rem;
+  }
+}

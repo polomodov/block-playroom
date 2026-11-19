@@ -1,0 +1,234 @@
+.coop-game {
+  --coop-ink: #eef8f2;
+  --coop-muted: #b5caca;
+  color: var(--coop-ink);
+  text-align: left;
+}
+.coop-game *,
+.coop-game *::before,
+.coop-game *::after {
+  box-sizing: border-box;
+}
+.coop-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.4rem 0 0.8rem;
+}
+.coop-game .coop-place {
+  color: #a5dfce;
+  font-size: 0.8rem;
+  font-weight: 750;
+  margin: 0 0 0.18rem;
+}
+.coop-game .coop-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 3.2vw, 2.1rem);
+  line-height: 1.18;
+}
+.coop-count {
+  color: var(--coop-muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.coop-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.45fr) minmax(190px, 1fr);
+  gap: clamp(0.7rem, 2.1vw, 1.25rem);
+  align-items: start;
+}
+.coop-stage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #5e847e;
+  border-radius: 13px;
+  background: #203b40;
+  box-shadow: 0 7px 0 #102227;
+}
+.coop-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.coop-game :focus-visible {
+  outline: 3px solid #ffe69b;
+  outline-offset: 2px;
+}
+.coop-win[hidden] {
+  display: none;
+}
+.coop-win {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  justify-content: center;
+  padding: 12px;
+  background: linear-gradient(transparent 45%, #101d27a8);
+}
+.coop-win div {
+  padding: 0.65rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border-radius: 10px;
+  border: 1px solid #d2b974;
+  background: #203039f5;
+}
+.coop-win span {
+  color: #ffe69b;
+}
+.coop-game button {
+  font: inherit;
+  color: var(--coop-ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.coop-side {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+}
+.coop-team {
+  display: flex;
+  gap: 0.4rem;
+}
+.coop-team button {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.55rem 0.3rem;
+  background: #263f47;
+  border: 1px solid #638087;
+  border-radius: 8px;
+}
+.coop-team i {
+  display: block;
+  background: #8af4ed;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
+.coop-team [data-actor='1'] i {
+  background: #ffc98a;
+}
+.coop-team [aria-pressed='true'] {
+  color: #121f27;
+  background: #8af4ed;
+  border-color: #bff9ef;
+}
+.coop-team [aria-pressed='true'][data-actor='1'] {
+  background: #ffc98a;
+  border-color: #ffdfaa;
+}
+.coop-team [aria-pressed='true'] i {
+  background: #233941;
+}
+.coop-game .coop-switch,
+.coop-game .coop-hint,
+.coop-game .coop-status {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+.coop-game .coop-switch {
+  color: var(--coop-muted);
+  font-size: 0.79rem;
+}
+.coop-game .coop-status {
+  padding: 0.48rem 0.65rem;
+  min-height: 3em;
+  color: #f3e5ae;
+  background: #b9a94212;
+  border-left: 2px solid #d9be70;
+}
+.coop-game .coop-arrows {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(42px, 54px));
+  gap: 4px;
+  justify-content: center;
+}
+.coop-arrows button,
+.coop-game [data-next] {
+  border: 1px solid #6c9992;
+  border-bottom-width: 3px;
+  background: #2c4b50;
+  border-radius: 8px;
+}
+.coop-game .coop-arrows button {
+  height: 44px;
+  font:
+    700 24px/1 system-ui,
+    sans-serif;
+  padding: 0.25rem;
+  touch-action: none;
+}
+.coop-arrows [data-dir='up'] {
+  grid-column: 2;
+}
+.coop-arrows [data-dir='left'] {
+  grid-column: 1;
+}
+.coop-arrows button:active {
+  background: #4e7276;
+  transform: translateY(1px);
+}
+.coop-game [data-next] {
+  padding: 0.45rem 0.75rem;
+  background: #ffe69b;
+  color: #2f3032;
+  border-color: #c6a559;
+  font-weight: 700;
+}
+.coop-game .coop-reset {
+  justify-self: center;
+  border: 0;
+  padding: 0.35rem;
+  background: transparent;
+  color: var(--coop-muted);
+  font-size: 0.85rem;
+}
+@media (max-width: 730px) {
+  .coop-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+  .coop-side {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.38rem 0.6rem;
+  }
+  .coop-side .coop-arrows {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    align-self: center;
+    grid-template-columns: repeat(3, 42px);
+  }
+  .coop-game .coop-team,
+  .coop-game .coop-switch,
+  .coop-game .coop-hint {
+    grid-column: 1;
+  }
+  .coop-game .coop-status {
+    grid-column: 1 / -1;
+    min-height: 0;
+  }
+  .coop-side .coop-reset {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 370px) {
+  .coop-side .coop-arrows {
+    grid-template-columns: repeat(3, 37px);
+  }
+  .coop-team button {
+    font-size: 0.77rem;
+  }
+}
