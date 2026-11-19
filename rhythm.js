@@ -262,7 +262,7 @@ export function mount(host, { saved, players = [], save, finish }) {
     disposed = false;
   const commit = () => save({ ...state });
   const events = new AbortController();
-  host.innerHTML = `<div class="rhythm-stage"><div class="rh-head"><div><h2>Гитарная репетиция</h2><p class="rh-world"></p></div><button type="button" class="rh-sound" aria-pressed="false">Включить звук</button></div>
+  host.innerHTML = `<div class="rhythm-stage"><div class="rh-head"><div><h2 class="rh-song"></h2><p class="rh-world"></p></div><button type="button" class="rh-sound" aria-pressed="false">Включить звук</button></div>
   <div class="rh-backdrop"><div class="rh-lamps" aria-hidden="true"><i></i><i></i><i></i></div><div class="rh-band"><div class="rh-pasha" aria-hidden="true"><span class="rh-guitar"><i></i><b></b></span><i class="rh-pick"></i><i class="rh-fret"></i></div><div class="rh-monster" aria-hidden="true"></div></div>
   <div class="rh-score"></div></div>
   <div class="rh-panel"><label class="rh-song-select">Мелодия <select></select></label>
@@ -318,7 +318,8 @@ export function mount(host, { saved, players = [], save, finish }) {
     root.style.setProperty('--sheet-height', panes * 100 + '%');
     root.style.setProperty('--panel-row', (song.panel / (panes - 1)) * 100 + '%');
     monster.style.setProperty('--actor-row', (song.monster / 16) * 100 + '%');
-    get('.rh-world').textContent = song.place + ' · ' + song.title;
+    get('.rh-song').textContent = song.title;
+    get('.rh-world').textContent = song.place;
     get('.rh-score').textContent = 'Фраза ' + (state.round + 1) + ' / 3 · ' + state.score + ' очк.';
     const texts = {
       choose: 'Послушай фразу монстра и повтори её четырьмя нотами. Можно играть без звука.',
