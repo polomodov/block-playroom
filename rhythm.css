@@ -1,0 +1,430 @@
+.rhythm-stage {
+  --ink: #fff8eb;
+  --pulse: #ffca86;
+  color: var(--ink);
+  text-align: left;
+}
+.rhythm-stage *,
+.rhythm-stage *::before,
+.rhythm-stage *::after {
+  box-sizing: border-box;
+}
+.rhythm-stage [hidden] {
+  display: none;
+}
+.rh-head,
+.rh-actions,
+.rh-song-select {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.rh-head {
+  justify-content: space-between;
+  margin: 0.45rem 0 0.75rem;
+}
+.rh-head h2 {
+  margin: 0;
+  font-size: clamp(1.3rem, 3.6vw, 2rem);
+  line-height: 1.16;
+}
+.rh-head .rh-world {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  color: #bed4ca;
+}
+.rhythm-stage button,
+.rhythm-stage select {
+  font: inherit;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.rhythm-stage :focus-visible {
+  outline: 3px solid #fff5c1;
+  outline-offset: 3px;
+}
+.rh-sound,
+.rh-action,
+.rh-repeat,
+.rh-song-select select {
+  border-radius: 8px;
+  border: 1px solid #637a78;
+  padding: 0.56rem 0.85rem;
+  background: #253d40;
+  color: var(--ink);
+  font-weight: 650;
+}
+.rh-sound {
+  flex: none;
+  font-size: 0.86rem !important;
+}
+.rh-sound[aria-pressed='true'] {
+  border-color: #bed893;
+  color: #e0f0b2;
+}
+.rh-backdrop {
+  height: clamp(160px, 28vh, 250px);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #769387;
+  border-radius: 12px 12px 0 0;
+  background: #293f46;
+}
+.rh-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(0deg, #111e27 0%, transparent 60%, #15232b4a), var(--panorama);
+  background-size:
+    100% 100%,
+    100% var(--sheet-height);
+  background-position:
+    center,
+    center var(--panel-row);
+}
+.rh-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 80% 0 0;
+  border-top: 2px solid #cfaa88;
+  background:
+    repeating-linear-gradient(87deg, transparent 0 39px, #4d3146 40px 42px),
+    linear-gradient(#a9806b, #674a55 82%, #422f43 84%);
+}
+.rh-score {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  z-index: 2;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 5px;
+  background: #132629ec;
+}
+.rh-lamps {
+  display: flex;
+  justify-content: space-around;
+  position: absolute;
+  inset: 0 7%;
+}
+.rh-lamps i {
+  position: relative;
+  width: 16px;
+  height: 6px;
+  border-radius: 0 0 5px 5px;
+  background: #fff0b1;
+  box-shadow: 0 0 10px 2px #ffe8a2;
+}
+.rh-lamps i::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  width: clamp(82px, 23vw, 180px);
+  height: clamp(145px, 25vh, 230px);
+  transform: translateX(-50%) rotate(9deg);
+  transform-origin: top;
+  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  background: linear-gradient(#ffeab680, transparent 93%);
+}
+.rh-lamps i:last-child::after {
+  transform: translateX(-50%) rotate(-11deg);
+}
+.rh-strum .rh-lamps i {
+  background: var(--pulse);
+}
+.rh-strum .rh-lamps i::after {
+  background: linear-gradient(var(--pulse), transparent 94%);
+  opacity: 0.6;
+}
+.rh-band {
+  position: absolute;
+  inset: 8% 0 9%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(14px, 10vw, 130px);
+  z-index: 1;
+}
+.rh-pasha,
+.rh-monster {
+  position: relative;
+  flex: none;
+  transform-origin: 50% 95%;
+  filter: drop-shadow(1px 3px 2px #1c152d99);
+}
+.rh-pasha {
+  height: 100%;
+  aspect-ratio: 150 / 250;
+}
+.rh-pasha::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 54%,
+    69% 53%,
+    67% 76%,
+    100% 77%,
+    100% 100%,
+    0 100%,
+    0 77%,
+    19% 76%,
+    20% 55%,
+    0 59%
+  );
+  background: url('./assets/maze-figures.webp') 100% 0 / 500% 200%;
+}
+.rh-guitar {
+  position: absolute;
+  left: 18%;
+  top: 51%;
+  width: 47%;
+  height: 18%;
+  border-radius: 48% 51% 45% 46%;
+  border: 2px solid #623519;
+  transform: rotate(-27deg);
+  background:
+    radial-gradient(circle at 60% 43%, #38231c 0 16%, #f9d891 17% 22%, transparent 23%),
+    radial-gradient(ellipse at 32% 30%, #ffe19b, #c57942 80%);
+  box-shadow: inset 1px -3px #a35c34;
+}
+.rh-guitar i {
+  position: absolute;
+  left: 81%;
+  top: 31%;
+  width: 88%;
+  height: 24%;
+  border: 1px solid #533b31;
+  background: repeating-linear-gradient(90deg, #6c493d 0 12%, #d8af82 13% 15%);
+}
+.rh-guitar i::after {
+  content: '';
+  position: absolute;
+  left: 94%;
+  top: -45%;
+  width: 24%;
+  height: 180%;
+  border: 1px solid #543629;
+  border-radius: 30%;
+  background: #a27550;
+}
+
+.rh-pick,
+.rh-fret {
+  position: absolute;
+  display: block;
+  width: 27%;
+  height: 8%;
+  border-radius: 45%;
+  border: 1px solid #9b5927;
+  border-bottom-width: 2px;
+  background: linear-gradient(#e4a345, #b46e2c);
+  transform-origin: 10% 50%;
+}
+.rh-pick {
+  left: 7%;
+  top: 54%;
+  transform: rotate(27deg);
+}
+.rh-fret {
+  left: 64%;
+  top: 52%;
+  width: 14%;
+  height: 6%;
+  transform: rotate(-43deg);
+}
+.rh-pick::after,
+.rh-fret::after {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 78%;
+  width: 55%;
+  height: 86%;
+  border-radius: 43%;
+  background: linear-gradient(#ffd19c, #db995c);
+  border-bottom: 1px solid #985b3b;
+}
+.rh-strum .rh-pick {
+  transform: rotate(8deg);
+}
+.rh-guitar b {
+  position: absolute;
+  width: 9%;
+  height: 38%;
+  left: 28%;
+  top: 31%;
+  background: #5d3830;
+  border-radius: 20%;
+}
+.rh-monster {
+  height: min(94%, 145px);
+  aspect-ratio: 1;
+  background: url('./assets/runner-monsters.webp') 0 var(--actor-row) / 1600% 1700%;
+}
+.rh-strum .rh-monster {
+  background-position-x: 66.6667%;
+  transform: translateY(-5px) rotate(4deg);
+}
+.rh-strum .rh-pasha {
+  transform: rotate(-2deg);
+}
+.rh-strum .rh-guitar {
+  transform: rotate(-22deg);
+}
+.rh-panel {
+  border: 1px solid #526a6b;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+  padding: clamp(0.75rem, 2.5vw, 1.25rem);
+  background: linear-gradient(145deg, #253b41, #243037);
+}
+.rh-song-select {
+  flex-wrap: wrap;
+  font-weight: 650;
+}
+.rh-song-select select {
+  max-width: 100%;
+  background: #17292e;
+}
+.rh-cue {
+  min-height: 1.35em;
+  margin: 0.55rem 0;
+  line-height: 1.35;
+  font-weight: 650;
+}
+.rh-sequence {
+  position: relative;
+  height: 29px;
+  margin: 0.45rem 0.5rem 0.15rem;
+}
+.rh-sequence::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  border-top: 2px dashed #839195;
+}
+.rh-sequence span {
+  position: absolute;
+  left: var(--at);
+  top: 50%;
+  transform: translate(-25%, -50%);
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  font-size: 0.89rem;
+  line-height: 1;
+  background: #233037;
+  border-radius: 50%;
+  border: 1px solid var(--note);
+  color: var(--note);
+}
+.rh-sequence .rh-next,
+.rh-sequence .rh-now {
+  color: #17292e;
+  background: var(--note);
+  outline: 2px solid #fff6db;
+  outline-offset: 1px;
+}
+.rh-sequence .rh-done {
+  background: var(--note);
+  color: #18312f;
+}
+.rh-beat {
+  height: 3px;
+  margin: 0 0.4rem 0.75rem;
+  background: #46555a;
+}
+.rh-beat span {
+  display: block;
+  height: 100%;
+  transform-origin: left;
+  background: #f9dfac;
+}
+.rh-pads {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.3rem, 1vw, 0.65rem);
+}
+.rh-pads button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-height: 54px;
+  padding: 0.3rem;
+  color: var(--note);
+  border: 1px solid var(--note);
+  border-bottom: 4px solid var(--note);
+  border-radius: 8px;
+  background: #202d39;
+  touch-action: manipulation;
+  opacity: 1;
+}
+.rh-pads button i {
+  font-style: normal;
+  font-size: 1.2em;
+}
+.rh-pads kbd {
+  font:
+    0.7em ui-monospace,
+    monospace;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 0.05rem 0.2rem;
+}
+.rh-pads button.rh-lit,
+.rh-pads button:enabled:active {
+  background: var(--note);
+  color: #233037;
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+.rh-actions {
+  margin-top: 0.7rem;
+}
+.rh-action {
+  background: #f4d38e;
+  border-color: #ffe8af;
+  color: #302719;
+}
+.rhythm-stage[data-phase='listen'] .rh-actions {
+  display: none;
+}
+@media (max-width: 540px) {
+  .rh-head h2 {
+    font-size: 1.2rem;
+  }
+  .rh-head .rh-world {
+    font-size: 0.79rem;
+  }
+  .rh-head {
+    gap: 0.35rem;
+  }
+  .rh-sound {
+    max-width: 102px;
+    padding: 0.42rem 0.55rem;
+  }
+  .rh-pads kbd {
+    display: none;
+  }
+  .rh-pads button {
+    min-height: 49px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rh-strum .rh-monster,
+  .rh-strum .rh-pasha,
+  .rh-strum .rh-guitar {
+    transform: none;
+  }
+}

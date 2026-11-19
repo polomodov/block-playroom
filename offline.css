@@ -1,0 +1,79 @@
+#offline-tools {
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.65rem;
+  align-items: start;
+  text-align: left;
+  max-width: 100%;
+  min-width: 0;
+  margin: 1.25rem 0;
+  padding: 1rem 1.15rem;
+  border: 1px solid #46665b;
+  border-radius: 0.6rem;
+  background: #182728;
+  color: #e9f6ed;
+  font:
+    500 15px/1.45 system-ui,
+    sans-serif;
+}
+#offline-tools [hidden] {
+  display: none !important;
+}
+#offline-tools .offline-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+}
+#offline-tools #offline-status {
+  color: #dce8e2;
+}
+#offline-tools #offline-status[data-ready] {
+  color: #a3f4b6;
+}
+#offline-tools button {
+  width: auto;
+  min-height: 38px;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.38rem;
+  border: 1px solid #759d85;
+  background: #233e35;
+  color: #edffdf;
+  font:
+    600 14px/1.25 system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+#offline-tools details {
+  margin: 0;
+  color: #dbe9e2;
+  font:
+    500 14px/1.5 system-ui,
+    sans-serif;
+}
+#offline-tools p {
+  max-width: 62ch;
+  margin: 0.4rem 0;
+  font: inherit;
+  color: inherit;
+}
+#offline-tools summary {
+  cursor: pointer;
+}
+#offline-tools ol {
+  list-style: none;
+  padding: 0;
+  margin: 0.45rem 0;
+  max-height: 16rem;
+  overflow: auto;
+}
+#offline-tools li {
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #365049;
+}
+#offline-tools li span {
+  font-size: 13px;
+  color: #bbd1c7;
+}
