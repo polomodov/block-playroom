@@ -64,7 +64,10 @@ function embedPage(html, name) {
     });
   if (name !== 'block-maze') {
     html = requiredReplace(html, 'href="../collection.css">', 'href="../collection.css">\n    <link rel="stylesheet" href="../classic-arcade.css">', page);
-    html = html.replace(/\s*<link rel="preload"[^>]*(?:jump|runner)-cover\.webp[^>]*>/, '');
+    const cover = name === 'block-jump'
+      ? '  <link rel="preload" as="image" href="./assets/jump-cover.webp">'
+      : '  <link rel="preload" href="./assets/runner-cover.webp" as="image">';
+    html = requiredReplace(html, cover, '', page);
   }
   return html;
 }
@@ -76,11 +79,11 @@ function classicModule(path, source, name) {
   if (name === 'block-jump' && path === 'actors-art.js') {
     let art = requiredReplace(source, 'torso(c,s.heroId,h);', "if (!paintedPart(c, s.heroId, 'coat')) torso(c,s.heroId,h);", file);
     art = requiredReplace(art, 'head(c,s.heroId,h,s.time%3.8>3.66);', "if (!paintedPart(c, s.heroId, 'face')) head(c,s.heroId,h,s.time%3.8>3.66);", file);
-    art = requiredReplace(art, 'front,h) {\n  const swing', 'front,h,id) {\n  const swing', file);
-    art = requiredReplace(art, 'function arm(c,phase,run,air,ascent,front,h)', 'function arm(c,phase,run,air,ascent,front,h,id)', file);
-    art = requiredReplace(art, '  stroke(c,sign*.75,-8,kneeX', "  if (paintedLimb(c,id,'leg',front,sign*.75,-8,kneeX,kneeY,footX,footY)) return;\n  stroke(c,sign*.75,-8,kneeX", file);
-    art = requiredReplace(art, '  stroke(c,-1.45,-14.15,elbowX', "  if (paintedLimb(c,id,'arm',front,-1.45,-14.15,elbowX,-11.25,palmX,palmY)) return;\n  stroke(c,-1.45,-14.15,elbowX", file);
-    art = requiredReplace(art, /(leg|arm)\(c,m\.phase([^;]+),h\);/g, '$1(c,m.phase$2,h,s.heroId);', file);
+    art = requiredReplace(art, /function (leg|arm)\(c,phase,run,air,ascent,front,h\) \{/g,
+      'function $1(c,phase,run,air,ascent,front,id) {\n  const h = family[id];', file);
+    art = requiredReplace(art, '  stroke(c,sign*.75,-8,kneeX', "  if (paintedLimb(c,id,'leg',front,[[sign*.75,-8],[kneeX,kneeY],[footX,footY]])) return;\n  stroke(c,sign*.75,-8,kneeX", file);
+    art = requiredReplace(art, '  stroke(c,-1.45,-14.15,elbowX', "  if (paintedLimb(c,id,'arm',front,[[-1.45,-14.15],[elbowX,-11.25],[palmX,palmY]])) return;\n  stroke(c,-1.45,-14.15,elbowX", file);
+    art = requiredReplace(art, /(leg|arm)\(c,m\.phase([^;]+),h\);/g, '$1(c,m.phase$2,s.heroId);', file);
     return imports('paintedPart, paintedLimb') + art;
   }
   if (name === 'block-jump' && path === 'renderer.js') {

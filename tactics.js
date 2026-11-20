@@ -292,6 +292,9 @@ export function mount(host, { players, saved, save, finish }) {
       ]
         .filter(Boolean)
         .join(', ');
+      let landmark = '';
+      if (symbol === 'G') landmark = fixture('exit_portal');
+      if (symbol === '#') landmark = fixture(scenery[m.scene][c % 2]);
       const icons =
         occupants.map((i) => heroSprite(s.team[i], i === s.active ? 'current' : '')).join('') +
         monsters
@@ -316,7 +319,7 @@ export function mount(host, { players, saved, save, finish }) {
         '" ' +
         (moves.includes(c) ? '' : 'disabled') +
         '>' +
-        (symbol === 'G' ? fixture('exit_portal') : symbol === '#' ? fixture(scenery[m.scene][c % 2]) : '') +
+        landmark +
         (s.gems.includes(c)
           ? '<canvas class="tac-gem" aria-hidden="true" width="64" height="64"></canvas>'
           : '') +

@@ -56,7 +56,7 @@ export function material(world, symbol = '.') {
     const side = 20;
     canvas.width = canvas.height = 3 * side;
     const ctx = canvas.getContext('2d');
-    const map = Array(5).fill(symbol.repeat(5));
+    const map = new Array(5).fill(symbol.repeat(5));
     ctx.translate(-side, -side);
     for (let y = 1; y <= 3; y++) {
       for (let x = 1; x <= 3; x++) {

@@ -186,13 +186,8 @@ function drawShelves(g, rows, left, top, size, level) {
   // Fixtures are fitted to contiguous wall cells, leaving every walkable tile visible.
   const sections = ['warehouse', 'show_kitchen', 'living_room'];
   for (const [row, cells] of rows.entries()) {
-    for (let col = 0; col < cells.length;) {
-      if (cells[col] !== '#') {
-        col++;
-        continue;
-      }
-      let end = col + 1;
-      while (cells[end] === '#') end++;
+    for (const wall of cells.matchAll(/#+/g)) {
+      const col = wall.index, end = col + wall[0].length;
       for (let start = col; start < end;) {
         const count = end - start === 3 ? 3 : Math.min(2, end - start);
         const width = Math.min(count * size - 4, size * 1.55);
@@ -203,7 +198,6 @@ function drawShelves(g, rows, left, top, size, level) {
         drawLandmark(g, name, x, y, width, height);
         start += count;
       }
-      col = end;
     }
   }
 }

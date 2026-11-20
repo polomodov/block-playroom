@@ -14,6 +14,7 @@ const SONGS = [
     place: 'Храм изумруда',
     partner: 'Паук',
     monster: 'spider',
+    props: ['brazier', 'stone_mask'],
     bpm: 94,
     sheet: 'world',
     panel: 0,
@@ -44,6 +45,7 @@ const SONGS = [
     place: 'Игровой центр',
     partner: 'Скелет',
     monster: 'skeleton',
+    props: ['carousel', 'claw'],
     bpm: 108,
     sheet: 'world',
     panel: 1,
@@ -74,6 +76,7 @@ const SONGS = [
     place: 'Край',
     partner: 'Эндермен',
     monster: 'enderman',
+    props: ['crystal_spires', 'chorus_grove'],
     bpm: 100,
     sheet: 'realm',
     panel: 2,
@@ -304,20 +307,26 @@ export function mount(host, { saved, players = [], save, finish }) {
     if (disposed) return;
     guitarist = drawGuitarist;
     drawStage();
+  }).catch(() => {
+    // A delayed or missing optional animation still leaves the playable rhythm chart and portrait.
+    if (!disposed) drawStage();
   });
   const quietMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   function drawStage() {
     const song = songOf(state.song);
     const age = quietMotion ? 0.45 : (state.elapsed * song.bpm) / 120;
     band.clearRect(0, 0, 560, 168);
-    const props = song.id === 'temple' ? ['brazier', 'stone_mask'] :
-      song.id === 'arcade' ? ['carousel', 'claw'] : ['crystal_spires', 'chorus_grove'];
+    const props = song.props;
     drawLandmark(band, props[0], 8, 76, 112);
     drawLandmark(band, props[1], 447, 76, 109);
     band.save();
     band.translate(208, 113);
     band.scale(4.6, 4.6);
     if (guitarist) guitarist(band, 0, 0, state.phase === 'choose' ? 0.48 : age % 4, false, false, figures);
+    else if (figures.naturalWidth) {
+      const cell = figures.naturalWidth / 5, height = figures.naturalHeight / 2;
+      band.drawImage(figures, 4 * cell, 0, cell, height, -8, -24, 16, 26);
+    }
     band.restore();
     band.save();
     band.translate(352, 100);

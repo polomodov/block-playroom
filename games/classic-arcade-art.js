@@ -64,11 +64,10 @@ const limbs = {
   dad:    { leg: [[55,176],[52,207],[53,245]], arm: [[40,101],[27,136],[25,190]], legWidth: 14, armWidth: 12 },
   pasha:  { leg: [[38,189],[37,214],[36,245]], arm: [[30,89],[18,129],[18,189]], legWidth: 15, armWidth: 13 },
 };
-export function paintedLimb(c, id, part, front, startX, startY, jointX, jointY, endX, endY) {
+export function paintedLimb(c, id, part, front, points) {
   const img = illustration(figures);
   if (!img.naturalWidth) return false;
   const rig = limbs[id], source = rig[part], width = rig[part + 'Width'], col = family.indexOf(id);
-  const points = [[startX, startY], [jointX, jointY], [endX, endY]];
   for (let i = 0; i < 2; i++) {
     const [ax, ay] = source[i], [bx, by] = source[i + 1];
     const [x, y] = points[i], [tx, ty] = points[i + 1];

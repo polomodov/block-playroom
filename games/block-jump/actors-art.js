@@ -79,7 +79,8 @@ function head(c,id,h,blink) {
   shape(c,'M2 -18.25Q2.9 -17.94 3.6 -18.45',null,id==='dad'?'#e5a987':'#ab695b',.4);
 }
 
-function leg(c,phase,run,air,ascent,front,h,id) {
+function leg(c,phase,run,air,ascent,front,id) {
+  const h = family[id];
   const swing=Math.sin(phase), lift=(1-Math.cos(phase))*.5;
   const sign=front?1:-1;
   // Tuck at the apex; extend both feet below the hips during the descent.
@@ -88,19 +89,20 @@ function leg(c,phase,run,air,ascent,front,h,id) {
   const kneeY=air ? -4.25-(front?3.3:1.3)*rising-1.45*apex : -4.2-run*lift*1.65;
   const footX=air ? sign*(.95+3.65*rising+2.1*apex)-.7 : swing*run*5.35+sign*.8;
   const footY=air ? -1.15-(front?4.45:1.75)*rising-(front?1.7:3.45)*apex : -1.0-run*lift*2.4;
-  if (paintedLimb(c,id,'leg',front,sign*.75,-8,kneeX,kneeY,footX,footY)) return;
+  if (paintedLimb(c,id,'leg',front,[[sign*.75,-8],[kneeX,kneeY],[footX,footY]])) return;
   stroke(c,sign*.75,-8,kneeX,kneeY,footX,footY,ink,3.15);
   stroke(c,sign*.75,-7.8,kneeX,kneeY,footX,footY,front?h.pant:'#3e4355',2.2);
   c.save();c.translate(footX,footY);c.rotate(air?sign*.2:swing*.28*run);
   shape(c,'M-1.22 -.55L.9 -.6 1.63 -.1 2.55 .09 2.7 .87Q.9 1.18 -1.35 .85Z',h.shoe,ink,.53);
   shape(c,'M-1.03 .76Q.2 1 2.48 .72',null,'#e5daca',.45);c.restore();
 }
-function arm(c,phase,run,air,ascent,front,h,id) {
+function arm(c,phase,run,air,ascent,front,id) {
+  const h = family[id];
   const swing=Math.sin(phase), sign=front?1:-1;
   const elbowX=-1.55+swing*run*2.7 + (air? -sign*(2+ascent) : 0);
   const palmX=elbowX+.45+run*(2.4+swing) + (air? sign*2.8:0);
   const palmY=-8.6-run*(1.55+swing*1.15)-(air?2.6+sign*1.7+ascent*(front?2.6:-1):0);
-  if (paintedLimb(c,id,'arm',front,-1.45,-14.15,elbowX,-11.25,palmX,palmY)) return;
+  if (paintedLimb(c,id,'arm',front,[[-1.45,-14.15],[elbowX,-11.25],[palmX,palmY]])) return;
   stroke(c,-1.45,-14.15,elbowX,-11.25,palmX,palmY,ink,2.95);
   stroke(c,-1.5,-14,elbowX,-11.25,palmX,palmY,front?h.jacket:h.shade,2.12);
   if(front)stroke(c,-1.8,-13.8,elbowX-.4,-11.4,palmX-.3,palmY-.3,h.lit,.38);
@@ -218,8 +220,8 @@ export function drawHero(c,s,camera) {
   c.save();c.translate(p.x+p.w/2-camera,p.y+p.h);
   c.scale(p.facing*h.height*(1+.1*landing),h.height*(1-.12*landing));
   c.lineJoin='round';c.lineCap='round';
-  leg(c,m.phase+Math.PI,run,air,ascent,false,h,s.heroId);
-  leg(c,m.phase,run,air,ascent,true,h,s.heroId);
+  leg(c,m.phase+Math.PI,run,air,ascent,false,s.heroId);
+  leg(c,m.phase,run,air,ascent,true,s.heroId);
   c.translate(0,bob+idle);c.rotate((air?.048*ascent:.064*run));
   const musicAge = s.heroId === 'pasha' ? performanceAge(s) : null;
   const playing = musicAge !== null;
@@ -228,7 +230,7 @@ export function drawHero(c,s,camera) {
   const shouting = s.heroId === 'dad' && s.abilityTime > 2.36;
   if (sprint) c.rotate(.115 * run);
   if (playing) c.rotate(Math.sin(musicAge * Math.PI * 4) * .042);
-  if (!playing) arm(c,m.phase,run,air,ascent,false,h,s.heroId);
+  if (!playing) arm(c,m.phase,run,air,ascent,false,s.heroId);
   if (!paintedPart(c, s.heroId, 'coat')) torso(c,s.heroId,h);
   c.save();
   if (playing) {
@@ -244,7 +246,7 @@ export function drawHero(c,s,camera) {
     const extend = Math.min(1,progress / .32,(1-progress) / .62);
     powerArm(c,s.heroId,h,1 - (1-extend)**2);
   } else if (shouting) powerArm(c,s.heroId,h,Math.sin(s.abilityTime * 12));
-  else arm(c,m.phase+Math.PI,run,air,ascent,true,h,s.heroId);
+  else arm(c,m.phase+Math.PI,run,air,ascent,true,s.heroId);
   c.restore();
   if(since<.19 && p.onGround && m.impact>.52) {
     const k=since/.19;
