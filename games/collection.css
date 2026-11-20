@@ -1,0 +1,20 @@
+a.collection-home {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: .3rem .65rem;
+  color: #f2e4bf;
+  border: 1px solid #776b57;
+  border-radius: 6px;
+  background: #282b2b;
+  font: 600 14px/1.2 system-ui, sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.collection-home:hover, a.collection-home:focus-visible { border-color: #f5ce87; }
+#lobby > a.collection-home { margin-bottom: .6rem; }
+dialog > a.collection-home { display: flex; margin: .8rem auto 0; width: max-content; }
+@media (max-width: 540px), (max-height: 500px) {
+  #arena a.collection-home { min-height: 30px; padding: .2rem .4rem; font-size: 12px; }
+}
