@@ -530,7 +530,7 @@ function kart(g, t, hero, ghost, boost) {
   }
   g.restore();
 }
-export function mount(host, { players, saved, save, finish }) {
+export function mount(host, { players, saved, save, finish, cue = () => {} }) {
   const hero = players[0];
   let s = restoreRace(saved, hero),
     course = courses[s.course],
@@ -635,12 +635,16 @@ export function mount(host, { players, saved, save, finish }) {
   function run(now) {
     if (paused || stopped) return;
     if (then !== null && s.phase === 'run') {
+      const pads = s.pads, splash = s.splash;
       debt += Math.min(0.1, (now - then) / 1000);
       while (debt >= TICK && s.phase === 'run') {
         drive(s, Number(pressed.has('right')) - Number(pressed.has('left')), pressed.has('brake'));
         debt -= TICK;
         if (s.ticks % 60 === 0 && s.phase === 'run') persist();
       }
+      if (s.phase === 'finish') cue('race-finish');
+      else if (s.pads > pads) cue('race-boost');
+      else if (s.splash > splash) cue('race-skid');
     }
     then = now;
     paint();
@@ -679,6 +683,7 @@ export function mount(host, { players, saved, save, finish }) {
     () => {
       if (paused || s.phase !== 'grid') return;
       s.phase = 'run';
+      cue('race-start');
       then = null;
       paint();
       persist();

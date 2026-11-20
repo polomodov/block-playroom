@@ -6,7 +6,8 @@ import { HEROES, WORLDS } from './worlds.js';
 import { saveGame, clearSavedGame, addResult, bindProgress } from './progress.js';
 import { createRun, restoreRun } from './engine.js?v=jump-1';
 import { drawRun } from './renderer.js?v=jump-1';
-import { playSound, playSolo, setSoundEnabled, stopSolo } from './audio.js';
+import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
+import { playGuitar, stopGuitar } from './guitar.js';
 
 const byId = id => document.getElementById(id);
 const lobby = byId('lobby');
@@ -21,7 +22,8 @@ let world = WORLDS.find(world => world.id === query.get('level')) || WORLDS[0];
 let hero = HEROES.find(hero => hero.id === query.get('hero')) || HEROES[0];
 let run, frame, lastTime, gesture;
 let nextSave = 0;
-let sound = false, resumeAfterHelp = false;
+let resumeAfterHelp = false;
+const warnings = monsterAudio();
 const bests = new Map();
 
 function readBest(id) {
@@ -139,11 +141,12 @@ function animate(now) {
   const s = run.state;
   const lives = s.lives, gems = s.gems;
   if (lastTime !== undefined) run.update(Math.min(Math.max(0,(now-lastTime)/1000),.10));
+  warnings.update(s);
   lastTime = now;
   drawRun(board,s);
   updateHud();
   if (s.status === 'over') {
-    stopSolo();
+    stopGuitar();
     playSound('over');
     addResult({hero:hero.id, level:world.id, distance:s.distance, gems:s.gems, lives:s.lives, outcome:'over'});
     showResult();
@@ -159,9 +162,11 @@ function start(restored = null) {
   if (!restored?.state) restored = null;
   if (!restored) beginArcadeRound();
   stopLoop();
-  stopSolo();
+  hush();
   if (dialog.open) dialog.close();
   run = restored || createRun({worldId:world.id, heroId:hero.id});
+  warnings.reset(run.state);
+  if (!restored) playSound('start');
   nextSave=run.state.time + 1;
   saveGame(run.snapshot());
   bests.set(world.id, Math.max(bests.get(world.id) || 0,readBest(world.id)));
@@ -196,7 +201,7 @@ function showResult() {
 
 function pause() {
   if (!run?.act('pause')) return;
-  stopSolo();
+  hush();
   saveGame(run.snapshot());
   showResult();
 }
@@ -205,6 +210,7 @@ function continueRun() {
   if (!run?.act('resume')) return;
   if (dialog.open) dialog.close();
   syncMode();
+  warnings.reset(run.state);
   if (hero.id === 'pasha' && run.state.powerTime > 0) playSolo(5-run.state.powerTime);
   board.focus({preventScroll:true});
   lastTime = undefined;
@@ -213,7 +219,7 @@ function continueRun() {
 
 function returnToLobby() {
   stopLoop();
-  stopSolo();
+  hush();
   saveBest();
   if (run && run.state.status !== 'over') saveGame(run.snapshot());
   if (dialog.open) dialog.close();
@@ -229,10 +235,10 @@ function returnToLobby() {
 
 function action(name) {
   if (!run?.act(name)) return;
-  if (name === 'jump') playSound('jump');
+  if (name === 'jump' || name === 'slide') playSound(name);
   if (name === 'power') {
     if (hero.id === 'pasha') playSolo();
-    else playSound('ability');
+    else playSound(hero.id);
     updateHud();
   }
 }
@@ -247,19 +253,12 @@ dialog.addEventListener('cancel', e => {
   if (run?.state.status === 'paused') continueRun();
   else returnToLobby();
 });
-byId('sound').addEventListener('click', async () => {
-  sound = !sound;
-  const label = sound ? 'Выключить звук' : 'Включить звук';
-  byId('sound').setAttribute('aria-pressed',String(sound));
-  byId('sound').setAttribute('aria-label',label);
-  byId('sound').title = label;
-  await setSoundEnabled(sound);
-  if (sound && run?.state.status === 'playing' && hero.id === 'pasha' && run.state.powerTime > 0) playSolo(5-run.state.powerTime);
-});
+const { playSolo, hush } = bindArcadeSound(byId('sound'), playGuitar, stopGuitar, () =>
+  run?.state.status === 'playing' && hero.id === 'pasha' && run.state.powerTime > 0 ? 5 - run.state.powerTime : null);
 byId('help').addEventListener('click',() => {
   resumeAfterHelp = run?.state.status === 'playing';
   if (resumeAfterHelp) {
-    run.act('pause');stopSolo();stopLoop();saveBest();saveGame(run.snapshot());syncMode();updateHud();
+    run.act('pause');hush();stopLoop();saveBest();saveGame(run.snapshot());syncMode();updateHud();
   }
   help.showModal();
 });

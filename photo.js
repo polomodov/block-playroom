@@ -253,7 +253,7 @@ function drawReticle(g, x, y) {
   g.strokeRect(x - 3, y - 3, 6, 6);
   g.restore();
 }
-export function mount(host, { players, saved, save, finish }) {
+export function mount(host, { players, saved, save, finish, cue = () => {} }) {
   const s = restorePhoto(saved),
     hero = players[0],
     events = new AbortController(),
@@ -274,6 +274,7 @@ export function mount(host, { players, saved, save, finish }) {
     feedback = '',
     feedbackUntil = 0,
     lastStatus = '';
+  let specialLastFrame = wildlife(s.stage, s.time).special;
   const reviewed = () => s.shots.length > s.stage;
   function print(shot) {
     const el = document.createElement('figure'),
@@ -319,6 +320,7 @@ export function mount(host, { players, saved, save, finish }) {
       q('.photo-status').textContent = text;
       lastStatus = text;
     }
+    return a.special;
   }
   function update() {
     const scene = assignments[s.stage];
@@ -342,12 +344,14 @@ export function mount(host, { players, saved, save, finish }) {
         return;
       }
       s.stage++;
+      specialLastFrame = false;
       s.time = 0;
       s.x = WIDTH / 2;
       s.y = HEIGHT / 2;
       feedbackUntil = 0;
     } else {
       const result = snapPhoto(s, hero);
+      cue(result.shot ? 'photo-shutter' : 'photo-miss');
       feedback = result.message;
       feedbackUntil = s.time + 1.4;
       if (result.shot) remember(result.shot);
@@ -406,7 +410,9 @@ export function mount(host, { players, saved, save, finish }) {
         WIDTH,
       );
       s.y = clamp(s.y + 210 * dt * (Number(keys.has('ArrowDown')) - Number(keys.has('ArrowUp'))), 0, HEIGHT);
-      draw();
+      const canShoot = draw();
+      if (canShoot && !specialLastFrame) cue('photo-focus');
+      specialLastFrame = canShoot;
       if (now - lastSave > 1500) {
         save(s);
         lastSave = now;

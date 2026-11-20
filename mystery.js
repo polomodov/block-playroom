@@ -250,7 +250,7 @@ const make = (tag, className, text) => {
   if (text) e.textContent = text;
   return e;
 };
-export function mount(host, { saved, players, save, finish }) {
+export function mount(host, { saved, players, save, finish, cue = () => {} }) {
   let s = readCase(saved, players[0]);
   let file = investigations[s.level];
   const events = new AbortController(),
@@ -355,7 +355,13 @@ export function mount(host, { saved, players, save, finish }) {
   }
   function act(fn) {
     if (paused || disposed || s.done) return;
+    const { clues, misses, veil, identified } = s;
     const note = fn();
+    if (s.done) cue('mystery-found');
+    else if (s.clues !== clues) cue('mystery-clue');
+    else if (s.misses > misses) cue('mystery-setback');
+    else if (s.identified !== identified) cue('mystery-match');
+    else if (s.veil > veil) cue('mystery-veil');
     paint(note);
     if (s.done) {
       finish({

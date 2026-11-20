@@ -312,7 +312,7 @@ function fixture(name) {
     '"></span>'
   );
 }
-export function mount(host, { players, saved, save, finish }) {
+export function mount(host, { players, saved, save, finish, cue = () => {} }) {
   let s = createTactics(players, saved),
     paused = false,
     disposed = false;
@@ -321,6 +321,15 @@ export function mount(host, { players, saved, save, finish }) {
     if (disposed || paused) return;
     const result = tacticsTurn(s, act);
     if (result === s) return;
+    if (act.type === 'move') {
+      if (result.phase !== 'play') cue('portal-open');
+      else cue(result.gems.length < s.gems.length ? 'tactics-crystal' : 'tactics-step');
+    } else if (act.type === 'skill') {
+      const hero = s.team[s.active];
+      cue(hero === 'pasha' ? 'hero-strum' : 'tactics-' + hero);
+    } else if (act.type === 'end') {
+      cue(result.health < s.health ? 'guard-impact' : 'tactics-patrol');
+    }
     s = result;
     if (s.phase === 'won') {
       finish({

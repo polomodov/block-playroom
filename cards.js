@@ -432,7 +432,7 @@ function cardButton(id, attr, disabled = false) {
     '</small></button>'
   );
 }
-export function mount(host, { players, saved, save, finish }) {
+export function mount(host, { players, saved, save, finish, cue = () => {} }) {
   let s = restoreCards(saved, players[0]),
     paused = false,
     disposed = false;
@@ -441,6 +441,10 @@ export function mount(host, { players, saved, save, finish }) {
     if (paused || disposed) return;
     const next = cardsTurn(s, act);
     if (s === next) return;
+    if (next.phase === 'won' || next.phase === 'reward') cue('portal-open');
+    else if (act.type === 'play') cue(s.hand[act.index] === 'guitar' ? 'hero-strum' : 'card-play');
+    else if (act.type === 'end') cue(next.health < s.health ? 'guard-impact' : 'card-deal');
+    else if (act.type === 'reward' || act.type === 'retry') cue('card-deal');
     s = next;
     if (s.phase === 'won') {
       const turns = s.previous + s.turn;

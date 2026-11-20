@@ -446,3 +446,20 @@ p {
 .art-pinball { background-position: 33.33333% 100%; }
 .art-photo { background-position: 66.66667% 100%; }
 .art-robot { background-position: 100% 100%; }
+
+.play-tools, .sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.sound-toggle[aria-pressed='true'] .sound-cross,
+.sound-toggle[aria-pressed='false'] .sound-waves {
+  display: none;
+}
+.sound-toggle[aria-pressed='true'] svg {
+  color: var(--warm);
+}
+@media (max-width: 680px) {
+  .playbar .sound-toggle { padding-inline: 9px; }
+  .playbar .sound-toggle [data-label] { display: none; }
+}

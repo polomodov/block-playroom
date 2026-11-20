@@ -57,6 +57,7 @@
         <div class="offline-line">
           <span id="offline-status" role="status">Готовим пятнадцать игр к игре без интернета…</span>
           <button type="button" id="offline-retry" hidden>Продолжить загрузку</button>
+          <button class="sound-toggle" id="lobby-sound" type="button" aria-label="Включить звук" aria-pressed="false"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="sound-waves" d="M16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-cross" d="m17 10 4 4m0-4-4 4"/></svg><span data-label>Звук выкл.</span></button>
           <button type="button" id="install-game" hidden>Установить игротеку</button>
         </div>
         <progress id="offline-progress" hidden aria-label="Загрузка игр"></progress>
@@ -173,7 +174,7 @@
       <header class="playbar">
         <button id="go-lobby" type="button">‹ В игротеку</button>
         <h1 id="game-title"></h1>
-        <button id="pause-game" type="button">Пауза</button>
+        <div class="play-tools"><button class="sound-toggle" id="game-sound" type="button" aria-label="Включить звук" aria-pressed="false"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="sound-waves" d="M16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-cross" d="m17 10 4 4m0-4-4 4"/></svg><span data-label>Звук выкл.</span></button><button id="pause-game" type="button">Пауза</button></div>
       </header>
       <div id="mode-host"></div>
     </main>

@@ -485,7 +485,7 @@ function paintBoard(g, s) {
   }
   g.restore();
 }
-export function mount(host, { players, saved, save, finish }) {
+export function mount(host, { players, saved, save, finish, cue = () => {} }) {
   const hero = players[0];
   let s = restorePinball(saved, hero);
   host.innerHTML =
@@ -543,6 +543,7 @@ export function mount(host, { players, saved, save, finish }) {
   function loop(now) {
     if (paused || stopped) return;
     if (last !== null) {
+      const balls = s.balls, bonus = s.bonus, points = s.score;
       debt += Math.min(0.1, (now - last) / 1000);
       while (debt >= DT && s.phase !== 'done') {
         // A quick tap between animation frames still delivers one full strike.
@@ -550,6 +551,12 @@ export function mount(host, { players, saved, save, finish }) {
         flick[0] = Math.max(0, flick[0] - 1);
         flick[1] = Math.max(0, flick[1] - 1);
         debt -= DT;
+      }
+      if (s.balls < balls) cue('pin-drain');
+      else if (s.bonus > bonus) cue('pin-bonus');
+      else if (s.score > points && now - lastBumper >= 80) {
+        cue('pin-bumper');
+        lastBumper = now;
       }
     }
     last = now;
@@ -569,7 +576,8 @@ export function mount(host, { players, saved, save, finish }) {
     previousPhase = s.phase;
     frame = requestAnimationFrame(loop);
   }
-  let savedAt = 0,
+  let lastBumper = -Infinity,
+    savedAt = 0,
     previousPhase = s.phase;
   table.addEventListener(
     'change',
@@ -594,6 +602,7 @@ export function mount(host, { players, saved, save, finish }) {
   );
   const shoot = () => {
     if (!paused && launchPinball(s)) {
+      cue('pin-launch');
       paint();
       persist();
     }
@@ -601,7 +610,10 @@ export function mount(host, { players, saved, save, finish }) {
   launch.addEventListener('click', shoot, opt);
   const controls = [q('.pin-left'), q('.pin-right')];
   const toggle = (index, on) => {
-    if (on && !held[index]) flick[index] = 9;
+    if (on && !held[index]) {
+      flick[index] = 9;
+      cue('pin-flipper');
+    }
     held[index] = on;
     controls[index].classList.toggle('held', on);
   };

@@ -5,8 +5,8 @@ import { terrainLayer as floor } from './world-art.js?v=studio-1';
 import { LEVELS } from './levels.js?v=living-worlds-1';
 import { createRun, restoreRun } from './physics.js?v=offline-1';
 import { drawRun } from './renderer.js?v=dragon-flight-1';
-import { playSound, setSoundEnabled, playSolo } from './audio.js?v=encore-1';
-import { performanceAge, stopGuitar } from './guitar.js?v=encore-1';
+import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
+import { performanceAge, playGuitar, stopGuitar } from './guitar.js?v=encore-1';
 import { bindProgress, loadSavedGame, saveGame, clearSavedGame, addResult } from './progress.js';
 
 const byId = id => document.getElementById(id);
@@ -66,7 +66,7 @@ let run;
 let phase = 'lobby';
 let frame;
 let previousTime;
-let sound = false;
+const warnings = monsterAudio();
 let continueAfterHelp = false;
 let lastSaveTime = -Infinity;
 let runId;
@@ -249,12 +249,13 @@ function animate(time) {
     const { lives, collected, checkpointReached, cooldown, solo } = s;
     const vy = s.player.vy;
     run.update(Math.min(.08, (time - previousTime) / 1000), inputs());
+    warnings.update(s);
     if (!solo && s.solo) playSolo(performanceAge(s));
+    if (s.cooldown > cooldown && s.status === 'playing' && heroId !== 'pasha') playSound(heroId);
     if (s.status === 'won') playSound('win');
-    else if (s.lives < lives) { stopGuitar(); playSound('hit'); }
+    else if (s.lives < lives) { stopGuitar(); playSound(s.status === 'lost' ? 'over' : 'hit'); }
     else if (!checkpointReached && s.checkpointReached) playSound('checkpoint');
     else if (s.collected > collected) playSound('gem');
-    else if (s.cooldown > cooldown && heroId !== 'pasha') playSound('ability');
     else if (vy >= 0 && s.player.vy < 0) playSound('jump');
   }
   previousTime = time;
@@ -273,6 +274,7 @@ function animate(time) {
 function play() {
   if (runDialog.open) runDialog.close();
   phase = 'playing';
+  warnings.reset(run.state);
   playSolo(performanceAge(run.state));
   previousTime = undefined;
   board.focus({ preventScroll: true });
@@ -298,6 +300,7 @@ function start() {
   stopLoop();
   run = createRun(level.id, heroId);
   runId = newRunId();
+  playSound('start');
   showArena();
   saveRun();
   play();
@@ -326,11 +329,13 @@ function resumeSavedGame(save) {
 function pause() {
   if (phase !== 'playing') return;
   phase = 'paused';
+  hush();
   saveRun();
   showResult();
 }
 
 function showLobby() {
+  hush();
   saveRun();
   stopLoop();
   phase = 'lobby';
@@ -371,6 +376,7 @@ byId('help').addEventListener('click', () => {
   continueAfterHelp = phase === 'playing';
   if (continueAfterHelp) {
     phase = 'help';
+    hush();
     saveRun();
     stopLoop();
   }
@@ -383,18 +389,8 @@ helpDialog.addEventListener('close', () => {
   }
   continueAfterHelp = false;
 });
-soundButton.addEventListener('click', async () => {
-  sound = !sound;
-  const ready = setSoundEnabled(sound);
-  soundButton.setAttribute('aria-pressed', String(sound));
-  soundButton.title = sound ? 'Выключить звук' : 'Включить звук';
-  await ready;
-  if (sound) {
-    const age = phase === 'playing' ? performanceAge(run.state) : null;
-    if (age !== null) playSolo(age);
-    else playSound('gem');
-  }
-});
+const { playSolo, hush } = bindArcadeSound(soundButton, playGuitar, stopGuitar,
+  () => phase === 'playing' ? performanceAge(run.state) : null);
 
 for (const button of touchButtons) {
   const control = button.dataset.control;

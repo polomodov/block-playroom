@@ -1,0 +1,191 @@
+--- a/game.js
++++ b/game.js
+@@ -1,5 +1,6 @@
+ import { enterCollectionGame } from '../collection-navigation.js';
+ import { beginArcadeRound } from './progress.js';
++import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
+ import { playGuitar, stopGuitar, performanceAge } from './guitar.js?v=encore-1';
+ import { createGame, restoreGame } from './engine.js?v=offline-1';
+ import { bindProgress, saveGame, clearSavedGame, addResult } from './progress.js';
+@@ -70,8 +71,7 @@
+ let previousTime;
+ let lastSaveTime = 0;
+ let swipe;
+-let soundEnabled = false;
+-let audio;
++const warnings = monsterAudio();
+ let resumeAfterHelp = false;
+
+
+@@ -83,74 +83,6 @@
+ function buttonText(button, text) {
+   setText(button.querySelector('[data-label]') || button, text);
+ }
+-
+-function playNote(frequency, duration, type = 'triangle') {
+-  if (!soundEnabled || audio?.state !== 'running') return;
+-  const oscillator = audio.createOscillator();
+-  const gain = audio.createGain();
+-  oscillator.type = type;
+-  oscillator.frequency.value = frequency;
+-  const now = audio.currentTime;
+-  gain.gain.setValueAtTime(0.0001, now);
+-  gain.gain.exponentialRampToValueAtTime(0.055, now + 0.008);
+-  gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+-  oscillator.connect(gain);
+-  gain.connect(audio.destination);
+-  oscillator.start(now);
+-  oscillator.stop(now + duration);
+-}
+-
+-// A descending voice with two resonances for the vowel in «Бу!».
+-function playBoo() {
+-  if (!soundEnabled || audio?.state !== 'running') return;
+-  const voice = audio.createOscillator();
+-  const gain = audio.createGain();
+-  const now = audio.currentTime;
+-  voice.type = 'sawtooth';
+-  voice.frequency.setValueAtTime(152, now);
+-  voice.frequency.exponentialRampToValueAtTime(88, now + 0.36);
+-  gain.gain.setValueAtTime(0.0001, now);
+-  gain.gain.exponentialRampToValueAtTime(0.24, now + 0.035);
+-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+-  for (const frequency of [340, 820]) {
+-    const formant = audio.createBiquadFilter();
+-    formant.type = 'bandpass';
+-    formant.frequency.value = frequency;
+-    formant.Q.value = 4;
+-    voice.connect(formant);
+-    formant.connect(gain);
+-  }
+-  gain.connect(audio.destination);
+-  voice.start(now);
+-  voice.stop(now + 0.4);
+-}
+-
+-function displaySound() {
+-  soundButton.setAttribute('aria-label', 'Звук');
+-  soundButton.title = soundEnabled ? 'Выключить звук' : 'Включить звук';
+-  soundButton.setAttribute('aria-pressed', String(soundEnabled));
+-  buttonText(soundButton, soundEnabled ? 'Звук вкл.' : 'Звук выкл.');
+-}
+-
+-soundButton.addEventListener('click', async () => {
+-  soundEnabled = !soundEnabled;
+-  displaySound();
+-  if (!soundEnabled) {
+-    stopGuitar();
+-    return;
+-  }
+-  try {
+-    const Audio = window.AudioContext || window.webkitAudioContext;
+-    audio ??= new Audio();
+-    await audio.resume();
+-    const age = game?.state.status === 'playing' ? performanceAge(game.state) : null;
+-    if (age !== null && soundEnabled) playGuitar(audio, audio.destination, age);
+-    else playNote(660, 0.12);
+-  } catch {
+-    soundEnabled = false;
+-    displaySound();
+-  }
+-});
+
+ function selectedValue(group) {
+   return document.querySelector(`input[name="${group}"]:checked`).value;
+@@ -260,14 +192,15 @@
+   const elapsed = previousTime === undefined ? 0 : (time - previousTime) / 1000;
+   previousTime = time;
+   game.update(Math.min(0.1, elapsed));
++  warnings.update(game.state);
+
+   if (game.state.lives < previousLives) {
+     stopGuitar();
+-    playNote(124, 0.28, 'sawtooth');
+-  } else if (game.state.collected > collected) playNote(770, 0.065);
++    if (game.state.status === 'playing') playSound('hit');
++  } else if (game.state.status === 'playing' && game.state.collected > collected) playSound('gem');
+   if (game.state.status !== 'playing') {
+     stopGuitar();
+-    if (game.state.status === 'won') playNote(980, 0.3);
++    playSound(game.state.status === 'won' ? 'win' : 'over');
+     const { hero, levelId, collected, lives, status } = game.state;
+     addResult({ hero, level: levelId, gems: collected, lives, outcome: status });
+     const next = game.nextSnapshot();
+@@ -282,6 +215,7 @@
+ }
+
+ function run() {
++  warnings.reset(game.state);
+   cancelAnimationFrame(frame);
+   previousTime = undefined;
+   updateScreen();
+@@ -307,7 +241,7 @@
+   game.start();
+   showArena();
+   saveRun();
+-  playNote(520, 0.13);
++  playSound('start');
+   run();
+ }
+
+@@ -331,7 +265,7 @@
+ function pause() {
+   if (game?.state.status !== 'playing') return;
+   cancelAnimationFrame(frame);
+-  stopGuitar();
++  hush();
+   swipe = undefined;
+   game.pause();
+   saveRun();
+@@ -341,7 +275,7 @@
+ function resume() {
+   if (game?.state.status !== 'paused') return;
+   game.resume();
+-  if (soundEnabled && audio) playGuitar(audio, audio.destination, performanceAge(game.state));
++  playSolo(performanceAge(game.state));
+   run();
+ }
+
+@@ -353,12 +287,8 @@
+ function activate() {
+   if (game?.state.status !== 'playing' || !game.activate()) return;
+   saveRun();
+-  if (game.state.hero === 'dad') playBoo();
+-  else if (game.state.hero === 'mom') playNote(1046, 0.25, 'sine');
+-  else if (game.state.hero === 'pasha') {
+-    if (soundEnabled && audio) playGuitar(audio, audio.destination, 0);
+-  }
+-  else playNote(game.state.hero === 'kirill' ? 920 : 175, 0.18, 'square');
++  if (game.state.hero === 'pasha') playSolo();
++  else playSound(game.state.hero);
+   if (game.state.status === 'playing') updateHud();
+   else updateScreen();
+ }
+@@ -389,7 +319,7 @@
+     swipe = undefined;
+     saveSelection(game.state.hero, game.state.levelId);
+     document.title = LEVELS[game.state.levelId].title + ' · Блок Аркада';
+-    playNote(650, 0.2);
++    playSound('checkpoint');
+     saveRun();
+     run();
+   } else {
+@@ -399,7 +329,7 @@
+ byId('menu').addEventListener('click', () => {
+   saveRun();
+   cancelAnimationFrame(frame);
+-  stopGuitar();
++  hush();
+   document.querySelector(`input[name="level"][value="${game.state.levelId}"]`).checked = true;
+   showLevelPreview();
+   game = undefined;
+@@ -513,7 +443,8 @@
+ }
+ showLevelPreview();
+ document.querySelectorAll('canvas[data-hero]').forEach((canvas) => drawPortrait(canvas, canvas.dataset.hero));
+-displaySound();
++const { playSolo, hush } = bindArcadeSound(soundButton, playGuitar, stopGuitar,
++  () => game?.state.status === 'playing' ? performanceAge(game.state) : null);
+ bindProgress({ onResume: resumeSavedGame });
+
+ enterCollectionGame();
