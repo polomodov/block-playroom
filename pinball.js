@@ -1,5 +1,8 @@
-import { drawLandmark, material } from './arcade-scenery.js';
-import { heroNames } from './progress.js';
+import { paintPinball } from './pinball-art.js';
+import { collectionProgress, heroNames } from './progress.js';
+import { announce, newPinballRules, pinballFeatures, resetBank, restorePinballRules, scoreRollovers, skillPower, stepPinballTimers } from './pinball-rules.js';
+export { pinballFeatures, skillPower };
+
 
 const W = 360,
   H = 480,
@@ -174,16 +177,17 @@ const walls = [
   [347, 108, 347, 466],
   [314, 101, 314, 343],
   [314, 343, 285, 380],
-  [285, 380, 229, 406],
+  // The thinner guides meet the tops of the flipper pivots without a trapping lip.
+  [285, 380, 229, 403],
   [14, 354, 46, 385],
-  [46, 385, 91, 406],
+  [46, 385, 91, 403],
   // Slings leave two return lanes on either side of the flippers.
   [49, 302, 58, 348],
   [58, 348, 92, 363],
-  [92, 363, 49, 302],
+  pinballFeatures.slings[0],
   [278, 298, 268, 347],
   [268, 347, 237, 361],
-  [237, 361, 278, 298],
+  pinballFeatures.slings[1],
   [77, 193, 49, 220],
   [259, 193, 287, 220],
 ];
@@ -197,6 +201,7 @@ const FLIP_LENGTH = 62,
 export function newPinball(hero = 'kirill', table = 'aqua') {
   return {
     v: 1,
+    ...newPinballRules(),
     hero: Object.hasOwn(heroNames, hero) ? hero : 'kirill',
     table: Object.hasOwn(tables, table) ? table : 'aqua',
     phase: 'serve',
@@ -251,10 +256,12 @@ export function restorePinball(saved, hero) {
     typeof saved.event !== 'string'
   )
     return newPinball(hero);
-  return structuredClone(saved);
+  return { ...structuredClone(saved), ...restorePinballRules(saved) };
 }
-export function launchPinball(s) {
-  if (s.phase !== 'serve') return false;
+export function launchPinball(s, power = s.power) {
+  if (s.phase !== 'serve' || !Number.isFinite(power)) return false;
+  s.power = clamp(Math.round(power), 55, 100);
+  s.skillArmed = true;
   s.phase = 'play';
   s.launches++;
   s.ball = ghostBall();
@@ -282,7 +289,9 @@ function segment(ball, x1, y1, x2, y2, radius, angularSpeed = 0) {
   const ny = dist > 0.00001 ? (ball.y - y) / dist : -dx / Math.hypot(dx, dy);
   ball.x = x + nx * (radius + R);
   ball.y = y + ny * (radius + R);
+  const impact = -(ball.vx * nx + ball.vy * ny);
   bounce(ball, nx, ny, -angularSpeed * dy * pos, angularSpeed * dx * pos, angularSpeed ? 0.83 : 0.68);
+  return impact;
 }
 export function flipper(i, angle) {
   const x = i ? 229 : 91,
@@ -296,14 +305,15 @@ function orbit(s) {
     r = 30 * Math.max(0, 1 - t / 1.2);
   return { x: 153 + Math.cos(a) * r, y: 184 + Math.sin(a) * r * 0.67 };
 }
-function capture(s) {
+function capture(s, notify) {
   s.phase = 'ride';
+  s.skillArmed = false;
   s.ride = 1.2;
-  s.event = 'ride';
   s.bonus++;
   s.score += s.table === 'end' ? 125 : 250;
+  announce(s, notify, 'ride');
 }
-export function tickPinball(s, left = false, right = false) {
+export function tickPinball(s, left = false, right = false, notify) {
   if (s.phase === 'done') return;
   const previous = [...s.angles];
   for (let i = 0; i < 2; i++) {
@@ -312,6 +322,7 @@ export function tickPinball(s, left = false, right = false) {
   }
   if (s.phase === 'serve') return;
   s.ticks++;
+  stepPinballTimers(s, DT, notify);
   s.lock = Math.max(0, s.lock - DT);
   for (let i = 0; i < 3; i++) s.flash[i] = Math.max(0, s.flash[i] - DT);
   const b = s.ball;
@@ -329,12 +340,27 @@ export function tickPinball(s, left = false, right = false) {
     return;
   }
   const theme = tables[s.table];
+  const oldX = b.x, oldY = b.y;
   b.vy += (theme.gravity ?? 445) * DT;
   b.x += b.vx * DT;
   b.y += b.vy * DT;
   b.vx *= 0.99964;
   b.vy *= 0.99988;
-  for (const w of walls) segment(b, ...w, 2);
+  for (const wall of walls) {
+    const impact = segment(b, ...wall, 2);
+    if (!(impact > 20)) continue;
+    const side = pinballFeatures.slings.indexOf(wall);
+    if (side < 0 || s.slings[side] > 0) continue;
+    const inward = side ? -1 : 1;
+    const [x1, y1, x2, y2] = wall;
+    const edgeX = x1 + (x2 - x1) * (b.y - y1) / (y2 - y1);
+    if ((b.x - edgeX) * inward <= 0) continue;
+    b.vx += inward * 110;
+    b.vy = Math.min(-80, b.vy - 55);
+    s.slings[side] = .24;
+    s.score += 15 * s.multiplier;
+    announce(s, notify, 'sling', side);
+  }
   for (const rail of theme.guides ?? []) segment(b, ...rail, 2);
   if (b.vy > 0) segment(b, ...laneGate, 2);
   for (let i = 0; i < 2; i++) {
@@ -360,18 +386,19 @@ export function tickPinball(s, left = false, right = false) {
     s.score += s.hits & (1 << i) ? 10 : 35;
     s.hits |= 1 << i;
     s.flash[i] = 0.24;
-    s.event = 'hit' + i;
+    announce(s, notify, 'bumper', i);
     if (s.hits === 7) {
       s.hits = 0;
       s.score += 125;
-      capture(s);
+      capture(s, notify);
       return;
     }
   }
   if (s.table === 'end' && !s.lock && Math.hypot(b.x - 153, b.y - 184) < 18) {
-    capture(s);
+    capture(s, notify);
     return;
   }
+  scoreRollovers(s, oldX, oldY, notify);
   const speed = Math.hypot(b.vx, b.vy);
   if (speed > 820) {
     b.vx *= 820 / speed;
@@ -380,291 +407,298 @@ export function tickPinball(s, left = false, right = false) {
   if (b.y > H + R) {
     if (b.x > 314) {
       s.phase = 'serve';
-      s.event = 'return';
+      announce(s, notify, 'return');
     } else {
       --s.balls;
       s.phase = s.balls ? 'serve' : 'done';
-      s.event = 'drain';
+      resetBank(s);
+      s.multiplier = 1;
+      announce(s, notify, 'drain');
     }
+    s.skillArmed = false;
     s.ball = ghostBall();
     s.angles = [REST, REST];
   }
 }
-function circle(g, x, y, r, fill) {
-  g.fillStyle = fill;
-  g.beginPath();
-  g.arc(x, y, r, 0, TAU);
-  g.fill();
+const geometry = { walls, laneGate, flipper, ...pinballFeatures };
+const formatScore = new Intl.NumberFormat('ru-RU');
+const bestKey = id => 'family-games:' + new URL('.', import.meta.url).pathname + ':pinball-best:' + id;
+function previousBest(id) {
+  let best = 0;
+  try { best = Number(localStorage.getItem(bestKey(id))) || 0; } catch { /* Private session. */ }
+  // Earlier editions stored the table title in the shared history.
+  for (const round of collectionProgress().results) {
+    if (round.mode === 'pinball' && round.summary.startsWith(tables[id].title + ' ·') && Number.isSafeInteger(round.score)) {
+      best = Math.max(best, round.score);
+    }
+  }
+  return Number.isSafeInteger(best) && best > 0 ? best : 0;
 }
-function line(g, coords, width, color) {
-  g.strokeStyle = color;
-  g.lineWidth = width;
-  g.lineCap = 'round';
-  g.beginPath();
-  g.moveTo(coords[0], coords[1]);
-  g.lineTo(coords[2], coords[3]);
-  g.stroke();
-}
-function paintBoard(g, s) {
-  const theme = tables[s.table];
-  g.save();
-  g.imageSmoothingEnabled = false;
-  g.fillStyle = g.createPattern(material(theme.world), 'repeat');
-  g.fillRect(0, 0, W, H);
-  // The inlaid scenery is below the rails, ball and scoring lamps.
-  g.globalAlpha = 0.76;
-  drawLandmark(g, theme.props[0], 45, 19, 102, 76);
-  drawLandmark(g, theme.props[1], 225, 31, 82, 61);
-  g.globalAlpha = 1;
-  // Painted return chutes lead the eye from the bumpers to the flippers.
-  g.strokeStyle = theme.line;
-  g.lineWidth = 3;
-  g.globalAlpha = 0.65;
-  for (let i = 0; i < 3; i++) {
-    g.beginPath();
-    g.moveTo(62 + i * 9, 164);
-    g.bezierCurveTo(21, 267, 211, 241 + i * 12, 146 + i * 10, 321);
-    g.stroke();
-  }
-  g.globalAlpha = 1;
-  const t = s.ticks / 120;
-  drawLandmark(g, theme.props[2], 105, 144, 96, 72);
-  g.strokeStyle = theme.light;
-  g.lineWidth = 1.5;
-  for (let j = 0; j < 3; j++) {
-    const a = (j * TAU) / 3 + t * 0.38;
-    g.beginPath();
-    g.ellipse(153, 202, 49, 12, 0, a, a + 0.95);
-    g.stroke();
-  }
-  g.fillStyle = '#fff1cb';
-  g.font = 'bold 12px system-ui';
-  g.textAlign = 'center';
-  g.fillText(theme.name.toUpperCase(), 154, 285);
-  for (let i = 0; i < 3; i++) {
-    circle(g, 130 + i * 24, 301, 5, s.hits & (1 << i) ? theme.lights[i] : '#172c37');
-  }
-  for (const w of [...walls, ...(theme.guides ?? [])]) {
-    line(g, [w[0] + 1, w[1] + 2, w[2] + 1, w[3] + 2], 7, '#102735');
-    line(g, w, 5, theme.line);
-    line(g, w, 2, theme.light);
-  }
-  const gateOpen = s.phase === 'play' && s.ball.vy < 0 && s.ball.x > 314 && Math.abs(s.ball.y - 91) < 30;
-  line(g, gateOpen ? [345, 47, 345, 78] : laneGate, 3, theme.light);
-  circle(g, 345, 78, 3, theme.line);
-  for (const [i, [x, y, r]] of theme.layout.entries()) {
-    const flash = s.flash[i] / 0.24;
-    circle(g, x + 2, y + 4, r + 3, '#172635');
-    circle(g, x, y, r + 2, theme.line);
-    circle(g, x, y, r, flash ? '#fff7cd' : theme.lights[i]);
-    circle(g, x, y, r - 5, theme.deep);
-    const target = theme.props[i];
-    drawLandmark(g, target, x - r + 3, y - r + 4, 2 * r - 6, 2 * r - 10);
-    g.fillStyle = flash ? '#fff3be' : theme.lights[i];
-    g.fillRect(x - 4, y + r - 5, 8, 2);
-  }
-  for (let i = 0; i < 2; i++) {
-    const f = flipper(i, s.angles[i]);
-    line(g, [f[0], f[1] + 2, f[2], f[3] + 2], 12, '#152533');
-    line(g, f, 10, i ? theme.accent : theme.light);
-    line(g, [f[0], f[1] - 2, f[2], f[3] - 2], 2, '#fff4cc');
-    circle(g, f[0], f[1], 5, '#657380');
-    circle(g, f[0] - 1, f[1] - 1, 2, '#d2e3df');
-  }
-  line(g, [331, 456, 331, 441], 9, theme.accent);
-  for (let y = 446; y < 464; y += 4) line(g, [324, y, 337, y - 1], 1, '#ebecb7');
-  if (s.phase !== 'done') {
-    const b = s.ball;
-    circle(g, b.x + 1.5, b.y + 2, R + 1, '#132330aa');
-    const metal = g.createRadialGradient(b.x - 2.4, b.y - 3, 1, b.x, b.y, R + 1);
-    metal.addColorStop(0, '#fffcef');
-    metal.addColorStop(0.4, '#d6ecf1');
-    metal.addColorStop(0.7, '#8baaaf');
-    metal.addColorStop(1, '#415078');
-    circle(g, b.x, b.y, R, metal);
-  }
-  g.restore();
-}
+
+const effects = {
+  bumper: 'pin-bumper', ride: 'pin-bonus', drain: 'pin-drain', sling: 'pin-sling',
+  target: 'pin-target', skill: 'pin-skill', armed: 'pin-armed', jackpot: 'pin-jackpot',
+};
+const cueOrder = ['jackpot', 'drain', 'armed', 'ride', 'skill', 'target', 'bumper', 'sling'];
+
 export function mount(host, { players, saved, save, finish, cue = () => {} }) {
   const hero = players[0];
   let s = restorePinball(saved, hero);
-  host.innerHTML =
-    '<section class="pin-game"><div class="pin-field"><canvas width="360" height="480" aria-label="Стол пинбола с двумя флипперами и тремя мишенями"></canvas><div class="pin-controls"><button type="button" class="pin-left" aria-label="Левый флиппер">◀ Левый</button><button type="button" class="pin-right" aria-label="Правый флиппер">Правый ▶</button></div></div><div class="pin-panel"><label class="pin-table">Стол <select></select></label><div class="pin-header"><small class="pin-player"><span class="face"></span><span></span></small><h2 class="pin-title"></h2></div><div class="pin-scorebar"><span class="pin-score"></span><span class="pin-balls"></span></div><p class="pin-task"></p><p class="pin-status" role="status"></p><label class="pin-power">Сила запуска <output></output><input type="range" min="55" max="100"></label><button class="pin-launch" type="button">Запустить шар</button><p class="pin-help">Нажимай два флиппера под столом. На клавиатуре — ← и →, пробел запускает шар.</p></div></section>';
-  const q = (x) => host.querySelector(x),
-    g = q('canvas').getContext('2d'),
-    table = q('select'),
-    status = q('.pin-status'),
-    score = q('.pin-score'),
-    balls = q('.pin-balls'),
-    power = q('input'),
-    launch = q('.pin-launch');
-  for (const [id, choice] of Object.entries(tables))
-    table.add(new Option(choice.place + ' · ' + choice.title, id));
-  const abort = new AbortController(),
-    opt = { signal: abort.signal },
-    held = [false, false],
-    flick = [0, 0];
-  let paused = false,
-    stopped = false,
-    frame,
-    last = null,
-    debt = 0;
-  const persist = () => {
-    if (!stopped) save(structuredClone(s));
+  host.innerHTML = `
+    <section class="pin-game">
+      <div class="pin-machine">
+        <div class="pin-marquee">
+          <div class="pin-readout"><span>Очки</span><strong class="pin-score"></strong></div>
+          <div class="pin-readout pin-factor"><span>Множитель</span><strong></strong></div>
+          <div class="pin-readout pin-stock"><span>Шары</span><div class="pin-balls"></div></div>
+        </div>
+        <div class="pin-field"><canvas width="720" height="960" aria-label="Игровое поле пинбола с левой и правой лопатками"></canvas></div>
+        <div class="pin-ticker"><span class="pin-status" role="status"></span><b class="pin-countdown" aria-hidden="true" hidden></b></div>
+        <div class="pin-controls">
+          <button type="button" class="pin-left" aria-label="Левый флиппер"><i aria-hidden="true">◀</i> Левый</button>
+          <button type="button" class="pin-launch" aria-label="Запустить шар. Удерживай для выбора силы">Пуск</button>
+          <button type="button" class="pin-right" aria-label="Правый флиппер">Правый <i aria-hidden="true">▶</i></button>
+        </div>
+      </div>
+      <aside class="pin-panel">
+        <header class="pin-backglass"><span class="pin-place"></span><h2 class="pin-title"></h2></header>
+        <div class="pin-operator"><span class="pin-player"><span class="face"></span><b></b></span><span>Рекорд стола <strong class="pin-best"></strong></span></div>
+        <label class="pin-table">Выбор стола<select></select></label>
+        <section class="pin-contract">
+          <h3 class="pin-objective"></h3>
+          <div class="pin-targets" aria-label="Горящие мишени"></div>
+          <p class="pin-mission"></p>
+        </section>
+        <div class="pin-serving"><label class="pin-power">Сила подачи <output></output><span class="pin-track"><span></span></span>
+          <input type="range" min="55" max="100" aria-label="Сила подачи"></label>
+          <p class="pin-skill-tip"></p></div>
+        <details class="pin-rules"><summary>Как играть</summary><p>Удерживай «Пуск» или пробел и отпусти для подачи. Короткое нажатие запускает шар с выбранной силой.</p><p>Стрелки ← и → поднимают лопатки. На экране можно держать сразу две кнопки или нажимать на две половины стола.</p><p class="pin-task"></p></details>
+      </aside>
+    </section>`;
+  const q = selector => host.querySelector(selector);
+  const root = q('.pin-game'), canvas = q('canvas'), g = canvas.getContext('2d');
+  const table = q('select'), power = q('input'), launch = q('.pin-launch'), controls = [q('.pin-left'), q('.pin-right')];
+  const lamps = ['I','II','III'].map(label => {
+    const lamp = document.createElement('span');
+    lamp.textContent = label;
+    q('.pin-targets').append(lamp);
+    return lamp;
+  });
+  for (const [id, choice] of Object.entries(tables)) table.add(new Option(choice.place + ' · ' + choice.title, id));
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const abort = new AbortController(), opt = { signal: abort.signal };
+  const holders = [new Set(), new Set()], flick = [0, 0], pending = new Set();
+  let frame, last = null, debt = 0, paused = false, stopped = false, charge = null;
+  let savedAt = 0, previousPhase = s.phase, hud = '', lastEffect = -Infinity, best = previousBest(s.table);
+  // Keep the table picker within reach above the field on a phone.
+  const portrait = matchMedia('(max-width: 640px) and (orientation: portrait)');
+  const picker = q('.pin-table');
+  function placePicker() {
+    if (portrait.matches) root.prepend(picker);
+    else q('.pin-operator').after(picker);
+  }
+  portrait.addEventListener('change', placePicker, opt);
+  placePicker();
+  const persist = () => { if (!stopped) save(structuredClone(s)); };
+  q('.pin-player .face').className = 'face face-' + hero;
+  q('.pin-player b').textContent = heroNames[hero];
+  const chargePower = now => {
+    if (!charge || now - charge.start < 160) return s.power;
+    return 55 + Math.round(45 * Math.min(1, (now - charge.start - 160) / 1000));
   };
-  q('.pin-player .face').className = 'face face-' + s.hero;
-  let previousHud = '';
-  function paint() {
-    paintBoard(g, s);
-    const hud = [s.table, s.phase, s.power, s.score, s.launches, s.balls, s.hits, s.event].join('|');
-    if (hud === previousHud) return;
-    previousHud = hud;
+  const msgs = {
+    ready: 'Шар на пружине · удерживай «Пуск»', launch: 'Проведи шар через мишени I, II и III', skill: 'Точная подача!',
+    drain: 'Шар потерян · следующая подача', return: 'Шар вернулся на пружину',
+    armed: 'Джекпот открыт! Целься в верхнее кольцо', jackpot: 'Джекпот!',
+    expired: 'Время вышло · снова зажги три мишени',
+    sling0: 'Отскок слева', sling1: 'Отскок справа',
+  };
+  function paint(now = performance.now()) {
+    const strength = chargePower(now), theme = tables[s.table];
+    paintPinball(g, s, theme, geometry, { charge: charge ? (strength - 55) / 45 : 0, reducedMotion: motion.matches });
+    const seconds = Math.ceil(s.jackpotTime);
+    const signature = [s.table, s.phase, s.score, s.balls, s.hits, s.bank, s.event, seconds, s.multiplier, strength, !!charge, best].join('|');
+    if (signature === hud) return;
+    hud = signature;
+    root.dataset.table = s.table;
+    root.dataset.phase = s.phase;
+    root.classList.toggle('pin-armed', seconds > 0);
+    root.style.setProperty('--pin-lamp', theme.lights[1]);
     table.value = s.table;
     table.disabled = s.launches > 0;
-    q('.pin-player span:last-child').textContent = heroNames[s.hero] + ' · ' + tables[s.table].place;
-    q('.pin-title').textContent = tables[s.table].title;
-    score.textContent = 'Очки · ' + s.score;
-    balls.textContent = 'Шары · ' + s.balls;
-    const count = [1, 2, 4].filter((bit) => s.hits & bit).length;
-    q('.pin-task').textContent = tables[s.table].task + ' · ' + count + '/3';
-    const msg = {
-      ready: 'Выбери стол и запускай шар.',
-      launch: 'Шар в игре',
-      ride: tables[s.table].name + '! Бонус × ' + s.bonus,
-      drain: 'Шар ушёл. Ещё одна подача!',
-      return: 'Шар вернулся в пусковой канал.',
-    };
-    const text = msg[s.event] || tables[s.table].targets[Number(s.event.slice(-1))] || 'Шар в игре';
-    if (status.textContent !== text) status.textContent = text;
+    q('.pin-place').textContent = theme.place;
+    q('.pin-title').textContent = theme.title;
+    q('.pin-score').textContent = formatScore.format(s.score);
+    q('.pin-factor strong').textContent = '×' + s.multiplier;
+    const stock = q('.pin-balls');
+    if (stock.dataset.count !== String(s.balls)) {
+      stock.dataset.count = s.balls;
+      stock.setAttribute('aria-label', 'Шаров осталось: ' + s.balls);
+      stock.replaceChildren(...Array.from({ length: 3 }, (_, i) => {
+        const ball = document.createElement('i');
+        if (i < s.balls) ball.className = 'live';
+        return ball;
+      }));
+    }
+    q('.pin-best').textContent = formatScore.format(best);
+    q('.pin-task').textContent = theme.task + '. Серия попаданий в бамперы включает аттракцион «' + theme.name + '».';
+    q('.pin-objective').textContent = seconds ? 'Джекпот · ' + seconds + ' с' : 'Зажги три мишени';
+    q('.pin-mission').textContent = seconds ? 'Отправь шар в светящееся кольцо наверху.' : 'Мишени I, II и III открывают верхнее кольцо джекпота.';
+    let lit = 0;
+    lamps.forEach((lamp, i) => {
+      const on = Boolean(seconds || s.bank & (1 << i));
+      lamp.classList.toggle('lit', on);
+      if (on) lit++;
+    });
+    q('.pin-targets').setAttribute('aria-label', 'Горит мишеней: ' + lit + ' из 3');
+    let message = msgs[s.event];
+    if (s.event.startsWith('hit')) message = theme.targets[Number(s.event.slice(-1))];
+    if (s.event.startsWith('target')) message = 'Мишень ' + ['I', 'II', 'III'][Number(s.event.slice(-1))] + ' горит';
+    if (s.event === 'ride') message = theme.name + '! Бонус за бамперы';
+    const status = q('.pin-status');
+    if (status.textContent !== (message || 'Шар в игре')) status.textContent = message || 'Шар в игре';
+    const countdown = q('.pin-countdown');
+    countdown.hidden = !seconds;
+    countdown.textContent = seconds ? 'Джекпот · ' + seconds + ' с' : '';
     power.value = s.power;
-    q('output').textContent = s.power + '%';
+    const [low, high] = skillPower[s.table];
+    q('output').textContent = strength + '%';
+    root.style.setProperty('--pin-fill', ((strength - 55) / 45 * 100) + '%');
+    root.style.setProperty('--pin-low', ((low - 55) / 45 * 100) + '%');
+    root.style.setProperty('--pin-high', ((high - 55) / 45 * 100) + '%');
+    q('.pin-skill-tip').textContent = 'Точная подача · ' + low + '–' + high + '%';
     power.disabled = launch.disabled = s.phase !== 'serve';
+    launch.classList.toggle('held', Boolean(charge));
+    launch.textContent = charge ? strength + '%' : 'Пуск';
   }
   function loop(now) {
     if (paused || stopped) return;
     if (last !== null) {
-      const balls = s.balls, bonus = s.bonus, points = s.score;
       debt += Math.min(0.1, (now - last) / 1000);
       while (debt >= DT && s.phase !== 'done') {
-        // A quick tap between animation frames still delivers one full strike.
-        tickPinball(s, held[0] || flick[0] > 0, held[1] || flick[1] > 0);
-        flick[0] = Math.max(0, flick[0] - 1);
-        flick[1] = Math.max(0, flick[1] - 1);
+        tickPinball(s, holders[0].size > 0 || flick[0] > 0, holders[1].size > 0 || flick[1] > 0, event => pending.add(event));
+        for (let i = 0; i < 2; i++) flick[i] = Math.max(0, flick[i] - 1);
         debt -= DT;
       }
-      if (s.balls < balls) cue('pin-drain');
-      else if (s.bonus > bonus) cue('pin-bonus');
-      else if (s.score > points && now - lastBumper >= 80) {
-        cue('pin-bumper');
-        lastBumper = now;
+      const effect = cueOrder.find(event => pending.has(event));
+      if (effect && (effect !== 'bumper' || now - lastEffect >= 80)) {
+        cue(effects[effect]);
+        lastEffect = now;
       }
+      pending.clear();
     }
     last = now;
-    paint();
+    paint(now);
     if (s.phase === 'done') {
       stopped = true;
-      finish({
-        score: s.score,
-        summary: tables[s.table].title + ' · ' + s.score + ' очк. · бонусов ' + s.bonus,
-      });
+      const record = s.score > Math.max(best, previousBest(s.table));
+      if (record) {
+        try { localStorage.setItem(bestKey(s.table), String(s.score)); } catch { /* Shared history also records the result. */ }
+      }
+      finish({ score: s.score, summary: tables[s.table].title + ' · ' + formatScore.format(s.score) +
+        ' очк. · джекпотов ' + s.jackpots + (record ? ' · Новый рекорд!' : '') });
       return;
     }
-    if (s.phase !== 'serve' && now - savedAt >= 900) {
+    if ((s.phase !== 'serve' && now - savedAt >= 900) || (s.phase === 'serve' && previousPhase !== 'serve')) {
       persist();
       savedAt = now;
-    } else if (s.phase === 'serve' && previousPhase !== 'serve') persist();
+    }
     previousPhase = s.phase;
     frame = requestAnimationFrame(loop);
   }
-  let lastBumper = -Infinity,
-    savedAt = 0,
-    previousPhase = s.phase;
-  table.addEventListener(
-    'change',
-    () => {
-      if (paused || s.launches) return;
-      s = newPinball(hero, table.value);
+  table.addEventListener('change', () => {
+    if (paused || s.launches) return;
+    charge = null;
+    s = newPinball(hero, table.value);
+    best = previousBest(s.table);
+    paint();
+    persist();
+  }, opt);
+  power.addEventListener('input', () => {
+    if (paused || s.phase !== 'serve') return;
+    s.power = Number(power.value);
+    paint();
+    persist();
+  }, opt);
+  const shoot = strength => {
+    if (paused || stopped || !launchPinball(s, strength)) return;
+    cue('pin-launch');
+    const cabinet = q('.pin-machine');
+    if (cabinet.getBoundingClientRect().top < 0 && cabinet.offsetHeight <= window.innerHeight) {
+      cabinet.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+    }
+    paint();
+    persist();
+  };
+  const wind = owner => {
+    if (!paused && !stopped && s.phase === 'serve' && !charge) {
+      charge = { owner, start: performance.now() };
       paint();
-      persist();
-    },
-    opt,
-  );
-  power.addEventListener(
-    'input',
-    () => {
-      if (!paused && s.phase === 'serve') {
-        s.power = Number(power.value);
-        paint();
-        persist();
-      }
-    },
-    opt,
-  );
-  const shoot = () => {
-    if (!paused && launchPinball(s)) {
-      cue('pin-launch');
-      paint();
-      persist();
     }
   };
-  launch.addEventListener('click', shoot, opt);
-  const controls = [q('.pin-left'), q('.pin-right')];
-  const toggle = (index, on) => {
-    if (on && !held[index]) {
-      flick[index] = 9;
-      cue('pin-flipper');
-    }
-    held[index] = on;
-    controls[index].classList.toggle('held', on);
+  const unwind = (owner, fire) => {
+    if (charge?.owner !== owner) return;
+    const strength = chargePower(performance.now());
+    charge = null;
+    if (fire) shoot(strength);
+    else paint();
   };
-  controls.forEach((b, i) => {
-    b.addEventListener(
-      'pointerdown',
-      (e) => {
-        if (paused) return;
-        e.preventDefault();
-        b.setPointerCapture(e.pointerId);
-        toggle(i, true);
-      },
-      opt,
-    );
-    b.addEventListener('lostpointercapture', () => toggle(i, false), opt);
+  launch.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    launch.setPointerCapture(e.pointerId);
+    wind(e.pointerId);
+  }, opt);
+  launch.addEventListener('pointerup', e => unwind(e.pointerId, true), opt);
+  launch.addEventListener('lostpointercapture', e => unwind(e.pointerId, false), opt);
+  launch.addEventListener('click', e => { if (!e.detail) shoot(s.power); }, opt);
+  const toggle = (i, owner, on) => {
+    if (on) {
+      if (!holders[i].size) { flick[i] = 9; cue('pin-flipper'); }
+      holders[i].add(owner);
+    } else holders[i].delete(owner);
+    controls[i].classList.toggle('held', holders[i].size > 0);
+  };
+  function bindFlippers(element, side) {
+    element.addEventListener('pointerdown', e => {
+      if (paused || stopped || e.button !== 0) return;
+      e.preventDefault();
+      element.setPointerCapture(e.pointerId);
+      toggle(side(e), e.pointerId, true);
+    }, opt);
+    element.addEventListener('lostpointercapture', e => {
+      toggle(0, e.pointerId, false);
+      toggle(1, e.pointerId, false);
+    }, opt);
+  }
+  controls.forEach((button, i) => {
+    bindFlippers(button, () => i);
+    button.addEventListener('click', e => {
+      if (e.detail || paused || stopped) return;
+      toggle(i, 'button', true);
+      toggle(i, 'button', false);
+    }, opt);
   });
-  const dirs = { ArrowLeft: 0, KeyA: 0, ArrowRight: 1, KeyD: 1 };
-  document.addEventListener(
-    'keydown',
-    (e) => {
-      if (
-        paused ||
-        stopped ||
-        e.altKey ||
-        e.ctrlKey ||
-        e.metaKey ||
-        ['INPUT', 'SELECT'].includes(e.target.tagName)
-      )
-        return;
-      if (Object.hasOwn(dirs, e.code)) {
-        e.preventDefault();
-        toggle(dirs[e.code], true);
-      }
-      if (e.code === 'Space' && !e.repeat && (e.target.tagName !== 'BUTTON' || host.contains(e.target))) {
-        e.preventDefault();
-        shoot();
-      }
-    },
-    opt,
-  );
-  document.addEventListener(
-    'keyup',
-    (e) => {
-      if (Object.hasOwn(dirs, e.code)) toggle(dirs[e.code], false);
-    },
-    opt,
-  );
+  bindFlippers(canvas, e => e.clientX < canvas.getBoundingClientRect().left + canvas.clientWidth / 2 ? 0 : 1);
+  const sides = { ArrowLeft: 0, KeyA: 0, ArrowRight: 1, KeyD: 1 };
+  document.addEventListener('keydown', e => {
+    if (paused || stopped || e.altKey || e.ctrlKey || e.metaKey || ['INPUT', 'SELECT', 'SUMMARY'].includes(e.target.tagName)) return;
+    if (Object.hasOwn(sides, e.code)) {
+      e.preventDefault();
+      toggle(sides[e.code], e.code, true);
+    }
+    if (e.code === 'Space' && (e.target.tagName !== 'BUTTON' || e.target === launch || controls.includes(e.target))) {
+      e.preventDefault();
+      if (!e.repeat) wind('keyboard');
+    }
+  }, opt);
+  document.addEventListener('keyup', e => {
+    if (Object.hasOwn(sides, e.code)) toggle(sides[e.code], e.code, false);
+    if (e.code === 'Space' && charge?.owner === 'keyboard') { e.preventDefault(); unwind('keyboard', true); }
+  }, opt);
   const release = () => {
+    charge = null;
     flick.fill(0);
-    toggle(0, false);
-    toggle(1, false);
+    for (let i = 0; i < 2; i++) { holders[i].clear(); controls[i].classList.remove('held'); }
   };
   window.addEventListener('blur', release, opt);
   paint();

@@ -16,7 +16,7 @@
 | [Ход команды](https://games.polomodov.tech/block-playroom/?game=tactics) | Проведите двух героев через порталы. Монстры заранее показывают свой следующий ход. |
 | [Кафе для монстров](https://games.polomodov.tech/block-playroom/?game=cafe) | Пеките вафли и блины, разливайте лимонад и успевайте отдавать заказы. |
 | [Колода порталов](https://games.polomodov.tech/block-playroom/?game=cards) | Сыграйте карты семьи против монстров и выберите новую карту после победы. |
-| [Пинбол миров](https://games.polomodov.tech/block-playroom/?game=pinball) | Выберите один из семи столов. Ловите шар лопатками и зажигайте мишени. |
+| [Пинбол миров](https://games.polomodov.tech/block-playroom/?game=pinball) | Запустите шар пружиной, зажгите три мишени и возьмите джекпот на одном из семи столов. |
 | [Фотоохота на монстров](https://games.polomodov.tech/block-playroom/?game=photo) | Соберите семь снимков. Ловите моменты, когда гаст заряжает шар, скелет натягивает лук, а крипер вспыхивает. |
 | [Робот за изумрудом](https://games.polomodov.tech/block-playroom/?game=robot) | Запрограммируйте робота на семи складах. Соберите изумруды и доставьте их на станцию. |
 
