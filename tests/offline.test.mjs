@@ -40,13 +40,21 @@ function setup() {
     clients: {
       matchAll: async () => [{ url: scope, postMessage: (data) => messages.push(data) }],
       claim: async () => {},
+      get: async () => undefined,
     },
     addEventListener: (name, fn) => (handlers[name] = fn),
     skipWaiting: async () => {
       activated++;
     },
   };
-  const caches = { open: async () => cache, keys: async () => [] };
+  const routes = new Map();
+  const routesCache = { match: async (url) => routes.get(url)?.clone(), put: async (url, response) => routes.set(url, response) };
+  const caches = {
+    open: async (name) => (name.endsWith(':routes') ? routesCache : cache),
+    keys: async () => [],
+    has: async () => false,
+    delete: async () => false,
+  };
   runInNewContext(source, {
     self,
     importScripts: () => {},
