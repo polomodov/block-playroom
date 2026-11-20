@@ -175,4 +175,4 @@ dialog .primary{width:100%;margin-top:4px}
  #board{height:calc(100svh - 83px);min-height:130px}
  .game-controls{margin-top:4px}.pad-group button,.power-btn{height:35px}
 }
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}

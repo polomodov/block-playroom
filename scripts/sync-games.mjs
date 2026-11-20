@@ -9,13 +9,13 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const releases = {
-  'block-maze': '3ab21d0378eb093aa26347e7622346e2a94efe46',
-  'block-jump': '88d08276b0b7caedab5c2d206b989ea6d09102d1',
-  'block-dash': 'ccb751fde578d0e71c13b61231300e2755aad63a',
+  'block-maze': 'b0ef0d834e571df1f50081e4b6d7eed509c11101',
+  'block-jump': '7c88599b6db09b4be3ebe08a21b32b70d5296811',
+  'block-dash': '9ab83636d4fece6de85d6c863d6b797c2c1981d2',
 };
 const check = process.argv.includes('--check');
 const ignored = new Set(['manifest.webmanifest', 'offline.js', 'offline.css', 'assets/app-192.png',
-  'assets/app-512.png', 'assets/jump-share.png', 'assets/runner-share.jpg',
+  'assets/app-512.png', 'assets/app-maskable-512.png', 'assets/jump-share.png', 'assets/runner-share.jpg',
   'assets/share/story.png', 'assets/share/family.png']);
 
 function git(directory, ...args) {

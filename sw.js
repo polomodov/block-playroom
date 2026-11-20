@@ -9,6 +9,43 @@ const resources = new Map();
 const uniqueAssets = new Map();
 const directories = new Set();
 let totalBytes = 0;
+// Pages opened before an update keep reading the release they were loaded from,
+// so a sprite sheet or script fetched mid-game always matches the code already
+// running. The page-to-release map lives in Cache Storage, because the browser
+// may stop and restart this worker at any time without running activate again.
+const routesCache = prefix + 'routes';
+const routesKey = base + '__offline-routes';
+let routes;
+function loadRoutes() {
+  routes ??= caches
+    .open(routesCache)
+    .then((cache) => cache.match(routesKey))
+    .then((response) => (response ? response.json() : {}))
+    .catch(() => ({}));
+  return routes;
+}
+async function saveRoutes(map) {
+  routes = Promise.resolve(map);
+  const cache = await caches.open(routesCache);
+  await cache.put(routesKey, new Response(JSON.stringify(map), { headers: { 'Content-Type': 'application/json' } }));
+}
+// Releases created before this one, oldest first (Cache Storage keeps creation
+// order). A newer release may already be installing; it is never touched here.
+async function olderReleases() {
+  const names = (await caches.keys()).filter((name) => name.startsWith(prefix) && name !== routesCache);
+  const index = names.indexOf(cacheName);
+  return index < 0 ? [] : names.slice(0, index);
+}
+// Forget closed pages and delete every older release no open page still uses.
+async function pruneReleases(map) {
+  const live = {};
+  const found = await Promise.all(Object.keys(map).map((id) => self.clients.get(id)));
+  for (const client of found) if (client) live[client.id] = map[client.id];
+  await saveRoutes(live);
+  const used = new Set(Object.values(live));
+  const stale = (await olderReleases()).filter((name) => !used.has(name));
+  await Promise.all(stale.map((name) => caches.delete(name)));
+}
 
 for (const [path, integrity, bytes] of OFFLINE_FILES) {
   const url = new URL(path, base).href;
@@ -62,6 +99,21 @@ async function fillCache() {
     await broadcast(done, bytes);
   }
 }
+// Pruning is only safe once this release serves pages: before that, the
+// previous worker is still active and its pages have no route yet.
+let activation = null;
+// Chromium hands pages to an activating worker and sends their requests before
+// the activate event runs, so wait for the activated state as well.
+async function activationDone() {
+  const worker = self.serviceWorker;
+  if (worker?.state === 'activating')
+    await new Promise((resolve) => worker.addEventListener('statechange', resolve, { once: true }));
+  await activation?.catch(() => {});
+}
+async function pruneWhenActive() {
+  await activationDone();
+  if ((self.serviceWorker?.state ?? 'activated') === 'activated') await pruneReleases(await loadRoutes());
+}
 let filling;
 function completePack() {
   if (!filling)
@@ -76,18 +128,24 @@ self.addEventListener('install', (event) => {
 });
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    (async () => {
+    (activation = (async () => {
       let legacy = false;
-      for (const name of await caches.keys()) {
-        if (!name.startsWith(prefix) || name === cacheName) continue;
+      const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const older = await olderReleases();
+      for (const name of older) {
         const old = await caches.open(name);
         if (
           (await old.match(new URL('index.html', base).href)) &&
           !(await old.match(new URL('games/block-maze/index.html', base).href))
         )
           legacy = true;
-        await caches.delete(name);
       }
+      const map = { ...(await loadRoutes()) };
+      // A page without a route was loaded from the newest older release; a page
+      // that already has one keeps it through any number of further updates.
+      const loadedFrom = older.at(-1);
+      if (loadedFrom) for (const client of open) map[client.id] ??= loadedFrom;
+      await pruneReleases(map);
       await self.clients.claim();
       // The previous four-game launcher predates controllerchange handling.
       // Replace a cached legacy home page once. An open game has ?game=... and
@@ -106,7 +164,7 @@ self.addEventListener('activate', (event) => {
           }
         }
       }
-    })(),
+    })()),
   );
 });
 
@@ -116,6 +174,7 @@ self.addEventListener('message', (event) => {
     (async () => {
       try {
         await completePack();
+        await pruneWhenActive();
         event.ports[0].postMessage({
           ready: true,
           pack,
@@ -125,6 +184,9 @@ self.addEventListener('message', (event) => {
           revision: OFFLINE_REVISION,
         });
       } catch {
+        // The site may already serve a newer release whose files no longer match
+        // this worker's checksums. Ask the browser to fetch that release instead.
+        self.registration.update?.().catch(() => {});
         event.ports[0].postMessage({ ready: false, pack });
       }
     })(),
@@ -144,6 +206,13 @@ self.addEventListener('fetch', (event) => {
   if (!key) return;
   event.respondWith(
     (async () => {
+      // Wait until activation has recorded which release each open page was loaded from.
+      await activationDone();
+      const release = (await loadRoutes())[event.clientId];
+      if (release && (await caches.has(release))) {
+        const old = await caches.open(release).then((cache) => cache.match(key));
+        if (old) return old;
+      }
       const cache = await caches.open(cacheName);
       const cached = await cache.match(key);
       if (cached) return cached;

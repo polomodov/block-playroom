@@ -250,3 +250,53 @@
     padding: 0.65rem;
   }
 }
+/* Phone held sideways: the course fills the height, scores and controls sit beside it. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .golf-game {
+    width: 100%;
+    grid-template-columns: auto minmax(180px, 1fr);
+    grid-template-areas: 'stage banner' 'stage turns' 'stage controls' 'stage status' 'stage rest';
+    align-items: start;
+    gap: 0.4rem 0.7rem;
+  }
+  .golf-stage {
+    grid-area: stage;
+  }
+  .golf-stage .golf-canvas {
+    width: auto;
+    max-width: calc(100vw - 240px);
+    height: calc(100svh - 62px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  .golf-banner {
+    grid-area: banner;
+    min-height: 0;
+    padding: 0.4rem 0.6rem;
+  }
+  .golf-world,
+  .golf-scenery {
+    display: none;
+  }
+  .golf-name {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  .golf-turns {
+    grid-area: turns;
+  }
+  .golf-controls {
+    grid-area: controls;
+    flex-wrap: wrap;
+    padding: 0.35rem;
+    gap: 0.35rem;
+  }
+  .golf-status {
+    grid-area: status;
+    margin: 0;
+    font-size: 0.8rem;
+  }
+  .golf-tip,
+  .golf-help {
+    grid-column: 2;
+    font-size: 0.78rem;
+  }
+}

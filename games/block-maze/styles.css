@@ -68,6 +68,9 @@ button:disabled {
 main {
   width: min(100% - 48px, 1088px);
   margin: auto;
+  /* Respect notches when the page extends under them (viewport-fit=cover). */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 .bar-inner,
 nav,
@@ -156,7 +159,8 @@ nav {
   font: 700 11px/14px var(--sans);
 }
 main {
-  padding: 24px 0 38px;
+  padding: 24px env(safe-area-inset-right) 38px env(safe-area-inset-left);
+  margin-bottom: env(safe-area-inset-bottom);
 }
 .banner {
   position: relative;
@@ -1039,5 +1043,79 @@ dialog .primary {
   .message-card p {
     margin-bottom: 10px;
     font-size: 0.9rem;
+  }
+}
+
+/* Phone held sideways: the maze fills the height, controls sit beside it. */
+@media (orientation: landscape) and (max-height: 540px) {
+  body:has(#arena:not([hidden])) .topbar {
+    display: none;
+  }
+  body:has(#arena:not([hidden])) main {
+    width: 100%;
+    padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  }
+  #arena {
+    --board-h: calc(100svh - 12px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: min(calc(var(--board-h) * 23 / 15), calc(100vw - 250px)) minmax(0, 1fr);
+    grid-template-areas: "board header" "board hud" "board actions" "board hint";
+    grid-template-rows: auto auto auto 1fr;
+    align-content: start;
+    gap: 8px 12px;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+  }
+  #arena .board-wrap {
+    grid-area: board;
+    align-self: start;
+    max-height: var(--board-h);
+  }
+  #arena .arena-header {
+    grid-area: header;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  #arena .arena-header h2 {
+    order: -1;
+    flex-basis: 100%;
+  }
+  #arena .hud {
+    grid-area: hud;
+    margin: 0;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    font-size: 0.8rem;
+  }
+  #arena .hud span {
+    min-width: 0;
+  }
+  #arena .minor {
+    padding: 5px 9px;
+    font-size: 0.85rem;
+  }
+  #arena .actions {
+    grid-area: actions;
+    margin: 0;
+    justify-content: center;
+    gap: 10px;
+  }
+  #arena #ability-hint {
+    grid-area: hint;
+    margin: 0;
+    font-size: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -428,3 +428,71 @@
     transform: none;
   }
 }
+/* Phone held sideways: the stage on the left, the guitar pads on the right. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .rhythm-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas: 'head head' 'stage panel';
+  }
+  .rh-head {
+    grid-area: head;
+    margin: 0 0 0.4rem;
+  }
+  .rh-head h2 {
+    font-size: 1rem;
+  }
+  .rh-head .rh-world {
+    display: none;
+  }
+  .rh-sound {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  .rh-backdrop {
+    grid-area: stage;
+    height: auto;
+    min-height: 0;
+    border-radius: 12px 0 0 12px;
+  }
+  .rh-panel {
+    grid-area: panel;
+    border-top: 1px solid #526a6b;
+    border-left: 0;
+    border-radius: 0 12px 12px 0;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+  .rh-song-select {
+    gap: 0.4rem;
+    flex-wrap: nowrap;
+  }
+  .rh-song-select select {
+    min-width: 0;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+  }
+  .rh-cue {
+    margin: 0.3rem 0;
+    font-size: 0.8rem;
+  }
+  .rh-pads {
+    margin: 0.35rem 0;
+    gap: 0.3rem;
+  }
+  .rh-pads button {
+    min-height: 0;
+    padding: 0.35rem 0.2rem;
+  }
+  .rh-pads kbd {
+    display: none;
+  }
+  .rh-actions {
+    gap: 0.4rem;
+  }
+  .rh-action,
+  .rh-repeat {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.82rem;
+  }
+}

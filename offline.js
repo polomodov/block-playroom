@@ -5,6 +5,7 @@ const progress = document.querySelector('#offline-progress');
 const pack = 'seven-games-v1';
 let promptEvent;
 let busy = false;
+let announced = -1;
 
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
@@ -31,7 +32,13 @@ function displayProgress(bytes, totalBytes) {
     progress.max = totalBytes;
     progress.value = bytes;
   }
-  status.textContent = 'Загрузка 7 игр для офлайна · ' + percent + '%';
+  // The progress bar moves every batch. The status line (read aloud by screen
+  // readers) changes only at each quarter so it does not recite every percent.
+  const step = Math.floor(percent / 25) * 25;
+  if (step !== announced) {
+    announced = step;
+    status.textContent = 'Загрузка 7 игр для офлайна · ' + step + '%';
+  }
 }
 function confirmFiles(worker) {
   return new Promise((resolve, reject) => {
@@ -80,7 +87,10 @@ async function confirmedPack(registration) {
     worker = await activated(registration.installing || registration.waiting || registration.active);
     reply = await confirmFiles(worker);
   }
-  if (!reply?.ready || reply.pack !== pack || reply.games !== 7 || navigator.serviceWorker.controller !== worker)
+  // After a hard reload (Shift+Reload) the page is deliberately not controlled;
+  // the next ordinary visit will be, so only a different controller is an error.
+  const controller = navigator.serviceWorker.controller;
+  if (!reply?.ready || reply.pack !== pack || reply.games !== 7 || (controller && controller !== worker))
     throw new Error('Incomplete seven-game pack');
 }
 async function prepare() {
@@ -90,6 +100,7 @@ async function prepare() {
     return;
   }
   busy = true;
+  announced = -1;
   retry.hidden = true;
   delete status.dataset.ready;
   if (progress) {
@@ -109,6 +120,9 @@ async function prepare() {
     await confirmedPack(reg);
     status.textContent = 'Готово к игре офлайн · 7 из 7 игр';
     status.dataset.ready = 'true';
+    // Ask the browser not to evict saves and the offline pack (Safari clears
+    // storage of sites that are not on the home screen after a week without visits).
+    navigator.storage?.persist?.().catch(() => {});
   } catch {
     status.textContent = 'Загрузка не завершена. Подключись к интернету и продолжи загрузку.';
     retry.hidden = false;
