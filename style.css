@@ -104,6 +104,7 @@ p {
   border-bottom-width: 4px;
   border-radius: 12px;
   text-align: left;
+  text-decoration: none;
   padding: 0;
   background: var(--panel);
   color: var(--ink);
@@ -124,6 +125,27 @@ p {
   background: url('./assets/playroom-covers.webp') no-repeat;
   background-size: 200% 200%;
   border-bottom: 1px solid #60536c;
+}
+.art-maze {
+  background: url('./games/block-maze/assets/share/cover.png') right center / 178% auto no-repeat;
+}
+.art-jump {
+  background: url('./games/block-jump/assets/jump-cover.webp') 75% center / cover no-repeat;
+}
+.art-dash {
+  background: url('./games/block-dash/assets/runner-cover.webp') 78% center / cover no-repeat;
+}
+.offline-extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 0.35rem 1.5rem;
+}
+.offline-extra details[open] {
+  flex-basis: 100%;
+}
+#offline-tools #continue-saved {
+  justify-self: start;
 }
 .art-coop {
   background-position: left top;
@@ -173,8 +195,7 @@ p {
   margin: 0.45rem 0 0.9rem;
 }
 #party,
-.launch,
-.siblings {
+.launch {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -236,15 +257,6 @@ p {
 .launch button:disabled {
   opacity: 0.45;
   cursor: default;
-}
-.siblings {
-  gap: 16px;
-  margin: 14px 0 0;
-}
-.siblings a {
-  color: #e0cad9;
-  text-underline-offset: 3px;
-  font-size: 0.9rem;
 }
 .playbar {
   display: flex;

@@ -3,9 +3,25 @@ export const titles = {
   golf: 'Гольф семи миров',
   mystery: 'Куда делся изумруд?',
   rhythm: 'Гитарная репетиция',
+  'block-maze': 'Блок Аркада',
+  'block-jump': 'Блок Прыжок',
+  'block-dash': 'Блок Экспресс',
 };
 export const heroNames = { kirill: 'Кирилл', maxim: 'Максим', mom: 'Мама', dad: 'Папа', pasha: 'Паша' };
 const key = 'family-games:' + new URL('.', import.meta.url).pathname + ':progress:1';
+// Embedded arcade games keep their original keys so existing games can be continued.
+const arcadeIds = ['block-maze', 'block-jump', 'block-dash'];
+const arcadeKey = (id) => 'family-games:/' + id + '/:progress:1';
+const levelNames = {
+  temple: 'Храм изумруда',
+  arcade: 'Игровой центр',
+  waterpark: 'Аквапарк',
+  store: 'Мебельный магазин',
+  nether: 'Нижний мир',
+  castle: 'Замок на Хеллоуин',
+  end: 'Край',
+};
+const outcomes = { won: 'Уровень пройден', lost: 'Попытки закончились', over: 'Финиш забега' };
 const blank = () => ({ slots: {}, results: [] });
 let memory = blank(),
   storageFailed = false;
@@ -30,8 +46,8 @@ function write(profile) {
     storageFailed = true;
   }
 }
-export function slot(mode) {
-  const s = read().slots[mode];
+export function slot(mode, profile = read()) {
+  const s = profile.slots[mode];
   if (
     !Object.hasOwn(titles, mode) ||
     !s ||
@@ -55,6 +71,58 @@ export function finishSlot(round, result) {
   const record = { ...round, summary: result.summary, score: result.score, at: Date.now() };
   write({ slots, results: [record, ...profile.results.filter((r) => r.id !== record.id)].slice(0, 50) });
 }
+function readArcade(id) {
+  try {
+    return JSON.parse(localStorage.getItem(arcadeKey(id)));
+  } catch {
+    return null;
+  }
+}
+function validTime(time) {
+  return Number.isFinite(time) && Number.isFinite(new Date(time).getTime());
+}
+export function collectionProgress(profile = read(), readGame = readArcade) {
+  const saves = Object.keys(profile.slots)
+    .map((id) => slot(id, profile))
+    .filter((s) => s && validTime(s.at));
+  const results = profile.results.filter(
+    (r) =>
+      r &&
+      Object.hasOwn(titles, r.mode) &&
+      validTime(r.at) &&
+      Array.isArray(r.players) &&
+      typeof r.summary === 'string',
+  );
+  for (const id of arcadeIds) {
+    const game = readGame(id);
+    if (!game) continue;
+    const saved = game.saved;
+    if (
+      saved &&
+      Object.hasOwn(heroNames, saved.hero) &&
+      Object.hasOwn(levelNames, saved.level) &&
+      validTime(saved.savedAt)
+    ) {
+      saves.push({ mode: id, at: saved.savedAt, href: './games/' + id + '/?resume=1' });
+    }
+    for (const r of Array.isArray(game.results) ? game.results : []) {
+      if (
+        !r ||
+        !Object.hasOwn(heroNames, r.hero) ||
+        !Object.hasOwn(levelNames, r.level) ||
+        !Object.hasOwn(outcomes, r.outcome) ||
+        !validTime(r.at)
+      )
+        continue;
+      const detail = [levelNames[r.level], outcomes[r.outcome]];
+      if (Number.isFinite(r.distance)) detail.push(Math.floor(r.distance) + ' м');
+      if (Number.isFinite(r.gems)) detail.push(r.gems + ' 💎');
+      results.push({ mode: id, at: r.at, players: [r.hero], summary: detail.join(' · ') });
+    }
+  }
+  const newestFirst = (a, b) => b.at - a.at;
+  return { latest: saves.sort(newestFirst)[0], results: results.sort(newestFirst).slice(0, 50) };
+}
 export function bindProgress(resume, update) {
   const q = (id) => document.getElementById(id),
     btn = q('continue-saved');
@@ -64,21 +132,14 @@ export function bindProgress(resume, update) {
     hour: '2-digit',
     minute: '2-digit',
   });
-  function latest() {
-    return Object.keys(titles)
-      .map(slot)
-      .filter(Boolean)
-      .sort((a, b) => b.at - a.at)[0];
-  }
   function refresh() {
-    const s = latest();
+    const { latest: s, results } = collectionProgress();
     btn.hidden = !s;
     if (s) btn.textContent = 'Вернуться в последнюю игру · ' + titles[s.mode];
     q('save-notice').hidden = !storageFailed;
     const history = q('game-history');
     history.replaceChildren();
-    for (const r of read().results) {
-      if (!Object.hasOwn(titles, r.mode) || !Number.isFinite(r.at) || !Array.isArray(r.players)) continue;
+    for (const r of results) {
       const li = document.createElement('li'),
         title = document.createElement('strong'),
         text = document.createElement('span');
@@ -95,15 +156,20 @@ export function bindProgress(resume, update) {
     update();
   }
   btn.addEventListener('click', () => {
-    const s = latest();
-    if (s) resume(s);
+    const { latest: s } = collectionProgress();
+    if (s?.href) location.assign(s.href);
+    else if (s) resume(s);
   });
   window.addEventListener('storage', (e) => {
     if (e.key === key || e.key === null) {
       storageFailed = false;
       memory = blank();
-      refresh();
     }
+    if (e.key === null || e.key === key || arcadeIds.some((id) => arcadeKey(id) === e.key)) refresh();
+  });
+  // A trip through an arcade game can restore this page from the back-forward cache.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) refresh();
   });
   refresh();
   return refresh;

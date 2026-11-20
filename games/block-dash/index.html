@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10191b">
+  <meta name="description" content="Беги по трём дорожкам, собирай изумруды и уворачивайся от монстров. Пять семейных героев и семь знакомых миров.">
+  <meta property="og:title" content="Блок Экспресс">
+  <meta property="og:description" content="Семейный раннер в семи кубических мирах. Как далеко ты убежишь?">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://games.polomodov.tech/block-dash/">
+  <meta property="og:image" content="https://games.polomodov.tech/block-dash/assets/runner-share.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Кирилл и Максим бегут по рельсам к воротам Храма изумруда.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="./assets/mark.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="preload" href="./assets/runner-cover.webp" as="image">
+  <title>Блок Экспресс</title>
+  <link rel="manifest" href="../../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../../assets/app-192.png">
+  <meta name="apple-mobile-web-app-title" content="Игротека">
+  <link rel="stylesheet" href="../../offline.css">
+    <link rel="stylesheet" href="../collection.css">
+</head>
+<body data-mode="lobby">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="./" aria-label="Блок Экспресс — главное меню"><i class="train-emblem" aria-hidden="true"><i></i></i><span>Блок <strong>Экспресс</strong></span></a>
+      <nav aria-label="Другие игры"><a href="../block-maze/">Лабиринт</a><a href="../block-jump/">Платформер</a></nav>
+      <div class="top-actions">
+        <button id="sound" class="tool-btn" type="button" aria-label="Включить звук" aria-pressed="false" title="Включить звук"><i class="speaker" aria-hidden="true"></i></button>
+        <button id="help" class="help-btn" type="button"><i aria-hidden="true">?</i><span>Как играть</span></button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section id="lobby" class="shell" aria-labelledby="game-title">
+      <a class="collection-home" data-collection-home href="../../">‹ В игротеку</a>
+      <div class="banner">
+        <div class="banner-content">
+          <span class="genre"><i aria-hidden="true"></i>Бесконечный раннер</span>
+          <h1 id="game-title">Блок<br><em>Экспресс</em></h1>
+          <p>Меняй дорожки, уворачивайся от монстров и собирай изумруды на бегу.</p>
+          <div class="launchbar">
+            <div class="launch-choice"><b id="mobile-world"></b><span id="mobile-hero"></span></div>
+            <button type="button" class="primary" id="play"><i class="play-icon" aria-hidden="true"></i>Начать забег</button>
+          </div>
+        </div>
+      </div>
+      <fieldset class="section-select routes">
+        <legend><i class="rail-icon" aria-hidden="true"></i>Выбери маршрут</legend>
+        <div id="levels" class="world-list"></div>
+      </fieldset>
+      <fieldset class="section-select crew">
+        <legend><i class="person-icon" aria-hidden="true"></i>Выбери героя</legend>
+        <div id="heroes" class="hero-list"></div>
+      </fieldset>
+      <div class="related"><span>Другие игры</span><a href="../block-maze/">Лабиринт</a><a href="../block-jump/">Платформер</a><a href="../../">Семейная игротека</a></div>
+      <section id="offline-tools" aria-label="Сохранения">
+        <button type="button" id="continue-saved" hidden>Продолжить партию</button>
+        <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
+        <details><summary>История игр на этом устройстве</summary><ol id="game-history"></ol></details>
+      </section>
+    </section>
+    <section id="arena" class="arena" hidden aria-labelledby="arena-title">
+      <div class="arena-bar">
+        <div class="arena-title"><i class="rail-icon" aria-hidden="true"></i><h2 id="arena-title"></h2></div>
+        <button type="button" class="pause-button" id="pause"><i aria-hidden="true"></i>Пауза</button>
+      </div>
+      <div class="game-window">
+        <canvas id="board" tabindex="0" aria-label="Игровое поле. Стрелки в стороны меняют дорожку, вверх — прыжок, вниз — подкат."></canvas>
+        <div class="hud">
+          <div class="hud-left"><span class="hud-stat distance"><b id="distance">0</b><small>м</small></span><span class="hud-stat" aria-label="Изумруды"><i class="gem" aria-hidden="true"></i><b id="gems">0</b></span></div>
+          <span class="hud-stat hearts" id="hearts"><i aria-hidden="true">♥</i><b id="lives">3</b></span>
+        </div>
+      </div>
+      <div class="game-controls">
+        <div class="pad-group" aria-label="Управление движением">
+          <button type="button" data-action="left" aria-label="Налево" title="Налево"><i class="dir-icon left"></i></button>
+          <button type="button" data-action="right" aria-label="Направо" title="Направо"><i class="dir-icon right"></i></button>
+          <button type="button" data-action="jump" aria-label="Прыжок" title="Прыжок"><i class="dir-icon jump"></i></button>
+          <button type="button" data-action="slide" aria-label="Подкат" title="Подкат"><i class="dir-icon slide"></i></button>
+        </div>
+        <div class="key-hint"><kbd>←</kbd><kbd>→</kbd> дорожка <kbd>↑</kbd> прыжок <kbd>↓</kbd> подкат</div>
+        <button type="button" class="power-btn" id="ability" data-action="power"><kbd>E</kbd><span id="ability-name"></span><b id="cooldown"></b></button>
+      </div>
+    </section>
+  </main>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <h2 id="help-title">Как играть</h2>
+    <p>Герой бежит сам. На телефоне смахивай по полю или нажимай кнопки под ним.</p>
+    <dl class="keys"><div><dt>Влево и вправо</dt><dd>Сменить дорожку</dd></div><div><dt>Вверх</dt><dd>Перепрыгнуть преграду</dd></div><div><dt>Вниз</dt><dd>Проскользнуть под аркой</dd></div><div><dt>Способность</dt><dd id="help-power"></dd></div></dl>
+    <p class="help-keys">На клавиатуре работают стрелки и WASD. Пробел — прыжок, E — способность, Esc — пауза. Способность восстанавливается за 30 секунд бега.</p>
+    <form method="dialog"><button type="submit" class="primary" id="help-close">Понятно</button></form>
+  </dialog>
+  <dialog id="run-dialog" aria-labelledby="run-title">
+    <div class="dialog-route" id="dialog-route"></div>
+    <h2 id="run-title"></h2>
+    <div class="summary"><div><span>Дистанция</span><b id="result-distance"></b></div><div><span>Изумруды</span><b id="result-gems"></b></div><div><span>Мой рекорд</span><b id="result-best"></b></div></div>
+    <button type="button" class="primary" id="resume"></button>
+    <div class="dialog-links"><button type="button" id="restart">Заново</button><button type="button" id="menu">Выбор маршрута</button></div>
+  </dialog>
+  <script type="module" src="./game.js?v=jump-1"></script>
+</body>
+</html>

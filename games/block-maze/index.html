@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#101719" />
+    <meta
+      name="description"
+      content="Выбери героя и собери изумруды в семи лабиринтах — от Храма изумруда до Края. Семейная пиксельная аркада для компьютера и телефона."
+    />
+    <link rel="canonical" href="https://games.polomodov.tech/block-maze/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:url" content="https://games.polomodov.tech/block-maze/" />
+    <meta property="og:title" content="Блок Аркада" />
+    <meta property="og:description" content="Собери изумруды и ускользни от монстров в семи лабиринтах. Выбирай героя и играй на компьютере или телефоне." />
+    <meta property="og:image" content="https://games.polomodov.tech/block-maze/assets/share/cover.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Кирилл, Максим, мама и папа у древнего храма в джунглях. На обложке название игры «Блок Аркада»." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Блок Аркада" />
+    <meta name="twitter:description" content="Собери изумруды и ускользни от монстров в семи лабиринтах. Выбирай героя и играй на компьютере или телефоне." />
+    <meta name="twitter:image" content="https://games.polomodov.tech/block-maze/assets/share/cover.png" />
+    <meta name="twitter:image:alt" content="Кирилл, Максим, мама и папа у древнего храма в джунглях. На обложке название игры «Блок Аркада»." />
+    <title>Храм изумруда · Блок Аркада</title>
+    <link rel="icon" href="./assets/mark.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="./assets/press-start-2p.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="preload" as="image" href="./assets/hero-portraits.webp" />
+    <link rel="stylesheet" href="./styles.css?v=studio-1" />
+    <script type="module" src="./game.js?v=offline-1"></script>
+    <link rel="manifest" href="../../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../../assets/app-192.png">
+    <meta name="apple-mobile-web-app-title" content="Игротека">
+    <link rel="stylesheet" href="../../offline.css">
+    <link rel="stylesheet" href="../collection.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="bar-inner">
+        <div class="wordmark" aria-label="Блок Аркада">
+          <img src="./assets/mark.svg" width="32" height="32" alt="" />БЛОК<span
+            >АРКАДА</span
+          >
+        </div>
+        <nav aria-label="Настройки игры">
+          <button
+            id="sound"
+            class="tool sound"
+            type="button"
+            aria-label="Включить звук"
+            aria-pressed="false"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" />
+              <path class="silent" d="m16 9 6 6m0-6-6 6" />
+              <path class="audible" d="M15 8q5 4 0 8m3-11q8 7 0 14" />
+            </svg>
+            <span data-label class="sr-only">Звук выкл.</span>
+          </button>
+          <button id="help" class="tool">
+            <span class="help-icon" aria-hidden="true">?</span>Как играть
+          </button>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <section id="lobby" aria-label="Выбор уровня и героя">
+      <a class="collection-home" data-collection-home href="../../">‹ В игротеку</a>
+        <div class="banner">
+          <canvas id="landscape" aria-hidden="true"></canvas>
+          <div class="banner-copy">
+            <h1><span id="title-first">ХРАМ</span> <span id="title-second">ИЗУМРУДА</span></h1>
+            <p id="level-description">Собери изумруды и ускользни от монстров.</p>
+          </div>
+        </div>
+        <div class="levels" role="radiogroup" aria-labelledby="level-heading">
+          <strong id="level-heading">Уровень</strong>
+          <div class="level-options">
+            <label class="level-option">
+              <input class="sr-only" type="radio" name="level" value="temple" checked />
+              <span class="level-number" aria-hidden="true">01</span>Храм изумруда
+            </label>
+            <label class="level-option">
+              <input class="sr-only" type="radio" name="level" value="arcade" />
+              <span class="level-number" aria-hidden="true">02</span>Игровой центр
+            </label>
+            <label class="level-option">
+              <input class="sr-only" type="radio" name="level" value="waterpark" />
+              <span class="level-number" aria-hidden="true">03</span>Аквапарк
+            </label>
+            <label class="level-option">
+              <input class="sr-only" type="radio" name="level" value="store" />
+              <span class="level-number" aria-hidden="true">04</span>Мебельный магазин
+            </label>
+            <label class="level-option">
+              <input class="sr-only" type="radio" name="level" value="nether" />
+              <span class="level-number" aria-hidden="true">05</span>Нижний мир
+            </label>
+            <label class="level-option">
+              <input class="sr-only" type="radio" name="level" value="castle" />
+              <span class="level-number" aria-hidden="true">06</span>Замок на Хеллоуин
+            </label>
+            <label class="level-option">
+              <input class="sr-only" type="radio" name="level" value="end" />
+              <span class="level-number" aria-hidden="true">07</span>Край
+            </label>
+          </div>
+        </div>
+        <div class="setup">
+          <section class="selection" aria-labelledby="choose-heading">
+            <h2 id="choose-heading">Выбери героя</h2>
+            <div
+              class="heroes"
+              role="radiogroup"
+              aria-labelledby="choose-heading"
+            >
+              <label class="hero kirill">
+                <input type="radio" name="hero" value="kirill" checked />
+                <span class="portrait-frame"
+                  ><canvas data-hero="kirill" aria-hidden="true"></canvas
+                  ><span class="selector" aria-hidden="true"></span
+                ></span>
+                <span class="hero-copy"
+                  ><strong>Кирилл</strong
+                  ><span
+                    ><i class="bolt" aria-hidden="true"></i>Ускорение</span
+                  ></span
+                >
+              </label>
+              <label class="hero maxim">
+                <input type="radio" name="hero" value="maxim" />
+                <span class="portrait-frame"
+                  ><canvas data-hero="maxim" aria-hidden="true"></canvas
+                  ><span class="selector" aria-hidden="true"></span
+                ></span>
+                <span class="hero-copy"
+                  ><strong>Максим</strong
+                  ><span
+                    ><i class="sword" aria-hidden="true"></i>Удар по
+                    монстру</span
+                  ></span
+                >
+              </label>
+              <label class="hero mom">
+                <input type="radio" name="hero" value="mom" />
+                <span class="portrait-frame">
+                  <canvas data-hero="mom" aria-hidden="true"></canvas>
+                  <span class="selector" aria-hidden="true"></span>
+                </span>
+                <span class="hero-copy">
+                  <strong>Мама</strong>
+                  <span><i class="ghost" aria-hidden="true"></i>Невидимость</span>
+                </span>
+              </label>
+              <label class="hero dad">
+                <input type="radio" name="hero" value="dad" />
+                <span class="portrait-frame">
+                  <canvas data-hero="dad" aria-hidden="true"></canvas>
+                  <span class="selector" aria-hidden="true"></span>
+                </span>
+                <span class="hero-copy">
+                  <strong>Папа</strong>
+                  <span><i class="shout" aria-hidden="true"></i>Крик «Бу!»</span>
+                </span>
+              </label>
+              <label class="hero pasha">
+                <input type="radio" name="hero" value="pasha" />
+                <span class="portrait-frame">
+                  <canvas data-hero="pasha" aria-hidden="true"></canvas>
+                  <span class="selector" aria-hidden="true"></span>
+                </span>
+                <span class="hero-copy">
+                  <strong>Паша</strong>
+                  <span><i class="music-note" aria-hidden="true"></i>Гитарное соло</span>
+                </span>
+              </label>
+            </div>
+            <button id="play" class="primary">
+              <span class="play-icon" aria-hidden="true"></span>Начать игру
+            </button>
+          </section>
+          <aside class="guide" aria-labelledby="guide-heading">
+            <h2 id="guide-heading">В лабиринте</h2>
+            <div class="guide-body">
+              <div class="mission">
+                <div class="gem-box">
+                  <img src="./assets/mark.svg" width="34" height="34" alt="" />
+                </div>
+                <div>
+                  <h3>Изумруды</h3>
+                  <p>Собери все, чтобы пройти уровень.</p>
+                </div>
+              </div>
+              <div class="monsters">
+                <h3>За тобой охотятся</h3>
+                <ul id="monster-list"></ul>
+              </div>
+              <div class="life-note">
+                <i class="heart" aria-hidden="true"></i>У героя три жизни
+              </div>
+            </div>
+          </aside>
+        </div>
+        <a class="sibling-game" href="../block-jump/">Играть в платформер «Блок Прыжок» →</a>
+        <a class="sibling-game" href="../../">Открыть семейную игротеку →</a>
+        <section id="offline-tools" aria-label="Сохранения">
+          <button type="button" id="continue-saved" hidden>Продолжить партию</button>
+          <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
+          <details><summary>История игр на этом устройстве</summary><ol id="game-history"></ol></details>
+        </section>
+      </section>
+      <section id="arena" hidden aria-label="Игра в лабиринте">
+        <div class="arena-header">
+          <button id="menu" class="minor">Выбор героя</button>
+          <h2 id="arena-title">Храм изумруда</h2>
+          <button id="pause" class="minor">Пауза</button>
+        </div>
+        <div class="hud" aria-live="off">
+          <span>
+            <canvas id="hud-portrait" aria-hidden="true"></canvas>
+            <strong id="hero-name"></strong>
+          </span>
+          <span><i class="heart" aria-hidden="true"></i> Жизни <b id="lives"></b></span>
+          <span><img src="./assets/mark.svg" width="21" height="21" alt="" /> Изумруды <b id="gems"></b></span>
+          <progress id="gem-progress" max="1" value="0" aria-hidden="true"></progress>
+        </div>
+        <div class="board-wrap">
+          <canvas
+            id="board"
+            tabindex="0"
+            aria-label="Лабиринт. Движение стрелками или WASD, способность пробелом."
+          ></canvas>
+          <div id="message" hidden>
+            <div class="message-card">
+              <h2 id="message-title"></h2>
+              <p id="message-copy"></p>
+              <button id="resume" class="primary">Продолжить</button>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <div id="dpad" aria-label="Направление движения">
+            <button data-dir="up" aria-label="Вверх">▲</button
+            ><button data-dir="left" aria-label="Влево">◀</button
+            ><button data-dir="down" aria-label="Вниз">▼</button
+            ><button data-dir="right" aria-label="Вправо">▶</button>
+          </div>
+          <button id="ability" class="primary"><i class="music-note" id="solo-icon" aria-hidden="true" hidden></i><span data-label>Способность</span></button
+          ><span class="key-hints"
+            ><kbd>WASD</kbd> ходить <kbd>Пробел</kbd> способность</span
+          >
+        </div>
+        <p id="ability-hint" role="status"></p>
+      </section>
+    </main>
+    <dialog id="help-dialog" aria-labelledby="help-heading">
+      <form method="dialog">
+        <h2 id="help-heading">Как играть</h2>
+        <p>
+          Собери все изумруды на уровне. У тебя три жизни. Берегись монстров, стрел скелета и взрыва крипера.
+          Проходи лабиринты по порядку или выбери любой из семи уровней в меню.
+        </p>
+        <h3>Движение</h3>
+        <p>
+          На компьютере нажимай стрелки или WASD. На телефоне проведи пальцем по
+          полю или нажми кнопку направления. Герой сам идёт до стены. Поворот
+          можно задать заранее.
+        </p>
+        <section id="waterpark-help" hidden>
+          <h3>Горка «Тайфун»</h3>
+          <p>Ищи изумруды вокруг водных горок и волнового бассейна. У стрелки под воронкой поверни вверх. Через секунду герой вынырнет на дорожке с другой стороны.</p>
+        </section>
+        <section id="nether-help" hidden>
+          <h3>Лава и мосты</h3>
+          <p>Переходи лаву по мостам. Когда магмовый куб сжимается, освободи отмеченную клетку на другом берегу. Если у рта гаста разгорается огненный шар, успей свернуть за угол.</p>
+        </section>
+        <section id="end-help" hidden>
+          <h3>Дыхание дракона</h3>
+          <p>Когда увидишь на дорожке розовые метки, сверни в сторону. Дракон сложит крылья, спикирует и выдохнет фиолетовые облака. Каждое облако рассеется через три секунды.</p>
+        </section>
+        <details class="help-monsters">
+          <summary>Монстры этого уровня</summary>
+          <ul class="help-abilities" id="monster-hints"></ul>
+        </details>
+        <h3>Способности</h3>
+        <p>
+          Нажми пробел или кнопку способности под полем. Через 30 секунд игры
+          способность снова готова.
+        </p>
+        <ul class="help-abilities">
+          <li><b>Кирилл</b> ускоряется на 4 секунды.</li>
+          <li><b>Максим</b> ударом оглушает монстров рядом на 4 секунды.</li>
+          <li><b>Мама</b> на 4 секунды становится невидимой. Монстры теряют её из виду, и она может пройти сквозь них.</li>
+          <li><b>Папа</b> кричит «Бу!». На 3 секунды монстры разбегаются и дают ему пройти.</li>
+          <li><b>Паша</b> играет гитарное соло. Ноты летят по коридорам на шесть клеток и огибают углы. Монстр, до которого долетела нота, пять секунд танцует. Видишь ноты над его головой? Беги мимо!</li>
+        </ul>
+        <button class="primary" autofocus>Понятно</button>
+      </form>
+    </dialog>
+  </body>
+</html>

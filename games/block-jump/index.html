@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#141c20">
+  <meta name="description" content="Семь миров, пять героев и флаг в конце каждой трассы. Семейный платформер для компьютера и телефона.">
+  <link rel="canonical" href="https://games.polomodov.tech/block-jump/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="Блок Прыжок">
+  <meta property="og:description" content="Выбери героя, перепрыгни пропасти и доберись до флага в семи пиксельных мирах.">
+  <meta property="og:url" content="https://games.polomodov.tech/block-jump/">
+  <meta property="og:image" content="https://games.polomodov.tech/block-jump/assets/jump-share.png?v=family-five-1">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Обложка семейного платформера «Блок Прыжок».">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Блок Прыжок">
+  <meta name="twitter:description" content="Семейный платформер. Доберись до флага!">
+  <meta name="twitter:image" content="https://games.polomodov.tech/block-jump/assets/jump-share.png?v=family-five-1">
+  <meta name="twitter:image:alt" content="Обложка семейного платформера «Блок Прыжок».">
+  <title>Блок Прыжок</title>
+  <link rel="icon" href="./assets/mark.svg">
+  <link rel="preload" as="font" type="font/ttf" href="./assets/press-start-2p.ttf" crossorigin>
+  <link rel="preload" as="image" href="./assets/jump-cover.webp">
+  <link rel="stylesheet" href="./styles.css?v=studio-1">
+  <script type="module" src="./game.js?v=offline-1"></script>
+  <link rel="manifest" href="../../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../../assets/app-192.png">
+  <meta name="apple-mobile-web-app-title" content="Игротека">
+  <link rel="stylesheet" href="../../offline.css">
+    <link rel="stylesheet" href="../collection.css">
+</head>
+<body data-screen="lobby">
+  <header class="site-header">
+    <div class="nav-wrap wrap">
+      <div class="brand" aria-label="Блок Прыжок"><i class="brand-mark" aria-hidden="true"></i><span>Блок <em>Прыжок</em></span></div>
+      <nav aria-label="Меню">
+        <a class="sibling" href="../block-maze/">Лабиринт</a>
+        <button type="button" class="tool sound" id="sound" aria-label="Звук" aria-pressed="false" title="Включить звук">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"></path>
+            <path class="off" d="m16 9 6 6m0-6-6 6"></path><path class="on" d="M15 8q4 4 0 8m3-11q7 7 0 14"></path>
+          </svg>
+        </button>
+        <button type="button" id="help" class="tool"><b aria-hidden="true">?</b>Как играть</button>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <section id="lobby" aria-labelledby="cover-title">
+      <a class="collection-home" data-collection-home href="../../">‹ В игротеку</a>
+      <div class="cover">
+        <div class="cover-copy">
+          <h1 id="cover-title"><span>Блок</span> <em>Прыжок</em></h1>
+          <p><i class="flag" aria-hidden="true"></i>Доберись до флага</p>
+          <button class="launch" id="play" type="button"><i class="play-icon" aria-hidden="true"></i>Начать игру</button>
+        </div>
+      </div>
+      <fieldset class="choices">
+        <legend>Выбери героя</legend>
+        <div class="heroes" id="heroes"></div>
+      </fieldset>
+      <fieldset class="choices level-picker">
+        <legend>Уровень</legend>
+        <div id="levels" class="levels"></div>
+      </fieldset>
+      <section id="offline-tools" aria-label="Сохранения">
+        <button type="button" id="continue-saved" hidden>Продолжить партию</button>
+        <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
+        <details><summary>История игр на этом устройстве</summary><ol id="game-history"></ol></details>
+      </section>
+    </section>
+    <section id="arena" aria-labelledby="arena-title" hidden>
+      <div class="arena-nav">
+        <button type="button" class="tool" id="menu">Меню</button>
+        <h2 id="arena-title"></h2>
+        <button type="button" class="tool" id="pause"><i class="pause-icon" aria-hidden="true"></i>Пауза</button>
+      </div>
+      <div class="game-frame">
+        <div class="hud">
+          <span class="hud-hero"><span class="portrait hud-portrait" id="hud-portrait" aria-hidden="true"></span><b id="hero-name"></b></span>
+          <span id="life-count" aria-label="Жизни"><i class="heart" aria-hidden="true"></i><b id="lives"></b></span>
+          <span aria-label="Изумруды"><img src="./assets/mark.svg" width="20" height="20" alt=""><b id="gems"></b></span>
+          <span class="checkpoint" id="checkpoint" aria-live="polite"><i class="flag" aria-hidden="true"></i><span>Старт</span></span>
+        </div>
+        <div class="route" aria-hidden="true"><div id="route-fill"></div></div>
+        <canvas id="board" width="480" height="216" tabindex="0" aria-label="Платформер. Стрелки в стороны для движения, пробел для прыжка, E для способности."></canvas>
+      </div>
+      <div class="controls">
+        <div class="moves touch-pad" aria-label="Движение">
+          <button type="button" class="touch-key" data-control="left" aria-label="Влево"><span aria-hidden="true">◀</span></button>
+          <button type="button" class="touch-key" data-control="right" aria-label="Вправо"><span aria-hidden="true">▶</span></button>
+        </div>
+        <div class="keyboard-hints"><span><kbd>←</kbd> <kbd>→</kbd> бег</span><span><kbd>Пробел</kbd> прыжок</span></div>
+        <div class="actions">
+          <button type="button" id="ability" class="action-key ability-key" data-control="ability"><kbd>E</kbd><span id="ability-name" aria-live="polite"></span><span id="cooldown"></span></button>
+          <button type="button" class="action-key jump-key touch-pad" data-control="jump">Прыжок</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <form method="dialog">
+      <h2 id="help-title">Как играть</h2>
+      <p>Доберись до флага в конце уровня. По пути можно собирать изумруды и прыгать на монстров сверху.</p>
+      <p id="help-monsters" hidden></p>
+      <h3>Бег и прыжок</h3>
+      <p>Беги стрелками или клавишами A и D. Прыгай пробелом, W или стрелкой вверх. Чем дольше держишь кнопку, тем выше прыжок.</p>
+      <p>На телефоне одной рукой зажми направление, а другой нажми «Прыжок» или кнопку способности.</p>
+      <h3>Способность</h3>
+      <p id="help-power"></p>
+      <p>Нажми E, X или кнопку под полем. Способность восстанавливается за 30 секунд игры.</p>
+      <h3>Контрольная точка</h3>
+      <p>У тебя три жизни. После контрольной точки ты вернёшься к ней, если упадёшь или столкнёшься с монстром.</p>
+      <button class="launch dialog-main" autofocus>Понятно</button>
+    </form>
+  </dialog>
+  <dialog id="run-dialog" aria-labelledby="result-title">
+    <h2 id="result-title"></h2>
+    <p id="result-copy"></p>
+    <button type="button" class="launch dialog-main" id="resume"></button>
+    <div class="dialog-links"><button type="button" class="text-btn" id="restart">Заново</button><button type="button" class="text-btn" id="back">Выбрать уровень</button></div>
+  </dialog>
+</body>
+</html>

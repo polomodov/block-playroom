@@ -7,12 +7,12 @@
     <title>Семейная игротека</title>
     <meta
       name="description"
-      content="Четыре приключения для всей семьи. Играйте на одном устройстве и берите игры в дорогу."
+      content="Семь семейных игр на телефоне и компьютере. Установите игротеку один раз и играйте без интернета."
     />
     <meta property="og:title" content="Семейная игротека" />
     <meta
       property="og:description"
-      content="Кооперативные головоломки, мини-гольф, детектив и гитара Паши."
+      content="Лабиринт, платформер, раннер, кооператив, мини-гольф, детектив и гитара Паши в одном приложении."
     />
     <meta
       property="og:image"
@@ -40,7 +40,52 @@
           <h1>Семейная игротека</h1>
         </div>
       </header>
+      <section id="offline-tools" aria-label="Офлайн и сохранения">
+        <div class="offline-line">
+          <span id="offline-status" role="status">Готовим семь игр к игре без интернета…</span>
+          <button type="button" id="offline-retry" hidden>Продолжить загрузку</button>
+          <button type="button" id="install-game" hidden>Установить игротеку</button>
+        </div>
+        <progress id="offline-progress" hidden aria-label="Загрузка игр"></progress>
+        <div class="offline-extra">
+          <details>
+            <summary>Как взять игры в дорогу</summary>
+            <p>
+              Добавь игротеку на домашний экран через меню браузера. На iPhone нажми «Поделиться» → «На экран
+              Домой». Открой её с этой иконки, пока есть интернет, и дождись надписи «Готово к игре офлайн · 7
+              из 7 игр».
+            </p>
+          </details>
+          <details>
+            <summary>История всех игр</summary>
+            <ol id="game-history"></ol>
+          </details>
+        </div>
+        <button type="button" id="continue-saved" hidden>Продолжить последнюю игру</button>
+        <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
+      </section>
       <div class="catalog" aria-label="Выберите игру">
+        <a class="cover-card" data-game-link="block-maze" href="./games/block-maze/">
+          <span class="art art-maze"></span>
+          <span class="card-copy"
+            ><small>Лабиринт</small><strong>Блок Аркада</strong
+            ><span>Соберите изумруды и обхитрите монстров в семи мирах.</span></span
+          >
+        </a>
+        <a class="cover-card" data-game-link="block-jump" href="./games/block-jump/">
+          <span class="art art-jump"></span>
+          <span class="card-copy"
+            ><small>Платформер</small><strong>Блок Прыжок</strong
+            ><span>Перепрыгивайте пропасти и доберитесь до флага.</span></span
+          >
+        </a>
+        <a class="cover-card" data-game-link="block-dash" href="./games/block-dash/">
+          <span class="art art-dash"></span>
+          <span class="card-copy"
+            ><small>Раннер</small><strong>Блок Экспресс</strong
+            ><span>Меняйте дорожки, перепрыгивайте барьеры и проскальзывайте под арками.</span></span
+          >
+        </a>
         <button type="button" class="cover-card" data-mode="coop" aria-pressed="true">
           <span class="art art-coop"></span
           ><span class="card-copy"
@@ -79,31 +124,6 @@
           ><button id="resume-mode" type="button" hidden>Продолжить эту игру</button>
         </div>
       </section>
-      <section id="offline-tools" aria-label="Офлайн и сохранения">
-        <div class="offline-line">
-          <span id="offline-status" role="status">Подготовка к игре офлайн…</span>
-          <button type="button" id="offline-retry" hidden>Повторить загрузку</button>
-          <button type="button" id="install-game" hidden>Установить игру</button>
-        </div>
-        <button type="button" id="continue-saved" hidden>Продолжить партию</button>
-        <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
-        <details>
-          <summary>История игр на этом устройстве</summary>
-          <ol id="game-history"></ol>
-        </details>
-        <details>
-          <summary>Как взять игру в дорогу</summary>
-          <p>
-            Добавь игру на экран «Домой» через меню браузера. На iPhone открой «Поделиться» → «На экран
-            Домой». Пока есть интернет, запусти игру с новой иконки и дождись надписи «Готово к игре офлайн».
-          </p>
-        </details>
-      </section>
-
-      <nav class="siblings" aria-label="Другие семейные игры">
-        <a href="../block-maze/">Лабиринт</a><a href="../block-jump/">Платформер</a
-        ><a href="../block-dash/">Блок Экспресс</a>
-      </nav>
     </main>
     <main id="arena" hidden>
       <header class="playbar">

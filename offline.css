@@ -77,3 +77,13 @@
   font-size: 13px;
   color: #bbd1c7;
 }
+#offline-progress {
+  display: block;
+  width: 100%;
+  max-width: 24rem;
+  height: 0.5rem;
+  accent-color: #a3f4b6;
+}
+#offline-progress[hidden] {
+  display: none;
+}
