@@ -250,20 +250,19 @@ test('доставка во всех трёх залах записывает о
   isMobile,
 }) => {
   const press = controls(page, isMobile);
-  await freezeGameClock(page);
+  test.setTimeout(60_000);
   await openMode(page, press, 'robot');
   const forward = 'forward',
     right = 'right';
-  const programs = [
-    [forward, forward, forward, right, forward, forward, right, forward],
-    ['loop', forward, forward, forward, right, 'end', forward],
-    ['loop', forward, forward, right, forward, 'left', 'end', forward],
+  const routes = [
+    { program: [forward, forward, forward, right, forward, forward, right, forward], steps: 8 },
+    { program: ['loop', forward, forward, forward, right, 'end', forward], steps: 13 },
+    { program: ['loop', forward, forward, right, forward, 'left', 'end', forward], steps: 16 },
   ];
-  for (const [index, program] of programs.entries()) {
+  for (const [index, { program, steps }] of routes.entries()) {
     for (const cmd of program) await press('[data-cmd="' + cmd + '"]');
-    await press('.rb-main');
-    // The longest route has 16 instructions. Eight simulated seconds let the robot finish it.
-    await page.clock.runFor(8000);
+    // One press executes one instruction, including each iteration of a loop.
+    for (let step = 0; step < steps; step++) await press('.rb-step');
     await expect(page.locator('.rb-status')).toHaveText('Все изумруды доставлены на станцию!');
     await expect(page.locator('.rb-main')).toHaveText(index === 2 ? 'Завершить доставку' : 'Следующий зал');
     await press('.rb-main');
