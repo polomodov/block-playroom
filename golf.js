@@ -195,7 +195,7 @@ export function restoreGolf(saved, players) {
   )
     return createGolf(players);
   const game = structuredClone(saved);
-  game.event = '';
+  game.event = game.balls[game.turn].ride?.type || (['penalty', 'sunk'].includes(saved.event) ? saved.event : '');
   return game;
 }
 
@@ -292,6 +292,7 @@ export function stepGolf(state, dt = STEP) {
     b = state.balls[state.turn];
   if (b.ride) {
     specialRide(b, course, dt);
+    if (!b.ride) state.event = '';
     return;
   }
   const oldSpeed = Math.hypot(b.vx, b.vy),

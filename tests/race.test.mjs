@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newRace, drive, restoreRace, raceRecord, ghostAt, validRecord, courseLength } from '../race.js';
+import {
+  newRace,
+  drive,
+  restoreRace,
+  raceRecord,
+  ghostAt,
+  validRecord,
+  courses,
+  courseLength,
+} from '../race.js';
 
 function race(steer, brake = false) {
   const s = newRace('maxim');
@@ -60,4 +69,34 @@ test('invalid and truncated records cannot become a rival', () => {
     }),
     false,
   );
+});
+
+test('seven courses have distinct routes, save their own lap and reject ghosts from other tracks', () => {
+  const lengths = new Set();
+  for (const course of Object.values(courses)) {
+    const s = newRace('maxim', course.id);
+    s.phase = 'run';
+    for (let i = 0; i < 243; i++) drive(s, i % 4 === 0 ? -1 : 1);
+    const copy = restoreRace(JSON.parse(JSON.stringify(s)), s.hero);
+    assert.deepEqual(s, copy);
+    for (let i = 0; i < 10000 && s.phase === 'run'; i++) {
+      drive(s);
+      drive(copy);
+    }
+    assert.equal(s.phase, 'finish');
+    assert.deepEqual(s, copy);
+    lengths.add(s.s);
+    assert.equal(s.s, course.length);
+    const ghost = raceRecord(s);
+    assert.ok(validRecord(ghost, course.id));
+    assert.equal(validRecord(ghost, course.id === 'temple' ? 'end' : 'temple'), false);
+    if (course.id === 'waterpark') {
+      delete ghost.course;
+      assert.ok(validRecord(ghost, 'waterpark'));
+      const legacy = newRace(s.hero);
+      delete legacy.course;
+      assert.deepEqual(restoreRace(legacy, s.hero), newRace(s.hero));
+    }
+  }
+  assert.equal(lengths.size, 7);
 });

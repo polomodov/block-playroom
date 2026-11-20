@@ -1,25 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newPinball, launchPinball, tickPinball, restorePinball, flipper } from '../pinball.js';
+import { newPinball, launchPinball, tickPinball, restorePinball, flipper, tables } from '../pinball.js';
 
-test('plunger releases the ball into the field at every strength and three drains finish a game', () => {
-  for (const power of [55, 70, 100]) {
-    const state = newPinball('kirill');
-    state.power = power;
-    let reached = false,
-      served = 0;
-    for (let i = 0; i < 120 * 150 && state.phase !== 'done'; i++) {
-      if (state.phase === 'serve') {
-        assert.ok(launchPinball(state));
-        served++;
+test('the one-way gate admits every serve and keeps scored balls out of the launch lane on all seven tables', () => {
+  assert.equal(Object.keys(tables).length, 7);
+  for (const table of Object.keys(tables)) {
+    for (let power = 55; power <= 100; power++) {
+      const state = newPinball('kirill', table);
+      state.power = power;
+      let reached = false,
+        served = 0;
+      for (let i = 0; i < 120 * 150 && state.phase !== 'done'; i++) {
+        if (state.phase === 'serve') {
+          assert.ok(launchPinball(state));
+          served++;
+        }
+        tickPinball(state);
+        reached ||= state.ball.x < 300;
       }
-      tickPinball(state);
-      reached ||= state.ball.x < 300;
+      assert.ok(reached);
+      assert.equal(served, 3, table + ' at ' + power + '%');
+      assert.equal(state.balls, 0);
+      assert.equal(state.phase, 'done');
     }
-    assert.ok(reached);
-    assert.equal(served, 3);
-    assert.equal(state.balls, 0);
-    assert.equal(state.phase, 'done');
   }
 });
 test('moving flippers impart upward velocity on both sides', () => {
@@ -68,4 +71,25 @@ test('corrupt physics and saves for another player return to the plunger', () =>
   launchPinball(s);
   assert.equal(restorePinball({ ...s, ball: { ...s.ball, x: Infinity } }, 'mom').phase, 'serve');
   assert.equal(restorePinball(s, 'dad').hero, 'dad');
+});
+
+test('each table awards a bonus from an ordinary launch and flipper strikes', () => {
+  for (const table of Object.keys(tables)) {
+    let won = false;
+    for (let power = 55; power <= 100 && !won; power++) {
+      const s = newPinball('maxim', table);
+      s.power = power;
+      for (let i = 0; i < 120 * 60 && s.phase !== 'done' && !s.bonus; i++) {
+        if (s.phase === 'serve') launchPinball(s);
+        const { x, y, vy } = s.ball;
+        tickPinball(s, y > 375 && vy > 0 && x < 160, y > 375 && vy > 0 && x >= 160);
+      }
+      if (s.bonus) {
+        won = true;
+        assert.equal(s.phase, 'ride');
+        assert.deepEqual(restorePinball(s, 'maxim'), s);
+      }
+    }
+    assert.ok(won, table);
+  }
 });

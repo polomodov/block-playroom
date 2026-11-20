@@ -101,3 +101,22 @@
   width: 34px;
   height: 26px;
 }
+
+.race-course {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.race-course select {
+  max-width: 100%;
+  color: inherit;
+  background: #25464e;
+  border: 1px solid #6a9490;
+  border-radius: 4px;
+  padding: 6px;
+  font: inherit;
+}
+.race-course:has(select:disabled) {
+  display: none;
+}

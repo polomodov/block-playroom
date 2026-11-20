@@ -21,6 +21,30 @@ export const warehouses = [
     hint: 'Найди повторяющуюся ступень маршрута. После третьей ступени робот окажется рядом со станцией.',
     rows: ['##########', '#S.g######', '###..g####', '#####..g##', '#######.E#', '##########'],
   },
+  {
+    name: 'Погрузочные доки',
+    limit: 11,
+    hint: 'Из главного прохода ведут три коротких дока. Чтобы выехать из дока обратно, дважды поверни в одну сторону.',
+    rows: ['#########', '#g#g#g###', '#S.....E#', '#########'],
+  },
+  {
+    name: 'Зеркальные секции',
+    limit: 15,
+    hint: 'В правой секции повторяй повороты направо, в левой — налево. За изумрудом в среднем проходе заезжай с юга.',
+    rows: ['#########', '#g..S..g#', '#.##g##.#', '#.##.##.#', '#g.Eg..g#', '#########'],
+  },
+  {
+    name: 'Транзитный терминал',
+    limit: 16,
+    hint: 'Лесенка ведёт мимо станции к дальнему кольцу. Обойди кольцо и вернись на станцию с последними изумрудами.',
+    rows: ['############', '#S.g###g..g#', '###..g#.##.#', '#####.gE##.#', '#######g..g#', '############'],
+  },
+  {
+    name: 'Ночная отгрузка',
+    limit: 20,
+    hint: 'Начни с поворота вниз. Собери три участка программы отдельно: спуск по ступеням, обход нижнего зала и подъём к станции.',
+    rows: ['#########', '#S#Eg####', '#g.#.g###', '##.g#.g##', '###..#..#', '####g##g#', '####.##.#', '####g..g#', '#########'],
+  },
 ];
 const commands = {
   forward: { mark: '↑', name: 'Шаг' },
@@ -364,7 +388,7 @@ export function mount(host, { saved, players = [], save, finish }) {
       rows = c.rows,
       editing = s.phase === 'edit',
       run = s.phase === 'run';
-    q('h2').textContent = s.level + 1 + '/3 · ' + c.name;
+    q('h2').textContent = (s.level + 1) + '/' + warehouses.length + ' · ' + c.name;
     q('.rb-hint').textContent = c.hint;
     q('.rb-length').textContent = s.program.length + ' / ' + c.limit;
     q('.rb-count').textContent =
@@ -417,7 +441,7 @@ export function mount(host, { saved, players = [], save, finish }) {
       edit: 'Запуск',
       run: 'К чертежу',
       failed: 'Исправить программу',
-      passed: s.level === 2 ? 'Завершить доставку' : 'Следующий зал',
+      passed: s.level === warehouses.length - 1 ? 'Завершить доставку' : 'Следующий зал',
     }[s.phase];
     q('.rb-step').hidden = ['failed', 'passed'].includes(s.phase);
     drawRobot(ctx, s, time, anim, bg);
@@ -488,9 +512,9 @@ export function mount(host, { saved, players = [], save, finish }) {
       }
       if (s.phase === 'passed') {
         const score = s.score + 100 + Math.max(0, warehouses[s.level].limit - s.program.length) * 5;
-        if (s.level === 2) {
+        if (s.level === warehouses.length - 1) {
           paused = true;
-          finish({ score, summary: 'Робот доставил изумруды из трёх залов · ' + score + ' очков' });
+          finish({ score, summary: `Робот доставил все изумруды. Залы — ${warehouses.length} из ${warehouses.length}. Счёт — ${score}.` });
           return;
         }
         s = createRobot(s.level + 1, score);

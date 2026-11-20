@@ -47,7 +47,7 @@ test('patrol costs hearts and returns the caught player, retry preserves the cam
   assert.equal(s.totalTurns, 1);
   assert.equal(s.health, 4);
 });
-// A player can solve the three missions using the signposted patrol alone.
+// A player can solve all seven missions using the signposted patrol alone.
 function pathToGoal(s) {
   const board = missions[s.level].map.join('');
   const targets = s.gems.length ? s.gems : [board.indexOf('G')];
@@ -74,9 +74,9 @@ function pathToGoal(s) {
   }
   throw Error('no route');
 }
-test('all three missions can be played to completion through normal moves', () => {
+test('all seven missions can be played to completion through normal moves', () => {
   let s = createTactics(['mom', 'maxim']);
-  for (let i = 0; i < 140 && s.phase !== 'won'; i++) {
+  for (let i = 0; i < 340 && s.phase !== 'won'; i++) {
     if (s.phase === 'clear') {
       s = act(s, { type: 'next' });
       continue;
@@ -86,7 +86,31 @@ test('all three missions can be played to completion through normal moves', () =
     if (dest !== s.positions[s.active]) s = act(s, { type: 'move', cell: dest });
     if (s.phase === 'play') s = act(s, { type: 'end' });
   }
+  assert.equal(missions.length, 7);
+  assert.equal(s.level, 6);
   assert.equal(s.phase, 'won');
   assert.equal(s.gems.length, 0);
   assert.deepEqual(createTactics(['kirill', 'dad'], { version: 1 }), createTactics(['kirill', 'dad']));
+});
+
+test('patrol forecasts follow walkable adjacent cells in every world and direct starts survive a reload', () => {
+  for (const [level, mission] of missions.entries()) {
+    const map = mission.map.join('');
+    for (const patrol of mission.patrols) {
+      for (const [i, from] of patrol.path.entries()) {
+        const to = patrol.path[(i + 1) % patrol.path.length];
+        assert.notEqual(map[from], '#', mission.name);
+        assert.equal(
+          Math.abs((from % 6) - (to % 6)) + Math.abs(Math.floor(from / 6) - Math.floor(to / 6)),
+          1,
+          patrol.name,
+        );
+      }
+    }
+    const chosen = act(createTactics(['mom', 'dad']), { type: 'mission', level });
+    assert.equal(chosen.startLevel, level);
+    assert.deepEqual(createTactics(chosen.team, chosen), chosen);
+    const started = act(chosen, { type: 'end' });
+    assert.equal(act(started, { type: 'mission', level: 0 }), started);
+  }
 });

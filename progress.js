@@ -69,8 +69,10 @@ export function slot(mode, profile = read()) {
     return null;
   return s;
 }
-export function saveSlot(round, payload) {
+export function saveSlot(round, payload, { onlyIfCurrent = false } = {}) {
   const profile = read();
+  // A previous tab may autosave on pagehide after this slot was replaced or finished.
+  if (onlyIfCurrent && profile.slots[round.mode]?.id !== round.id) return;
   write({ ...profile, slots: { ...profile.slots, [round.mode]: { ...round, payload, at: Date.now() } } });
 }
 export function finishSlot(round, result) {

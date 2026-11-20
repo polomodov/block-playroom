@@ -1,4 +1,5 @@
 import { enterCollectionGame } from '../collection-navigation.js';
+import { beginArcadeRound } from './progress.js';
 import { playGuitar, stopGuitar, performanceAge } from './guitar.js?v=encore-1';
 import { createGame, restoreGame } from './engine.js?v=offline-1';
 import { bindProgress, saveGame, clearSavedGame, addResult } from './progress.js';
@@ -301,6 +302,7 @@ function showArena() {
 }
 
 function start(hero, levelId) {
+  beginArcadeRound();
   game = createGame(hero, levelId);
   game.start();
   showArena();

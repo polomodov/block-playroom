@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { menu, newCafe, restoreCafe, advanceCafe, stovePhase, useStation, ticket, serve } from '../cafe.js';
+import { shifts, menu, newCafe, restoreCafe, advanceCafe, stovePhase, useStation, ticket, serve } from '../cafe.js';
 
 function open(shift = 0, previous = 0) {
   const state = newCafe(shift, previous);
@@ -8,9 +8,10 @@ function open(shift = 0, previous = 0) {
   advanceCafe(state, 0);
   return state;
 }
-test('prepare exact orders through all three shifts and carry forward twelve guests', () => {
+test('prepare exact orders through each of the seven shifts and carry the guests into the next shift', () => {
   let total = 0;
-  for (let shift = 0; shift < 3; shift++) {
+  assert.ok(shifts.length >= 7);
+  for (let shift = 0; shift < shifts.length; shift++) {
     const s = open(shift, total);
     for (let i = 0; s.phase === 'open'; i++) {
       while (s.orders[i] === undefined) advanceCafe(s, 0.25);
@@ -26,7 +27,7 @@ test('prepare exact orders through all three shifts and carry forward twelve gue
     assert.equal(s.lost, 0);
     total = s.previous + s.sent;
   }
-  assert.equal(total, 12);
+  assert.equal(total, shifts.reduce((n, shift) => n + shift.needed, 0));
 });
 test('a half-cooked dish resumes at the same time, spoils and can be cooked again', () => {
   const s = open();

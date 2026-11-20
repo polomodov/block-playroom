@@ -1,36 +1,21 @@
 import { drawLandmark, landmarkAtlas } from './arcade-scenery.js';
 import { monsterPortrait } from './maze-portraits.js';
-// The furniture shop advances one turn per move, including the witch's patrol.
-export const rooms = [
-  { name: 'Касса', item: 'till', clue: 0 },
-  { name: 'Вход', item: 'sign' },
-  { name: 'Светильники', item: 'lamp' },
-  { name: 'Диваны', item: 'sofa', stash: true },
-  { name: 'Галерея', item: 'plant' },
-  { name: 'Мастерская', item: 'desk', clue: 1 },
-  { name: 'Стеллажи', item: 'shelf', stash: true },
-  { name: 'Архив', item: 'files', clue: 2 },
-  { name: 'Шкафы', item: 'wardrobe', stash: true },
-];
-export const suspects = [
-  { name: 'Паук', stamp: 'круг', ribbon: 'синяя', type: 'spider' },
-  { name: 'Скелет', stamp: 'звезда', ribbon: 'синяя', type: 'skeleton' },
-  { name: 'Зомби', stamp: 'круг', ribbon: 'медная', type: 'zombie' },
-  { name: 'Эндермен', stamp: 'звезда', ribbon: 'медная', type: 'enderman' },
-];
-const stashes = [3, 6, 8],
-  patrol = [4, 5, 8, 7, 6, 3],
-  start = 1;
+import { investigations } from './mystery-cases.js';
+export { investigations };
+export const { rooms, suspects } = investigations[0];
+
 const heroes = ['kirill', 'maxim', 'mom', 'dad', 'pasha'];
 const directions = { ArrowUp: [0, -1], ArrowRight: [1, 0], ArrowDown: [0, 1], ArrowLeft: [-1, 0] };
 const pick = (n, x) => Math.min(n - 1, Math.max(0, Math.floor(n * x())));
-export function newCase(hero = 'mom', random = Math.random) {
+export function newCase(hero = 'mom', random = Math.random, level = 0) {
+  const { stashes, entrance } = investigations[level];
   return {
+    level,
     version: 1,
     hero: heroes.includes(hero) ? hero : 'mom',
     culprit: pick(4, random),
     stash: stashes[pick(3, random)],
-    position: start,
+    position: entrance,
     turn: 0,
     clues: 0,
     identified: false,
@@ -41,15 +26,20 @@ export function newCase(hero = 'mom', random = Math.random) {
   };
 }
 export function readCase(saved, hero, random = Math.random) {
+  // Version 1 saves from the original furniture shop have no level field.
+  const level = saved?.level === undefined ? 0 : saved.level;
+  const file = Number.isInteger(level) && investigations[level];
   if (
     !saved ||
+    !file ||
     saved.version !== 1 ||
     saved.hero !== hero ||
     !Number.isInteger(saved.culprit) ||
-    !suspects[saved.culprit] ||
-    !stashes.includes(saved.stash) ||
+    !file.suspects[saved.culprit] ||
+    !file.stashes.includes(saved.stash) ||
     !Number.isInteger(saved.position) ||
-    !rooms[saved.position] ||
+    !file.rooms[saved.position] ||
+    file.closed.includes(saved.position) ||
     !Number.isInteger(saved.clues) ||
     saved.clues < 0 ||
     saved.clues > 7 ||
@@ -61,26 +51,29 @@ export function readCase(saved, hero, random = Math.random) {
     saved.recharge > 8
   )
     return newCase(hero, random);
-  const base = newCase(hero, () => 0);
-  return Object.fromEntries(Object.keys(base).map((k) => [k, saved[k]]));
+  const base = newCase(hero, () => 0, level);
+  return { ...Object.fromEntries(Object.keys(base).map((k) => [k, saved[k]])), level };
 }
 export function nextPatrol(s) {
+  const { patrol } = investigations[s.level ?? 0];
   return patrol[(s.turn + 1) % patrol.length];
 }
 export function walk(s, to) {
+  const { rooms, closed, entrance } = investigations[s.level];
   if (s.done || !Number.isInteger(to) || !rooms[to]) return '';
   const distance =
     Math.abs((s.position % 3) - (to % 3)) + Math.abs(Math.floor(s.position / 3) - Math.floor(to / 3));
   if (distance > 1) return 'Сначала перейди в соседний зал.';
+  if (closed.includes(to)) return 'Здесь проход закрыт. Поищи обход по карте.';
   const staying = to === s.position,
     caught = to === nextPatrol(s) && s.veil === 0;
   s.turn++;
   s.veil = Math.max(0, s.veil - 1);
   s.recharge = Math.max(0, s.recharge - 1);
-  s.position = caught ? start : to;
+  s.position = caught ? entrance : to;
   if (caught) {
     s.misses++;
-    return 'Ведьма проводила тебя ко входу. Все улики остались в блокноте.';
+    return 'Патруль проводил тебя ко входу. Все улики остались в блокноте.';
   }
   return staying ? 'Ты пропустил патруль.' : rooms[to].name;
 }
@@ -91,15 +84,17 @@ export function cloak(s) {
   return true;
 }
 function evidence(s, i) {
+  const { rooms, suspects } = investigations[s.level];
   const who = suspects[s.culprit];
   return [
     'На чеке остался штамп: ' + who.stamp + '.',
-    'На верстаке лежит ' + who.ribbon + ' лента от посылки.',
-    'В архиве записан зал доставки: «' + rooms[s.stash].name + '».',
+    'Здесь осталась ' + who.ribbon + ' лента от посылки.',
+    'В накладной записан зал доставки: «' + rooms[s.stash].name + '».',
   ][i];
 }
 export function inspect(s) {
   if (s.done) return '';
+  const { rooms, entrance } = investigations[s.level];
   const r = rooms[s.position];
   if (r.clue !== undefined) {
     s.clues |= 1 << r.clue;
@@ -109,12 +104,12 @@ export function inspect(s) {
     s.done = true;
     return 'Изумруд найден!';
   }
-  if (s.position === start) return 'Дежурный оставил подсказку: проверь кассу, мастерскую и архив.';
-  if (r.stash && s.identified) return 'Здесь пусто. В архивной записи указан зал доставки.';
+  if (s.position === entrance) return 'Дежурный отметил в блокноте три зала для осмотра.';
+  if (r.stash && s.identified) return 'Здесь пусто. В накладной указан зал доставки.';
   return 'Пока здесь тихо. Загляни в залы со знаком лупы.';
 }
 export function identify(s, id) {
-  if (s.done || s.identified || s.clues !== 7 || !Number.isInteger(id) || !suspects[id]) return '';
+  if (s.done || s.identified || s.clues !== 7 || !Number.isInteger(id) || !investigations[s.level].suspects[id]) return '';
   if (id !== s.culprit) {
     s.misses++;
     return 'У этого помощника другие приметы. Сверь и штамп, и ленту.';
@@ -127,7 +122,7 @@ function furnishing(canvas, item) {
   g.clearRect(0, 0, canvas.width, canvas.height);
   g.imageSmoothingEnabled = false;
   const showrooms = { sofa: 'living_room', desk: 'show_kitchen', shelf: 'warehouse' };
-  if (showrooms[item] && drawLandmark(g, showrooms[item], 3, 0, 84)) return;
+  if (drawLandmark(g, showrooms[item] || item, 3, 0, 84)) return;
   function face(points, color) {
     g.fillStyle = color;
     g.beginPath();
@@ -256,17 +251,20 @@ const make = (tag, className, text) => {
   return e;
 };
 export function mount(host, { saved, players, save, finish }) {
-  const s = readCase(saved, players[0]),
-    events = new AbortController(),
+  let s = readCase(saved, players[0]);
+  let file = investigations[s.level];
+  const events = new AbortController(),
     opts = { signal: events.signal };
   let paused = false,
     disposed = false;
   host.innerHTML =
-    '<section class="case"><header class="case-banner"><div><small>Мебельный магазин</small><h2>Дело о пропавшем изумруде</h2><p>Кто спрятал посылку и в каком зале? Собери три улики и сверь приметы помощников.</p></div></header><div class="case-layout"><div><div class="case-line"><strong class="case-location"></strong><span class="case-count"></span></div><div class="case-map" role="group" aria-label="План магазина"></div><p class="case-patrol"></p><div class="case-actions"><button class="case-search">Осмотреть зал</button><button class="case-wait">Пропустить ход</button><button class="case-cloak">Невидимость</button></div><p class="case-msg" role="status"></p></div><aside><h3>Блокнот</h3><ol class="case-notes"></ol><h3>Помощники</h3><p>У каждого свой штамп и лента.</p><div class="case-suspects"></div></aside></div></section>';
+    '<section class="case"><header class="case-banner"><div><label class="case-picker">Выбери дело <select></select></label><h2></h2><p>Кто спрятал посылку и в каком зале? Собери три улики и сверь приметы помощников.</p></div></header><div class="case-layout"><div><div class="case-line"><strong class="case-location"></strong><span class="case-count"></span></div><div class="case-map" role="group" aria-label="План залов"></div><p class="case-patrol"></p><div class="case-actions"><button class="case-search">Осмотреть зал</button><button class="case-wait">Пропустить ход</button><button class="case-cloak">Невидимость</button></div><p class="case-msg" role="status"></p></div><aside><h3>Блокнот</h3><ol class="case-notes"></ol><h3>Помощники</h3><p>У каждого свой штамп и лента.</p><div class="case-suspects"></div></aside></div></section>';
   const q = (sel) => host.querySelector(sel),
     message = q('.case-msg'),
     cells = [];
-  for (const [i, r] of rooms.entries()) {
+  const picker = q('.case-picker select');
+  investigations.forEach((item, i) => picker.add(new Option((i + 1) + ' · ' + item.world, i)));
+  for (let i = 0; i < file.rooms.length; i++) {
     const b = make('button', 'case-room');
     b.type = 'button';
     b.dataset.room = i;
@@ -274,29 +272,47 @@ export function mount(host, { saved, players, save, finish }) {
     picture.width = 90;
     picture.height = 56;
     picture.setAttribute('aria-hidden', 'true');
-    furnishing(picture, r.item);
-    if (!landmarkAtlas().complete) landmarkAtlas().addEventListener('load', () => furnishing(picture, r.item), { ...opts, once: true });
     const figure = make('span', 'case-figure');
     figure.style.backgroundPosition = heroes.indexOf(s.hero) * 25 + '% 0%';
     const badge = make('span', 'case-clue');
-    b.append(picture, figure, monsterPortrait('witch', 'case-witch'), badge, make('span', 'case-label', r.name));
+    b.append(picture, figure, make('span', 'case-witch'), badge, make('span', 'case-label'));
     b.addEventListener('click', () => act(() => (i === s.position ? inspect(s) : walk(s, i))), opts);
     q('.case-map').append(b);
     cells.push(b);
   }
-  const choices = suspects.map((person, i) => {
-    const b = make('button', 'case-suspect'),
-      icon = monsterPortrait(person.type, 'case-beast');
-    b.append(
-      icon,
-      make('strong', '', person.name),
-      make('small', '', person.stamp + ' · ' + person.ribbon + ' лента'),
-    );
+  const choices = file.suspects.map((_, i) => {
+    const b = make('button', 'case-suspect');
     b.addEventListener('click', () => act(() => identify(s, i)), opts);
     q('.case-suspects').append(b);
     return b;
   });
+  function furnishings() {
+    cells.forEach((cell, i) => furnishing(cell.querySelector('canvas.case-furniture'), file.rooms[i].item));
+  }
+  function setScene() {
+    file = investigations[s.level];
+    picker.value = String(s.level);
+    const header = q('.case-banner');
+    header.querySelector('h2').textContent = file.title;
+    header.style.setProperty('--case-panorama', 'url("./assets/' + file.sheet + '-panoramas.webp")');
+    header.style.setProperty('--case-height', file.sheet === 'world' ? '400%' : '300%');
+    header.style.setProperty('--case-row', (100 * file.row / (file.sheet === 'world' ? 3 : 2)) + '%');
+    cells.forEach((cell, i) => {
+      cell.disabled = file.closed.includes(i);
+      cell.querySelector('.case-label').textContent = file.rooms[i].name;
+      cell.querySelector('.case-witch').replaceWith(monsterPortrait(file.guard, 'case-witch'));
+    });
+    choices.forEach((b, i) => {
+      const person = file.suspects[i];
+      b.replaceChildren(monsterPortrait(person.type, 'case-beast'), make('strong', '', person.name),
+        make('small', '', person.stamp + ' · ' + person.ribbon + ' лента'));
+    });
+    furnishings();
+    paint(s.identified ? 'Проверь зал доставки из блокнота.' : 'Лупа на плане отмечает залы с уликами.');
+  }
   function paint(note) {
+    const rooms = file.rooms;
+    picker.disabled = Boolean(s.turn || s.clues || s.recharge);
     cells.forEach((b, i) => {
       const r = rooms[i],
         isHere = s.position === i,
@@ -309,14 +325,15 @@ export function mount(host, { saved, players, save, finish }) {
         'aria-label',
         r.name +
           (isHere ? ', вы здесь' : '') +
-          (isWatch ? ', сюда идёт ведьма' : '') +
+          (isWatch ? ', сюда идёт патруль' : '') +
+          (b.disabled ? ', проход закрыт' : '') +
           (clue === '⌕' ? ', есть улика' : ''),
       );
     });
     q('.case-location').textContent = 'Вы здесь · ' + rooms[s.position].name;
     q('.case-count').textContent = 'Улики ' + [1, 2, 4].filter((x) => s.clues & x).length + '/3';
     q('.case-patrol').textContent =
-      '☾ Ведьма идёт в зал «' + rooms[nextPatrol(s)].name + '». Нажми на соседний зал, чтобы перейти.';
+      '☾ Патруль идёт в зал «' + rooms[nextPatrol(s)].name + '» (' + file.guardName + '). Нажми на соседний зал, чтобы перейти.';
     const veil = q('.case-cloak');
     veil.hidden = s.hero !== 'mom';
     veil.disabled = s.recharge > 0;
@@ -326,8 +343,8 @@ export function mount(host, { saved, players, save, finish }) {
         ? 'До невидимости · ' + s.recharge
         : 'Стать невидимой';
     q('.case-notes').replaceChildren(
-      ...['Касса', 'Мастерская', 'Архив'].map((place, i) =>
-        make('li', '', s.clues & (1 << i) ? evidence(s, i) : 'Осмотреть · ' + place),
+      ...file.clues.map((cell, i) =>
+        make('li', '', s.clues & (1 << i) ? evidence(s, i) : 'Осмотреть · ' + rooms[cell].name),
       ),
     );
     choices.forEach((b, i) => {
@@ -343,7 +360,7 @@ export function mount(host, { saved, players, save, finish }) {
     if (s.done) {
       finish({
         score: Math.max(10, 100 - s.misses * 5),
-        summary: 'Изумруд найден · ' + rooms[s.stash].name + ' · ходов ' + s.turn,
+        summary: file.world + ' · Изумруд найден · ' + file.rooms[s.stash].name + ' · ходов ' + s.turn,
       });
     } else save({ ...s });
   }
@@ -351,13 +368,13 @@ export function mount(host, { saved, players, save, finish }) {
   q('.case-wait').addEventListener('click', () => act(() => walk(s, s.position)), opts);
   q('.case-cloak').addEventListener(
     'click',
-    () => act(() => (cloak(s) ? 'Мама невидима для ведьмы на три хода.' : '')),
+    () => act(() => (cloak(s) ? 'Мама невидима для патруля на три хода.' : '')),
     opts,
   );
   document.addEventListener(
     'keydown',
     (e) => {
-      if (paused || disposed || e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      if (paused || disposed || e.target === picker || e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
       const d = directions[e.key];
       if (!d) return;
       e.preventDefault();
@@ -367,7 +384,14 @@ export function mount(host, { saved, players, save, finish }) {
     },
     opts,
   );
-  paint(s.identified ? 'Проверь зал доставки из блокнота.' : 'Лупа на плане отмечает залы с уликами.');
+  picker.addEventListener('change', () => {
+    if (paused || disposed || picker.disabled) return;
+    s = newCase(players[0], Math.random, Number(picker.value));
+    setScene();
+    save({ ...s });
+  }, opts);
+  landmarkAtlas().addEventListener('load', furnishings, { ...opts, once: true });
+  setScene();
   save({ ...s });
   return {
     pause() {

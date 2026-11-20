@@ -23,10 +23,10 @@
   z-index: -1;
   background:
     linear-gradient(90deg, #38252df2, #39252db0 58%, #30202b10),
-    url('./assets/world-panoramas.webp') center 33.3333% / auto 400%;
+    var(--panorama, url('./assets/world-panoramas.webp')) center var(--scene-y, 33.3333%) / auto var(--sheet-height, 400%);
   background-size:
     100% 100%,
-    auto 400%;
+    auto var(--sheet-height, 400%);
 }
 .cafe-banner .cafe-avatar {
   width: clamp(45px, 8vw, 86px);
@@ -44,7 +44,7 @@
   width: min(22%, 135px);
   aspect-ratio: 3 / 2;
   flex: none;
-  background: url('./games/block-maze/assets/maze-landmarks.webp') 33.3333% 0 / 400% 500%;
+  background: url('./games/block-maze/assets/maze-landmarks.webp') var(--prop, 33.3333% 0) / 400% 500%;
   image-rendering: pixelated;
 }
 .cafe-game h2,
@@ -52,6 +52,14 @@
 .cafe-game p {
   margin: 0;
 }
+.cafe-banner[data-scene='waterpark'] { --scene-y: 66.6667%; --prop: 66.6667% 0; }
+.cafe-banner[data-scene='store'] { --scene-y: 100%; --prop: 33.3333% 75%; }
+.cafe-banner[data-scene='castle'], .cafe-banner[data-scene='end'] {
+  --panorama: url('./assets/realm-panoramas.webp');
+  --sheet-height: 300%;
+}
+.cafe-banner[data-scene='castle'] { --scene-y: 50%; --prop: 33.3333% 100%; }
+.cafe-banner[data-scene='end'] { --scene-y: 100%; --prop: 66.6667% 25%; }
 .cafe-banner small,
 .cafe-hud {
   color: #ffdc9d;

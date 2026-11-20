@@ -87,3 +87,14 @@ test('повреждённая строка истории не мешает с�
     [robot.id, detective.id],
   );
 });
+
+test('контрольная точка из другой вкладки не воскрешает завершённую партию', async (t) => {
+  useStorage(t);
+  const playing = await loadProgress();
+  playing.saveSlot(robot, { program: ['left'] });
+  const otherTab = await loadProgress();
+  otherTab.finishSlot(robot, result);
+  playing.saveSlot(robot, { program: ['right'] }, { onlyIfCurrent: true });
+  assert.equal(playing.slot('robot'), null);
+  assert.deepEqual(playing.collectionProgress().results.map((r) => r.id), [robot.id]);
+});

@@ -22,8 +22,14 @@ const solutions = [
     ['post', 3],
     ['rope', 5],
   ],
+  [['post', 2], ['post', 4]],
+  [['rope', 2], ['rope', 4]],
+  [['post', 3], ['post', 5], ['rope', 2]],
+  [['post', 5], ['rope', 1], ['rope', 3]],
 ];
 test('every crossing has a physical solution with its available inventory', () => {
+  assert.equal(solutions.length, crossings.length);
+  assert.ok(crossings.length >= 7);
   for (const [level, parts] of solutions.entries()) {
     const state = newBridge(level);
     for (let i = 0; i < crossings[level].bays; i++) assert.equal(togglePart(state, 'deck', i), true);

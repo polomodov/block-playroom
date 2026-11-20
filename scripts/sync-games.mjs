@@ -109,11 +109,29 @@ function classicModule(path, source, name) {
 function adapt(path, bytes, name) {
   if (path === 'index.html') return Buffer.from(embedPage(bytes.toString(), name));
   if (name !== 'block-maze' && path.endsWith('.js')) bytes = Buffer.from(classicModule(path, bytes.toString(), name));
-  if (path === 'game.js') return Buffer.from("import { enterCollectionGame } from '../collection-navigation.js';\n" +
-    bytes.toString() + '\nenterCollectionGame();\n');
-  if (path === 'progress.js') return Buffer.from(requiredReplace(bytes.toString(),
-    "'family-games:' + new URL('.', import.meta.url).pathname + ':progress:1'",
-    "'family-games:/" + name + "/:progress:1'", name + '/progress.js'));
+  if (path === 'game.js') {
+    const start = {
+      'block-maze': 'function start(hero, levelId) {',
+      'block-jump': 'function start() {',
+      'block-dash': 'if (!restored?.state) restored = null;',
+    }[name];
+    const claim = name === 'block-dash' ? 'if (!restored) beginArcadeRound();' : 'beginArcadeRound();';
+    const source = requiredReplace(bytes.toString(), start, start + '\n  ' + claim, name + '/game.js');
+    return Buffer.from("import { enterCollectionGame } from '../collection-navigation.js';\n" +
+      "import { beginArcadeRound } from './progress.js';\n" + source + '\nenterCollectionGame();\n');
+  }
+  if (path === 'progress.js') {
+    const file = name + '/progress.js';
+    let source = requiredReplace(bytes.toString(),
+      "'family-games:' + new URL('.', import.meta.url).pathname + ':progress:1'",
+      "'family-games:/" + name + "/:progress:1'", file);
+    // Keep each edition's storage key and its hero/level labels. The library
+    // shares the history reader and assigns save ownership when a player starts or resumes.
+    source = requiredReplace(source, /let memory = \{saved:null, results:\[\]\};[\s\S]*$/,
+      'export const { beginArcadeRound, loadSavedGame, saveGame, clearSavedGame, addResult, bindProgress } =\n' +
+      '  arcadeProgress(key, heroes, levels);\n', file);
+    return Buffer.from("import { arcadeProgress } from '../arcade-progress.js';\n" + source);
+  }
   return bytes;
 }
 function diskFiles(dir, prefix = '') {

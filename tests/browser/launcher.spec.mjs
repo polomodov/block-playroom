@@ -48,3 +48,24 @@ test('отмена перезапуска оставляет программу 
   await expect(page.locator('.rb-game')).toBeVisible();
   await expect(queue).toHaveCount(0);
 });
+
+test('старая вкладка при выходе не перезаписывает новую партию робота', async ({ page, context }) => {
+  await page.goto('./?game=robot');
+  await page.locator('#start-mode').click();
+  await page.locator('[data-cmd="left"]').click();
+
+  const next = await context.newPage();
+  await next.goto('./?game=robot');
+  await next.locator('#start-mode').click();
+  await next.getByRole('dialog').getByRole('button', { name: 'Начать', exact: true }).click();
+  await next.locator('[data-cmd="forward"]').click();
+  await next.locator('#go-lobby').click();
+  // Closing or pausing the older game writes a final checkpoint.
+  await page.locator('#go-lobby').click();
+  await next.reload();
+  await next.locator('#resume-mode').click();
+  await next.getByRole('button', { name: 'Продолжить', exact: true }).click();
+  const commands = next.getByRole('group', { name: 'Очередь команд' }).getByRole('button');
+  await expect(commands).toHaveCount(1);
+  await expect(commands.first()).toHaveAttribute('aria-label', '1. Шаг');
+});

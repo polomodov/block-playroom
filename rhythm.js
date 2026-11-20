@@ -7,14 +7,14 @@ const NOTES = [
   { name: 'Ми', key: 'D', hz: 329.63, color: '#f2cf78', shape: '▲' },
   { name: 'Соль', key: 'F', hz: 392, color: '#c7abff', shape: '■' },
 ];
-const SONGS = [
+export const songs = [
   {
     id: 'temple',
     title: 'Эхо изумруда',
     place: 'Храм изумруда',
+    scenery: ['brazier', 'stone_mask'],
     partner: 'Паук',
     monster: 'spider',
-    props: ['brazier', 'stone_mask'],
     bpm: 94,
     sheet: 'world',
     panel: 0,
@@ -43,9 +43,9 @@ const SONGS = [
     id: 'arcade',
     title: 'Карусель',
     place: 'Игровой центр',
+    scenery: ['carousel', 'claw'],
     partner: 'Скелет',
     monster: 'skeleton',
-    props: ['carousel', 'claw'],
     bpm: 108,
     sheet: 'world',
     panel: 1,
@@ -71,12 +71,76 @@ const SONGS = [
     ],
   },
   {
+    id: 'waterpark',
+    title: 'Волна за волной',
+    place: 'Аквапарк',
+    scenery: ['typhoon', 'water_slide'],
+    partner: 'Страж',
+    monster: 'guardian',
+    bpm: 86,
+    sheet: 'world',
+    panel: 2,
+    riffs: [
+      [[0, 0], [2, 1], [3, 2], [2, 3]],
+      [[1, 0], [2, 0.5], [3, 1], [2, 2], [1, 3]],
+      [[0, 0], [1, 0.5], [2, 1], [3, 2], [2, 3], [0, 3.5]],
+    ],
+  },
+  {
+    id: 'store',
+    title: 'Эхо пустых полок',
+    place: 'Мебельный магазин',
+    scenery: ['show_kitchen', 'warehouse'],
+    partner: 'Зомби',
+    monster: 'zombie',
+    bpm: 92,
+    sheet: 'world',
+    panel: 3,
+    riffs: [
+      [[1, 0], [1, 0.5], [3, 2]],
+      [[2, 0], [2, 0.5], [0, 2], [0, 2.5]],
+      [[3, 0], [3, 0.5], [1, 1.5], [1, 2], [0, 3.5]],
+    ],
+  },
+  {
+    id: 'nether',
+    title: 'Бас магмового куба',
+    place: 'Нижний мир',
+    scenery: ['basalt_columns', 'lavafall'],
+    partner: 'Магмовый куб',
+    monster: 'magma_cube',
+    bpm: 106,
+    sheet: 'realm',
+    panel: 0,
+    riffs: [
+      [[0, 0], [0, 1.5], [3, 2]],
+      [[0, 0], [0, 0.5], [2, 1.5], [0, 2.5], [3, 3]],
+      [[0, 0], [0, 0.5], [3, 1.5], [0, 2], [2, 3], [0, 3.5]],
+    ],
+  },
+  {
+    id: 'castle',
+    title: 'Полуночный вальс',
+    place: 'Замок на Хеллоуин',
+    scenery: ['gatehouse', 'pumpkin_patch'],
+    partner: 'Ведьма',
+    monster: 'witch',
+    bpm: 96,
+    sheet: 'realm',
+    panel: 1,
+    riffs: [
+      [[2, 0], [0, 1], [1, 2]],
+      [[3, 0], [1, 1], [2, 2], [3, 3]],
+      [[2, 0], [0, 1], [1, 2], [3, 3], [1, 4], [2, 5]],
+    ],
+  },
+  {
     id: 'end',
     title: 'Струны Края',
     place: 'Край',
+    scenery: ['crystal_spires', 'chorus_grove'],
     partner: 'Эндермен',
     monster: 'enderman',
-    props: ['crystal_spires', 'chorus_grove'],
     bpm: 100,
     sheet: 'realm',
     panel: 2,
@@ -103,7 +167,7 @@ const SONGS = [
   },
 ];
 const heroNames = { kirill: 'Кирилл', maxim: 'Максим', mom: 'Мама', dad: 'Папа', pasha: 'Паша' };
-const songOf = (id) => SONGS.find((s) => s.id === id) || SONGS[0];
+const songOf = (id) => songs.find((s) => s.id === id) || songs[0];
 export function createRhythm(saved) {
   const base = {
     version: 1,
@@ -120,7 +184,7 @@ export function createRhythm(saved) {
   if (
     !saved ||
     saved.version !== 1 ||
-    !SONGS.some((s) => s.id === saved.song) ||
+    !songs.some((s) => s.id === saved.song) ||
     !Number.isInteger(saved.round) ||
     saved.round < 0 ||
     saved.round >= 3 ||
@@ -283,7 +347,7 @@ export function mount(host, { saved, players = [], save, finish }) {
     repeat = get('.rh-repeat'),
     cue = get('.rh-cue'),
     sound = get('.rh-sound');
-  for (const song of SONGS) {
+  for (const song of songs) {
     const opt = new Option(song.title + ' · ' + song.place, song.id);
     select.add(opt);
   }
@@ -316,9 +380,8 @@ export function mount(host, { saved, players = [], save, finish }) {
     const song = songOf(state.song);
     const age = quietMotion ? 0.45 : (state.elapsed * song.bpm) / 120;
     band.clearRect(0, 0, 560, 168);
-    const props = song.props;
-    drawLandmark(band, props[0], 8, 76, 112);
-    drawLandmark(band, props[1], 447, 76, 109);
+    drawLandmark(band, song.scenery[0], 8, 76, 112);
+    drawLandmark(band, song.scenery[1], 447, 76, 109);
     band.save();
     band.translate(208, 113);
     band.scale(4.6, 4.6);
@@ -487,7 +550,9 @@ export function mount(host, { saved, players = [], save, finish }) {
     const dt = previous === null ? 0 : Math.max(0, (now - previous) / 1000);
     previous = now;
     const was = state.phase;
-    stepRhythm(state, dt);
+    // Cues light up and sound on rendered frames. Keep each note visible after a stall;
+    // the player's response still uses the full time between frames for scoring.
+    stepRhythm(state, was === 'listen' ? Math.min(dt, 0.12) : dt);
     if (was !== state.phase) {
       clearPulse();
       draw();

@@ -22,20 +22,13 @@
   padding: clamp(13px, 2vw, 24px);
   background:
     linear-gradient(90deg, #2d2536e0, #212737a6, transparent),
-    url('./assets/world-panoramas.webp') center top / 100% 400%;
+    var(--scene, url('./assets/world-panoramas.webp')) center top / 100% 400%;
 }
-.deck-game.aqua .deck-header {
-  background-position:
-    center,
-    center 67%;
-}
-.deck-game.end .deck-header {
-  background-image:
-    linear-gradient(90deg, #2d2536e0, #212737a6, transparent), url('./assets/realm-panoramas.webp');
-  background-size:
-    100% 100%,
-    100% 300%;
-  background-position: center, bottom;
+.deck-header p {
+  max-width: 52ch;
+  margin-top: 6px;
+  color: #fff0d5;
+  text-shadow: 0 1px 3px #181322;
 }
 .deck-header h2 {
   font-size: clamp(22px, 3.7vw, 34px);
@@ -84,7 +77,7 @@
   padding: clamp(8px, 1.7vw, 18px);
   background:
     linear-gradient(0deg, #152426da 0%, #172e2a40 60%, #1c242d40),
-    url('./assets/world-panoramas.webp') center top / 100% 400%;
+    var(--scene, url('./assets/world-panoramas.webp')) center top / 100% 400%;
   border-block: 2px solid #85765f;
 }
 .deck-lane {
@@ -341,17 +334,17 @@
     transform: rotate(-7deg);
   }
 }
-.deck-game.aqua .deck-lanes {
-  background-position:
-    center,
-    center 66.67%;
+.deck-game.arcade { --scene-position: 33.333%; }
+.deck-game.aqua { --scene-position: 66.667%; }
+.deck-game.store, .deck-game.end { --scene-position: 100%; }
+.deck-game.castle { --scene-position: 50%; }
+.deck-game:is(.nether, .castle, .end) {
+  --scene: url('./assets/realm-panoramas.webp');
+  --scene-height: 300%;
 }
-.deck-game.end .deck-lanes {
-  background-image: linear-gradient(0deg, #272033c9, #1f1c3040), url('./assets/realm-panoramas.webp');
-  background-size:
-    auto,
-    100% 300%;
-  background-position: center, bottom;
+.deck-game :is(.deck-header, .deck-lanes) {
+  background-position: center, center var(--scene-position, 0%);
+  background-size: 100% 100%, 100% var(--scene-height, 400%);
 }
 .deck-illustration {
   display: block;
