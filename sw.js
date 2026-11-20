@@ -68,7 +68,8 @@ async function fillCache() {
 }
 async function dropPreviousWhenUnused() {
   if (!previousCache) return;
-  for (const id of previousClients) if (await self.clients.get(id)) return;
+  const open = await Promise.all([...previousClients].map((id) => self.clients.get(id)));
+  if (open.some(Boolean)) return;
   await caches.delete(previousCache);
   previousCache = null;
   previousClients = new Set();
@@ -92,7 +93,7 @@ self.addEventListener('activate', (event) => {
       const open = await self.clients.matchAll({ type: 'window' });
       const older = (await caches.keys()).filter((name) => name.startsWith(prefix) && name !== cacheName);
       // Keep the newest older release (the one open pages were loaded from).
-      previousCache = open.length && older.length ? older[older.length - 1] : null;
+      previousCache = open.length && older.length ? older.at(-1) : null;
       previousClients = new Set(previousCache ? open.map((client) => client.id) : []);
       for (const name of older) {
         const old = await caches.open(name);

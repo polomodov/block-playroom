@@ -9,9 +9,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const releases = {
-  'block-maze': '592d0287ff27daffd6740e9f699b826e64e8dbe7',
-  'block-jump': '6a4d8f98ae200d7bfb6f7abf1bfe528a9d625af1',
-  'block-dash': '114249d1661a4c0d4736d53e6d3bc31294df647b',
+  'block-maze': '4c10d35cb77d7c4704235d8f06a6a7cfbe8642ea',
+  'block-jump': 'cfe2ffc4b4baf449a5e21adfe227fb607008d3c0',
+  'block-dash': 'afd7db244b28323f9ace7d2461ba8bbae2e89f7b',
 };
 const check = process.argv.includes('--check');
 const ignored = new Set(['manifest.webmanifest', 'offline.js', 'offline.css', 'assets/app-192.png',
