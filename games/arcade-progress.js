@@ -34,7 +34,7 @@ export function arcadeProgress(key, heroes, levels) {
 
   function beginArcadeRound() {
     const profile = read();
-    owner = crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36);
+    owner = crypto.getRandomValues(new Uint32Array(4)).join('-');
     lastSavedAt = profile.saved?.savedAt;
     write({ ...profile, libraryOwner: owner }, false);
   }
