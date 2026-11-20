@@ -355,3 +355,20 @@ p {
     font-size: 0.8rem;
   }
 }
+
+.catalog > .setup {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+.art-extra {
+  background-image: url('./assets/adventure-covers.webp');
+  background-size: 400% 200%;
+}
+.art-race { background-position: 0% 0%; }
+.art-bridge { background-position: 33.33333% 0%; }
+.art-tactics { background-position: 66.66667% 0%; }
+.art-cafe { background-position: 100% 0%; }
+.art-cards { background-position: 0% 100%; }
+.art-pinball { background-position: 33.33333% 100%; }
+.art-photo { background-position: 66.66667% 100%; }
+.art-robot { background-position: 100% 100%; }

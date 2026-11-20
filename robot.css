@@ -1,0 +1,202 @@
+.rb-game {
+  color: #ecf2e6;
+  background: #22333b;
+  border: 1px solid #5a7377;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.rb-game header {
+  padding: 13px 18px;
+  background: linear-gradient(115deg, #35484a, #283641);
+}
+.rb-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.rb-head small {
+  color: #a8e5ce;
+  font-weight: 700;
+}
+.rb-portrait {
+  width: 60px;
+  height: 45px;
+  display: block;
+  flex: none;
+  border: 1px solid #819c8e;
+}
+.rb-game h2 {
+  margin: 2px 0;
+  font-size: clamp(20px, 2.8vw, 28px);
+}
+.rb-hint {
+  margin: 7px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: #e0e8da;
+}
+.rb-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(255px, 1fr);
+  gap: 12px;
+  padding: 14px;
+}
+.rb-stage {
+  align-self: start;
+  background: #182e37;
+  border: 1px solid #687c75;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.rb-stage canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.rb-count {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: #c8edc4;
+  border-top: 1px solid #4e6c6e;
+}
+.rb-console {
+  min-width: 0;
+  border-radius: 8px;
+  background: #2f4145;
+  padding: 12px;
+}
+.rb-game h3 {
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+.rb-inputs,
+.rb-program,
+.rb-tools,
+.rb-play,
+.rb-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.rb-game button {
+  touch-action: manipulation;
+  border: 1px solid #7e9390;
+  border-radius: 5px;
+  background: #3e545a;
+  color: #f6f1df;
+  min-height: 34px;
+  padding: 4px 7px;
+  font-weight: 650;
+}
+.rb-inputs button {
+  min-height: 42px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  font-size: 0.71rem;
+  gap: 2px;
+}
+.rb-inputs b {
+  font-size: 1.12rem;
+  line-height: 1;
+  color: #b7ebda;
+}
+.rb-inputs [data-cmd='loop'] b,
+.rb-inputs [data-cmd='end'] b {
+  color: #f8cf83;
+}
+.rb-label {
+  justify-content: space-between;
+  margin: 12px 0 5px;
+  font-size: 0.84rem;
+  color: #dcebdc;
+}
+.rb-length {
+  font-variant-numeric: tabular-nums;
+}
+.rb-program {
+  background: #142b34;
+  border: 1px solid #69827e;
+  border-radius: 5px;
+  min-height: 48px;
+  padding: 6px;
+  color: #afc5ba;
+  font-size: 0.81rem;
+}
+.rb-program button {
+  min-width: 31px;
+  font-size: 1rem;
+  min-height: 33px;
+}
+.rb-program .rb-cursor {
+  border-right: 4px solid #ffcf8f;
+}
+.rb-program .rb-lit {
+  background: #b8deaa;
+  color: #1c342e;
+}
+.rb-game button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.rb-program button:disabled {
+  opacity: 1;
+}
+.rb-tools {
+  margin-top: 6px;
+}
+.rb-tools button {
+  font-size: 0.76rem;
+  min-height: 30px;
+}
+.rb-status {
+  margin: 10px 0 8px;
+  line-height: 1.42;
+  font-size: 0.86rem;
+  color: #e0e7d9;
+}
+.rb-play .rb-main {
+  color: #1f322f;
+  background: #a9dfba;
+  border-color: #bce7bc;
+  min-height: 40px;
+  padding: 6px 14px;
+}
+.rb-game button:focus-visible {
+  outline: 2px solid #ffcd88;
+  outline-offset: 2px;
+}
+@media (max-width: 760px) {
+  .rb-layout {
+    grid-template-columns: 1fr;
+    padding: 9px;
+    gap: 8px;
+  }
+  .rb-console {
+    padding: 9px;
+  }
+  .rb-game header {
+    padding: 10px;
+  }
+  .rb-hint {
+    font-size: 0.83rem;
+  }
+  .rb-portrait {
+    width: 45px;
+    height: 34px;
+  }
+  .rb-label {
+    margin-top: 7px;
+  }
+  .rb-game h2 {
+    font-size: 1.13rem;
+  }
+  .rb-status {
+    margin: 6px 0;
+  }
+  .rb-stage {
+    width: 100%;
+  }
+}

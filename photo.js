@@ -1,0 +1,437 @@
+// The album stores the scene and shutter position so it can redraw a photograph offline.
+import { heroNames } from './progress.js';
+
+export const assignments = [
+  {
+    name: 'Огни Нижнего мира',
+    subject: 'Гаст',
+    goal: 'Сними гаста, пока он надувает огненный шар.',
+    sheet: 'realm',
+    row: 0,
+    monster: 10,
+    action: 'Гаст заряжает огненный шар!',
+    idle: 'Гаст парит над лавой',
+    color: '#ffae63',
+  },
+  {
+    name: 'Лавовый берег',
+    subject: 'Магмовый куб',
+    goal: 'Поймай момент, когда куб прижался к земле перед прыжком.',
+    sheet: 'realm',
+    row: 0,
+    monster: 11,
+    action: 'Куб сжался перед прыжком!',
+    idle: 'Куб осматривает берег',
+    color: '#ffc25f',
+  },
+  {
+    name: 'Искры Края',
+    subject: 'Эндермен',
+    goal: 'Сними эндермена в кольце искр перед телепортацией.',
+    sheet: 'realm',
+    row: 2,
+    monster: 9,
+    action: 'Появилось кольцо телепортации!',
+    idle: 'Эндермен бродит между колоннами',
+    color: '#d39dff',
+  },
+];
+const WIDTH = 800,
+  HEIGHT = 340,
+  FRAME_W = 214,
+  FRAME_H = 154,
+  TAU = Math.PI * 2;
+const albumKey = 'family-games:block-playroom:photo-album:1';
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+export const freshPhoto = () => ({ version: 1, stage: 0, time: 0, x: WIDTH / 2, y: HEIGHT / 2, shots: [] });
+function validShot(shot) {
+  return (
+    shot &&
+    Number.isInteger(shot.stage) &&
+    assignments[shot.stage] &&
+    Number.isFinite(shot.time) &&
+    shot.time >= 0 &&
+    Number.isFinite(shot.x) &&
+    Number.isFinite(shot.y) &&
+    shot.x >= 0 &&
+    shot.x <= WIDTH &&
+    shot.y >= 0 &&
+    shot.y <= HEIGHT &&
+    Number.isInteger(shot.stars) &&
+    shot.stars >= 1 &&
+    shot.stars <= 3 &&
+    Object.hasOwn(heroNames, shot.hero)
+  );
+}
+export function restorePhoto(saved) {
+  if (
+    !saved ||
+    saved.version !== 1 ||
+    !Number.isInteger(saved.stage) ||
+    !assignments[saved.stage] ||
+    ![saved.time, saved.x, saved.y].every(Number.isFinite) ||
+    saved.time < 0 ||
+    !Array.isArray(saved.shots) ||
+    saved.shots.length < saved.stage ||
+    saved.shots.length > saved.stage + 1 ||
+    !saved.shots.every((s, i) => validShot(s) && s.stage === i)
+  )
+    return freshPhoto();
+  return {
+    ...freshPhoto(),
+    stage: saved.stage,
+    time: saved.time,
+    x: clamp(saved.x, 0, WIDTH),
+    y: clamp(saved.y, 0, HEIGHT),
+    shots: saved.shots.map((s) => ({ ...s })),
+  };
+}
+export function wildlife(stage, time) {
+  const beat = time % 6.4,
+    loop = Math.floor(time / 6.4);
+  const special = beat >= 2 && beat < 4.3;
+  const travel = stage === 2 ? (loop % 2 === 0 ? 1 : -1) : 1;
+  const x = WIDTH / 2 + travel * (212 * Math.sin(time * 0.52 + stage * 1.6) + 33 * Math.cos(time * 0.87));
+  let y = 178 + Math.sin(time * 1.5) * 14;
+  if (stage === 1) y = 230 - (beat >= 4.3 ? Math.sin(((beat - 4.3) * Math.PI) / 2.1) * 86 : 0);
+  if (stage === 2) y = 196 + Math.cos(time * 0.7) * 16;
+  return { x, y, special, beat };
+}
+export function snapPhoto(s, hero) {
+  if (s.shots.length > s.stage) return { message: 'Кадр уже в альбоме.' };
+  const animal = wildlife(s.stage, s.time);
+  const dx = Math.abs(s.x - animal.x),
+    dy = Math.abs(s.y - animal.y);
+  if (dx > 78 || dy > 53)
+    return { message: 'Монстр за краем видоискателя. Коснись его на экране и попробуй ещё раз.' };
+  if (!animal.special) return { message: assignments[s.stage].goal };
+  const distance = Math.hypot(dx / 78, dy / 53);
+  const shot = {
+    stage: s.stage,
+    time: s.time,
+    x: s.x,
+    y: s.y,
+    hero,
+    stars: distance < 0.32 ? 3 : distance < 0.75 ? 2 : 1,
+  };
+  s.shots.push(shot);
+  return { shot, message: 'Получилось! ' + assignments[s.stage].subject + ' в кадре.' };
+}
+function bestAlbum() {
+  try {
+    const a = JSON.parse(localStorage.getItem(albumKey));
+    return Array.isArray(a) ? a.filter(validShot) : [];
+  } catch {
+    return [];
+  }
+}
+function remember(shot) {
+  const a = bestAlbum();
+  const previous = a.find((s) => s.stage === shot.stage);
+  if (previous && previous.stars > shot.stars) return;
+  try {
+    localStorage.setItem(albumKey, JSON.stringify([...a.filter((s) => s.stage !== shot.stage), shot]));
+  } catch {
+    /* The current expedition still keeps its photographs. */
+  }
+}
+function paintScene(g, images, stage, time) {
+  const scene = assignments[stage],
+    animal = wildlife(stage, time);
+  g.fillStyle = stage === 2 ? '#362949' : '#733930';
+  g.fillRect(0, 0, WIDTH, HEIGHT);
+  const panorama = images.realm;
+  if (panorama.naturalWidth) {
+    const h = panorama.naturalHeight / 3,
+      sw = (h * WIDTH) / HEIGHT,
+      available = panorama.naturalWidth - sw;
+    const sourceX = available * (0.48 + 0.13 * Math.sin(time * 0.19 + stage));
+    g.drawImage(panorama, sourceX, scene.row * h, sw, h, 0, 0, WIDTH, HEIGHT);
+  }
+  const shade = g.createLinearGradient(0, 0, 0, HEIGHT);
+  shade.addColorStop(0, '#1b122100');
+  shade.addColorStop(1, '#17131d9c');
+  g.fillStyle = shade;
+  g.fillRect(0, 0, WIDTH, HEIGHT);
+  for (let i = 0; i < 18; i++) {
+    const x = (i * 213 + time * (8 + (i % 4))) % WIDTH;
+    const y = HEIGHT - ((i * 57 + time * (10 + (i % 3))) % HEIGHT);
+    g.fillStyle = stage === 2 ? '#d3b2ff80' : '#ffd3948c';
+    g.fillRect(x, y, 2 + (i % 3), 2 + (i % 3));
+  }
+  let w = stage === 2 ? 114 : 130,
+    h = w;
+  if (stage === 1 && animal.special) {
+    w *= 1.28;
+    h *= 0.64;
+  }
+  const bottom = animal.y + (stage === 1 ? 42 : h * 0.5);
+  g.save();
+  g.shadowColor = '#130e1e';
+  g.shadowBlur = 8;
+  if (images.monsters.naturalWidth) {
+    const cell = images.monsters.naturalWidth / 16;
+    const frame = Math.floor(time * 5) % 8;
+    g.drawImage(
+      images.monsters,
+      frame * cell,
+      scene.monster * cell,
+      cell,
+      cell,
+      animal.x - w / 2,
+      bottom - h,
+      w,
+      h,
+    );
+  } else {
+    g.fillStyle = scene.color;
+    g.fillRect(animal.x - 28, animal.y - 28, 56, 56);
+  }
+  g.restore();
+  if (animal.special) {
+    if (stage === 0) {
+      const radius = 8 + 15 * ((animal.beat - 2) / 2.3);
+      const glow = g.createRadialGradient(animal.x, animal.y + 14, 1, animal.x, animal.y + 14, radius * 1.7);
+      glow.addColorStop(0, '#ffffdb');
+      glow.addColorStop(0.35, '#ffe569');
+      glow.addColorStop(0.65, '#ff6d28db');
+      glow.addColorStop(1, '#ff542500');
+      g.fillStyle = glow;
+      g.fillRect(animal.x - radius * 2, animal.y + 14 - radius * 2, radius * 4, radius * 4);
+    } else {
+      for (let i = 0; i < 12; i++) {
+        const a = (i * TAU) / 12 + time * 2,
+          x = animal.x + Math.cos(a) * (stage === 2 ? 57 : 61),
+          y = animal.y + (stage === 2 ? 0 : 29) + Math.sin(a) * (stage === 2 ? 52 : 13);
+        g.fillStyle = i % 2 ? '#fff4ce' : scene.color;
+        g.fillRect(x, y, 4, 4);
+      }
+    }
+  }
+}
+function drawReticle(g, x, y) {
+  const l = x - FRAME_W / 2,
+    t = y - FRAME_H / 2;
+  g.save();
+  g.fillStyle = '#16112243';
+  g.beginPath();
+  g.rect(0, 0, WIDTH, HEIGHT);
+  g.rect(l, t, FRAME_W, FRAME_H);
+  g.fill('evenodd');
+  g.strokeStyle = '#fff3cc';
+  g.lineWidth = 3;
+  g.shadowColor = '#191329';
+  g.shadowBlur = 3;
+  for (const [px, py, dx, dy] of [
+    [l, t, 1, 1],
+    [l + FRAME_W, t, -1, 1],
+    [l, t + FRAME_H, 1, -1],
+    [l + FRAME_W, t + FRAME_H, -1, -1],
+  ]) {
+    g.beginPath();
+    g.moveTo(px + dx * 19, py);
+    g.lineTo(px, py);
+    g.lineTo(px, py + dy * 19);
+    g.stroke();
+  }
+  g.strokeRect(x - 3, y - 3, 6, 6);
+  g.restore();
+}
+export function mount(host, { players, saved, save, finish }) {
+  const s = restorePhoto(saved),
+    hero = players[0],
+    events = new AbortController(),
+    opts = { signal: events.signal };
+  host.innerHTML =
+    '<section class="photo-game"><header><div><small>Фотоэкспедиция</small><h2></h2></div><b class="photo-counter"></b></header><p class="photo-goal"></p><canvas class="photo-field" width="800" height="340" tabindex="0" aria-label="Видоискатель. Коснитесь монстра или перемещайте рамку стрелками. Пробел делает снимок."></canvas><div class="photo-bar"><span class="photo-status" role="status"></span><button type="button" class="photo-shutter">Снять кадр</button></div><p class="photo-hint">Коснись монстра, чтобы навести рамку. В нужный момент нажми «Снять кадр». На клавиатуре работают стрелки и пробел.</p><div class="photo-shelf"><h3>Семейный альбом</h3><div class="photo-prints"></div></div></section>';
+  const q = (sel) => host.querySelector(sel),
+    canvas = q('.photo-field'),
+    g = canvas.getContext('2d'),
+    shutter = q('.photo-shutter');
+  const images = { realm: new Image(), monsters: new Image() };
+  const keys = new Set();
+  let paused = false,
+    disposed = false,
+    raf = 0,
+    last = null,
+    lastSave = 0,
+    feedback = '',
+    feedbackUntil = 0,
+    lastStatus = '';
+  const reviewed = () => s.shots.length > s.stage;
+  function print(shot) {
+    const el = document.createElement('figure'),
+      c = document.createElement('canvas'),
+      label = document.createElement('figcaption');
+    c.width = 214;
+    c.height = 154;
+    const painter = c.getContext('2d');
+    painter.translate(FRAME_W / 2 - shot.x, FRAME_H / 2 - shot.y);
+    paintScene(painter, images, shot.stage, shot.time);
+    label.textContent =
+      assignments[shot.stage].subject + ' · ' + heroNames[shot.hero] + ' · ' + '★'.repeat(shot.stars);
+    el.append(c, label);
+    return el;
+  }
+  function album() {
+    const photos = new Map(bestAlbum().map((shot) => [shot.stage, shot]));
+    for (const shot of s.shots) photos.set(shot.stage, shot);
+    const shelf = q('.photo-prints');
+    shelf.replaceChildren();
+    for (const [i, stage] of assignments.entries()) {
+      if (photos.has(i)) {
+        shelf.append(print(photos.get(i)));
+        continue;
+      }
+      const empty = document.createElement('span');
+      empty.textContent = stage.subject + ' · кадр впереди';
+      shelf.append(empty);
+    }
+  }
+  function draw() {
+    paintScene(g, images, s.stage, s.time);
+    drawReticle(g, s.x, s.y);
+    const a = wildlife(s.stage, s.time),
+      scene = assignments[s.stage];
+    const text = reviewed()
+      ? 'Кадр в альбоме · ' + '★'.repeat(s.shots[s.stage].stars)
+      : s.time < feedbackUntil
+        ? feedback
+        : a.special
+          ? scene.action
+          : scene.idle;
+    if (text !== lastStatus) {
+      q('.photo-status').textContent = text;
+      lastStatus = text;
+    }
+  }
+  function update() {
+    const scene = assignments[s.stage];
+    q('h2').textContent = scene.name;
+    q('.photo-goal').textContent = scene.goal;
+    q('.photo-counter').textContent = 'Задание ' + (s.stage + 1) + ' / ' + assignments.length;
+    shutter.textContent = reviewed()
+      ? s.stage === 2
+        ? 'Завершить экспедицию'
+        : 'Следующее задание'
+      : 'Снять кадр';
+    draw();
+    album();
+  }
+  function take() {
+    if (paused || disposed) return;
+    if (reviewed()) {
+      if (s.stage === 2) {
+        const stars = s.shots.reduce((n, shot) => n + shot.stars, 0);
+        finish({ score: stars, summary: 'Три снимка в альбоме · ' + stars + ' из 9 звёзд' });
+        return;
+      }
+      s.stage++;
+      s.time = 0;
+      s.x = WIDTH / 2;
+      s.y = HEIGHT / 2;
+      feedbackUntil = 0;
+    } else {
+      const result = snapPhoto(s, hero);
+      feedback = result.message;
+      feedbackUntil = s.time + 1.4;
+      if (result.shot) remember(result.shot);
+    }
+    update();
+    save(s);
+  }
+  function aim(e) {
+    if (paused || disposed || reviewed()) return;
+    const r = canvas.getBoundingClientRect();
+    s.x = clamp(((e.clientX - r.left) / r.width) * WIDTH, 0, WIDTH);
+    s.y = clamp(((e.clientY - r.top) / r.height) * HEIGHT, 0, HEIGHT);
+    draw();
+  }
+  canvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      aim(e);
+    },
+    opts,
+  );
+  canvas.addEventListener(
+    'pointermove',
+    (e) => {
+      if (e.buttons || canvas.hasPointerCapture(e.pointerId)) aim(e);
+    },
+    opts,
+  );
+  shutter.addEventListener('click', take, opts);
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (paused || disposed || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.code.startsWith('Arrow')) {
+        e.preventDefault();
+        keys.add(e.code);
+      } else if (e.code === 'Space' && !e.repeat && !e.target.closest?.('button')) {
+        e.preventDefault();
+        take();
+      }
+    },
+    opts,
+  );
+  document.addEventListener('keyup', (e) => keys.delete(e.code), opts);
+  window.addEventListener('blur', () => keys.clear(), opts);
+  function loop(now) {
+    if (paused || disposed) return;
+    const dt = last === null ? 0 : Math.min(0.1, (now - last) / 1000);
+    last = now;
+    if (!reviewed()) {
+      s.time += dt;
+      s.x = clamp(
+        s.x + 240 * dt * (Number(keys.has('ArrowRight')) - Number(keys.has('ArrowLeft'))),
+        0,
+        WIDTH,
+      );
+      s.y = clamp(s.y + 210 * dt * (Number(keys.has('ArrowDown')) - Number(keys.has('ArrowUp'))), 0, HEIGHT);
+      draw();
+      if (now - lastSave > 1500) {
+        save(s);
+        lastSave = now;
+      }
+    }
+    raf = requestAnimationFrame(loop);
+  }
+  for (const [key, file] of [
+    ['realm', 'realm-panoramas.webp'],
+    ['monsters', 'runner-monsters.webp'],
+  ]) {
+    images[key].addEventListener(
+      'load',
+      () => {
+        if (!disposed) update();
+      },
+      opts,
+    );
+    images[key].src = new URL('./assets/' + file, import.meta.url);
+  }
+  update();
+  raf = requestAnimationFrame(loop);
+  return {
+    pause() {
+      paused = true;
+      keys.clear();
+      cancelAnimationFrame(raf);
+      last = null;
+      save(s);
+    },
+    resume() {
+      if (paused && !disposed) {
+        paused = false;
+        raf = requestAnimationFrame(loop);
+      }
+    },
+    destroy() {
+      disposed = true;
+      cancelAnimationFrame(raf);
+      events.abort();
+    },
+  };
+}
