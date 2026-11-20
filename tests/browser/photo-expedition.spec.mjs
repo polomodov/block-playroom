@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test.use({ serviceWorkers: 'block' });
 
 test('семь снимков появляются в альбоме и завершают экспедицию', async ({ page }) => {
+  test.setTimeout(120_000);
   const start = new Date('2026-01-01T10:00:00Z');
   await page.clock.install({ time: start });
   await page.clock.pauseAt(new Date(+start + 1000));

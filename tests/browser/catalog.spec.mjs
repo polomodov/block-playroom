@@ -218,28 +218,39 @@ function arcadeSave(page, id) {
 }
 
 for (const arcade of arcades) {
-  test(arcade.id + ' — вход и восстановление через игротеку', async ({ page, isMobile }) => {
+  test(arcade.id + ' — вход и восстановление через игротеку', async ({ context, page, isMobile }) => {
+    const original = await context.newPage();
+    const play = controls(original, isMobile);
+    await original.goto('./');
+    await play('[data-game-link="' + arcade.id + '"]');
+    await expect(original).toHaveURL(new RegExp('/games/' + arcade.id + '/$'));
+    await play('#play');
+    await expect(original.locator('#arena')).toBeVisible();
+    await arcade.play(original, play, isMobile);
+    const hud = original.locator(arcade.hud);
+    await expect(hud).toHaveText(arcade.id === 'block-maze' ? /^[1-9]\d*\s*\// : /[1-9]/);
+    await play('#pause');
+    await expect(original.locator('#resume')).toBeVisible();
+    const displayed = await hud.textContent();
+    const { savedAt, ...checkpoint } = await arcadeSave(original, arcade.id);
+    if (arcade.id === 'block-dash') expect(checkpoint.lane).toBe(1);
+    await play('[data-collection-home]');
+    await expect(original.locator('#continue-saved')).toBeVisible();
+    const persisted = await arcadeSave(original, arcade.id);
+    expect(persisted).toMatchObject(checkpoint);
+    expect((await original.pageErrors()).map((error) => error.message)).toEqual([]);
+    expect((await original.pageErrors()).map((error) => error.message)).toEqual([]);
+    await original.close();
+
+    // Open an independent document in the same browser profile. Check the stored
+    // payload before any arcade code can restore or autosave it.
     const press = controls(page, isMobile);
     await page.goto('./');
-    await press('[data-game-link="' + arcade.id + '"]');
-    await expect(page).toHaveURL(new RegExp('/games/' + arcade.id + '/$'));
-    await press('#play');
-    await expect(page.locator('#arena')).toBeVisible();
-    await arcade.play(page, press, isMobile);
-    await expect(page.locator(arcade.hud)).toHaveText(/[1-9]/);
-    await press('#pause');
-    await expect(page.locator('#resume')).toBeVisible();
-    const displayed = await page.locator(arcade.hud).textContent();
-    const saved = await arcadeSave(page, arcade.id);
-    if (arcade.id === 'block-dash') expect(saved.lane).toBe(1);
-    await press('[data-collection-home]');
-    await expect(page.locator('.catalog')).toBeVisible();
-    await page.reload();
+    expect(await arcadeSave(page, arcade.id)).toEqual(persisted);
     await press('#continue-saved');
     await expect(page.locator('#arena')).toBeVisible();
     await expect(page.locator('#resume')).toBeVisible();
     await expect(page.locator(arcade.hud)).toHaveText(displayed);
-    const { savedAt, ...checkpoint } = saved;
     expect(await arcadeSave(page, arcade.id)).toMatchObject(checkpoint);
     await press('#resume');
     await expect(page.locator('#resume')).toBeHidden();
