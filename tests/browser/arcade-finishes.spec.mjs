@@ -55,8 +55,9 @@ const games = [
 
 for (const game of games) {
   test(game.id + ' завершает восстановленную партию и сохраняет результат при повреждённой истории', async ({
-    page, isMobile,
+    page: playing, context, isMobile,
   }) => {
+    let page = playing;
     const key = 'family-games:/' + game.id + '/:progress:1';
     await page.goto('./');
     await page.evaluate(({ key, check, brokenDate }) => {
@@ -79,7 +80,10 @@ for (const game of games) {
     await expect(page.locator(game.result)).toHaveText(game.title);
     if (game.id === 'block-jump') await page.keyboard.up('ArrowRight');
     await page.locator('[data-collection-home]').click();
-    await page.reload();
+    await expect(page.locator('.catalog')).toBeVisible();
+    await page.close();
+    page = await context.newPage();
+    await page.goto('./');
     await page.getByText('История всех игр', { exact: true }).click();
     const rows = page.locator('#game-history li');
     await expect(rows).toHaveCount(2);

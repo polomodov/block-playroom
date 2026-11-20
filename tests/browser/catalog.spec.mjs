@@ -239,7 +239,6 @@ for (const arcade of arcades) {
     const persisted = await arcadeSave(original, arcade.id);
     expect(persisted).toMatchObject(checkpoint);
     expect((await original.pageErrors()).map((error) => error.message)).toEqual([]);
-    expect((await original.pageErrors()).map((error) => error.message)).toEqual([]);
     await original.close();
 
     // Open an independent document in the same browser profile. Check the stored
