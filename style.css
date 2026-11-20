@@ -122,7 +122,7 @@ p {
 .art {
   width: 100%;
   aspect-ratio: 1.5;
-  background: url('./assets/playroom-covers.webp') no-repeat;
+  background: url('./assets/playroom-covers.webp?v=two-keys-family') no-repeat;
   background-size: 200% 200%;
   border-bottom: 1px solid #60536c;
 }
