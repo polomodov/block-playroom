@@ -3,7 +3,7 @@ importScripts('./offline-files.js');
 const base = self.registration.scope;
 const prefix = 'family-offline:' + new URL(base).pathname + ':';
 const cacheName = prefix + OFFLINE_REVISION;
-const pack = 'seven-games-v1';
+const pack = 'family-library-v2';
 const entries = new Map();
 const resources = new Map();
 const uniqueAssets = new Map();
@@ -129,17 +129,8 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (activation = (async () => {
-      let legacy = false;
       const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       const older = await olderReleases();
-      for (const name of older) {
-        const old = await caches.open(name);
-        if (
-          (await old.match(new URL('index.html', base).href)) &&
-          !(await old.match(new URL('games/block-maze/index.html', base).href))
-        )
-          legacy = true;
-      }
       const map = { ...(await loadRoutes()) };
       // A page without a route was loaded from the newest older release; a page
       // that already has one keeps it through any number of further updates.
@@ -147,23 +138,8 @@ self.addEventListener('activate', (event) => {
       if (loadedFrom) for (const client of open) map[client.id] ??= loadedFrom;
       await pruneReleases(map);
       await self.clients.claim();
-      // The previous four-game launcher predates controllerchange handling.
-      // Replace a cached legacy home page once. An open game has ?game=... and
-      // continues until its next navigation, with its saved progress intact.
-      if (legacy) {
-        const clients = await self.clients.matchAll({ type: 'window' });
-        for (const client of clients) {
-          const url = new URL(client.url);
-          if (
-            (url.origin + url.pathname === base || url.origin + url.pathname === base + 'index.html') &&
-            !url.searchParams.has('game')
-          ) {
-            // Do not wait for navigation inside activation: its fetch may be
-            // queued until activation itself completes.
-            client.navigate(client.url).catch(() => {});
-          }
-        }
-      }
+      // Never navigate an existing window: its client URL can still be the lobby
+      // after the player started a game. Its next navigation loads the new catalog.
     })()),
   );
 });
@@ -175,10 +151,15 @@ self.addEventListener('message', (event) => {
       try {
         await completePack();
         await pruneWhenActive();
+        // Seven-game launchers send a string and require their original pack ID.
+        // Keep their status valid while the new catalog waits for the next launch.
+        const previous = (await loadRoutes())[event.source?.id];
+        const oldLauncher = previous && !(await (await caches.open(previous)).match(base + 'photo.js'));
         event.ports[0].postMessage({
           ready: true,
-          pack,
-          games: 7,
+          pack: oldLauncher ? 'seven-games-v1' : pack,
+          games: oldLauncher ? 7 : OFFLINE_GAME_COUNT,
+          library: { pack, games: OFFLINE_GAME_COUNT },
           count: resources.size,
           totalBytes,
           revision: OFFLINE_REVISION,
@@ -208,7 +189,7 @@ self.addEventListener('fetch', (event) => {
     (async () => {
       // Wait until activation has recorded which release each open page was loaded from.
       await activationDone();
-      const release = (await loadRoutes())[event.clientId];
+      const release = event.request.mode !== 'navigate' && (await loadRoutes())[event.clientId];
       if (release && (await caches.has(release))) {
         const old = await caches.open(release).then((cache) => cache.match(key));
         if (old) return old;

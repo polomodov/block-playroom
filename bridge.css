@@ -1,0 +1,140 @@
+.br-game {
+  background: #29232c;
+  color: #fbebd6;
+  border: 1px solid #705456;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.br-game header {
+  padding: 14px 20px;
+  background: linear-gradient(110deg, #48303c, #282635);
+}
+.br-game header small {
+  color: #ffc181;
+  font-weight: 700;
+}
+.br-game h2 {
+  margin: 4px 0;
+  font-size: clamp(20px, 3vw, 29px);
+}
+.br-game p {
+  line-height: 1.4;
+}
+.br-hint {
+  font-size: 0.92rem;
+  margin: 3px 0;
+}
+.br-work {
+  padding: clamp(8px, 1.6vw, 18px);
+}
+.br-board {
+  position: relative;
+  border: 1px solid #87605a;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.br-board canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.br-places {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.br-places button {
+  pointer-events: auto;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: clamp(29px, 5.4vw, 42px);
+  aspect-ratio: 1;
+  font: 700 clamp(15px, 2.5vw, 21px)/1 system-ui;
+  color: #fff5da;
+  background: #40303eed;
+  border: 2px dashed #f7cb88;
+  border-radius: 6px;
+  padding: 0;
+  touch-action: manipulation;
+}
+.br-places button[data-part='post'] {
+  color: #ffd897;
+}
+.br-places button[data-part='rope'] {
+  color: #b7f1ff;
+  border-color: #8cddea;
+}
+.br-places button[aria-pressed='true'] {
+  background: #29584e;
+  border-style: solid;
+  color: #b6ffe2;
+}
+.br-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 18px;
+  align-items: center;
+  margin-top: 13px;
+}
+.br-parts {
+  font-weight: 700;
+  color: #fff0bf;
+}
+.br-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #decccc;
+  font-size: 0.83rem;
+}
+.br-meter meter {
+  width: 90px;
+  height: 1rem;
+}
+.br-status {
+  margin: 2px 0;
+  font-size: 0.91rem;
+  color: #e3d5d6;
+}
+.br-go {
+  padding: 10px 15px;
+  min-height: 42px;
+  border: 1px solid #ffc78a;
+  background: #ffc78a;
+  color: #382c32;
+  border-radius: 7px;
+  font-weight: 700;
+}
+.br-go:disabled {
+  opacity: 0.7;
+}
+.br-places button:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 1px;
+}
+@media (max-width: 660px) {
+  .br-controls {
+    grid-template-columns: 1fr;
+  }
+  .br-game header {
+    padding: 11px;
+  }
+  .br-game h2 {
+    font-size: 1.23rem;
+  }
+  .br-hint,
+  .br-parts,
+  .br-status {
+    font-size: 0.83rem;
+  }
+  .br-go {
+    justify-self: start;
+  }
+  .br-board {
+    min-height: 164px;
+  }
+  .br-board canvas {
+    height: 100%;
+    min-height: 164px;
+  }
+}

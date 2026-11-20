@@ -2,7 +2,8 @@ const status = document.querySelector('#offline-status');
 const retry = document.querySelector('#offline-retry');
 const install = document.querySelector('#install-game');
 const progress = document.querySelector('#offline-progress');
-const pack = 'seven-games-v1';
+const pack = 'family-library-v2';
+const gameCount = document.querySelectorAll('.catalog .cover-card').length;
 let promptEvent;
 let busy = false;
 let announced = -1;
@@ -37,7 +38,7 @@ function displayProgress(bytes, totalBytes) {
   const step = Math.floor(percent / 25) * 25;
   if (step !== announced) {
     announced = step;
-    status.textContent = 'Загрузка 7 игр для офлайна · ' + step + '%';
+    status.textContent = `Загрузка ${gameCount} игр для офлайна · ${step}%`;
   }
 }
 function confirmFiles(worker) {
@@ -59,7 +60,7 @@ function confirmFiles(worker) {
     };
     navigator.serviceWorker.addEventListener('message', heartbeat);
     resetTimer();
-    channel.port1.onmessage = (event) => done(resolve, event.data);
+    channel.port1.onmessage = ({ data }) => done(resolve, data?.library ? { ...data, ...data.library } : data);
     worker.postMessage('offline-status', [channel.port2]);
   });
 }
@@ -70,7 +71,7 @@ function activated(worker) {
       if (!['activated', 'redundant'].includes(worker.state)) return;
       worker.removeEventListener('statechange', check);
       if (worker.state === 'activated') resolve(worker);
-      else reject(new Error('Seven-game installation interrupted'));
+      else reject(new Error('Library installation interrupted'));
     }
     worker.addEventListener('statechange', check);
     check();
@@ -81,8 +82,7 @@ async function confirmedPack(registration) {
   let worker = await activated(pending || registration.active);
   let reply = await confirmFiles(worker);
   if (reply?.pack !== pack) {
-    // A previous four-game worker also answers "ready". Ask the browser to
-    // update it before reporting that the three new entry points work offline.
+    // Earlier workers also answer "ready". Verify the current collection before confirming offline availability.
     if (!registration.installing && !registration.waiting) await registration.update();
     worker = await activated(registration.installing || registration.waiting || registration.active);
     reply = await confirmFiles(worker);
@@ -90,8 +90,8 @@ async function confirmedPack(registration) {
   // After a hard reload (Shift+Reload) the page is deliberately not controlled;
   // the next ordinary visit will be, so only a different controller is an error.
   const controller = navigator.serviceWorker.controller;
-  if (!reply?.ready || reply.pack !== pack || reply.games !== 7 || (controller && controller !== worker))
-    throw new Error('Incomplete seven-game pack');
+  if (!reply?.ready || reply.pack !== pack || reply.games !== gameCount || (controller && controller !== worker))
+    throw new Error('Incomplete library pack');
 }
 async function prepare() {
   if (busy) return;
@@ -107,7 +107,7 @@ async function prepare() {
     progress.hidden = false;
     progress.removeAttribute('value');
   }
-  status.textContent = 'Подготовка всех 7 игр для офлайна…';
+  status.textContent = `Подготовка всех ${gameCount} игр для офлайна…`;
   try {
     let reg;
     try {
@@ -118,7 +118,7 @@ async function prepare() {
     }
     if (!reg.installing && !reg.waiting && !reg.active) await reg.update();
     await confirmedPack(reg);
-    status.textContent = 'Готово к игре офлайн · 7 из 7 игр';
+    status.textContent = `Готово к игре офлайн · ${gameCount} из ${gameCount} игр`;
     status.dataset.ready = 'true';
     // Ask the browser not to evict saves and the offline pack (Safari clears
     // storage of sites that are not on the home screen after a week without visits).

@@ -1,0 +1,168 @@
+.pin-game {
+  max-width: 760px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(180px, 1fr);
+  gap: clamp(10px, 2vw, 22px);
+  align-items: start;
+  color: #f8efdc;
+}
+.pin-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.pin-field canvas {
+  width: 100%;
+  display: block;
+  height: auto;
+  border-radius: 15px 15px 8px 8px;
+  border: 2px solid #7c9088;
+  background: #173b45;
+}
+.pin-controls {
+  display: flex;
+  gap: 8px;
+}
+.pin-controls button {
+  flex: 1;
+  min-height: 46px;
+  touch-action: none;
+  user-select: none;
+}
+.pin-game button,
+.pin-game select {
+  font: inherit;
+  font-weight: 650;
+  color: inherit;
+  background: #3c4651;
+  border: 1px solid #788d92;
+  border-radius: 8px;
+  padding: 8px 11px;
+}
+.pin-controls button.held {
+  background: #737a66;
+  color: white;
+}
+.pin-controls button:focus-visible {
+  outline: 3px solid #ffe6ba;
+}
+.pin-panel {
+  background: #262937;
+  border: 1px solid #5b5666;
+  border-radius: 10px;
+  padding: clamp(11px, 2vw, 20px);
+  display: grid;
+  gap: 10px;
+}
+.pin-panel h2 {
+  margin: 2px 0;
+  font-size: clamp(20px, 4.5vw, 31px);
+  line-height: 1.18;
+}
+.pin-player {
+  color: #b6e9dd;
+  font-weight: 650;
+}
+.pin-scorebar {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  font-weight: 700;
+  color: #ffe6a1;
+  font-size: 0.94rem;
+}
+.pin-panel label {
+  font-size: 0.85rem;
+}
+.pin-table {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pin-game select {
+  font-size: 0.85rem;
+  padding: 6px;
+  max-width: 100%;
+}
+.pin-table:has(select:disabled) {
+  display: none;
+}
+.pin-panel p {
+  margin: 0;
+  line-height: 1.4;
+}
+.pin-task {
+  color: #d8d5e8;
+  font-size: 0.92rem;
+}
+.pin-status {
+  color: #95e6ce;
+  min-height: 1.4em;
+  font-size: 0.84rem;
+}
+.pin-power {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px;
+  color: #eadfca;
+}
+.pin-power input {
+  width: 100%;
+  grid-column: 1/-1;
+  accent-color: #d5cc84;
+}
+.pin-game .pin-launch {
+  min-height: 42px;
+  background: #edcd89;
+  color: #2d2932;
+  border-color: #f4dfaa;
+}
+.pin-game .pin-launch:disabled,
+.pin-power:has(input:disabled) {
+  display: none;
+}
+.pin-help {
+  color: #c5c1cc;
+  font-size: 0.81rem;
+}
+@media (max-width: 580px) {
+  .pin-game {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+  .pin-field canvas {
+    width: min(100%, 47svh);
+    justify-self: center;
+  }
+  .pin-panel {
+    gap: 6px;
+    padding: 9px 12px;
+  }
+  .pin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 5px;
+  }
+  .pin-panel h2 {
+    font-size: 18px;
+  }
+  .pin-scorebar,
+  .pin-task,
+  .pin-help {
+    font-size: 0.8rem;
+  }
+}
+
+.pin-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pin-player .face {
+  width: 34px;
+  height: 26px;
+}

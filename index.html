@@ -7,12 +7,12 @@
     <title>Семейная игротека</title>
     <meta
       name="description"
-      content="Семь семейных игр на телефоне и компьютере. Установите игротеку один раз и играйте без интернета."
+      content="Пятнадцать семейных игр на телефоне и компьютере. Установите игротеку один раз и играйте без интернета."
     />
     <meta property="og:title" content="Семейная игротека" />
     <meta
       property="og:description"
-      content="Лабиринт, платформер, раннер, кооператив, мини-гольф, детектив и гитара Паши в одном приложении."
+      content="Пятнадцать семейных игр в одном приложении. Гоняйте на картах, стройте мосты, программируйте робота и играйте без сети."
     />
     <meta
       property="og:image"
@@ -30,6 +30,14 @@
     <link rel="stylesheet" href="./golf.css" />
     <link rel="stylesheet" href="./mystery.css" />
     <link rel="stylesheet" href="./rhythm.css" />
+    <link rel="stylesheet" href="./race.css" />
+    <link rel="stylesheet" href="./bridge.css" />
+    <link rel="stylesheet" href="./tactics.css" />
+    <link rel="stylesheet" href="./cafe.css" />
+    <link rel="stylesheet" href="./cards.css" />
+    <link rel="stylesheet" href="./pinball.css" />
+    <link rel="stylesheet" href="./photo.css" />
+    <link rel="stylesheet" href="./robot.css" />
     <script type="module" src="./playroom.js"></script>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/app-192.png" />
@@ -48,7 +56,7 @@
       </header>
       <section id="offline-tools" aria-label="Офлайн и сохранения">
         <div class="offline-line">
-          <span id="offline-status" role="status">Готовим семь игр к игре без интернета…</span>
+          <span id="offline-status" role="status">Готовим пятнадцать игр к игре без интернета…</span>
           <button type="button" id="offline-retry" hidden>Продолжить загрузку</button>
           <button type="button" id="install-game" hidden>Установить игротеку</button>
         </div>
@@ -58,8 +66,7 @@
             <summary>Как взять игры в дорогу</summary>
             <p>
               Добавь игротеку на домашний экран через меню браузера. На iPhone нажми «Поделиться» → «На экран
-              Домой». Открой её с этой иконки, пока есть интернет, и дождись надписи «Готово к игре офлайн · 7
-              из 7 игр».
+              Домой». Открой её с этой иконки, пока есть интернет, и дождись надписи «Готово к игре офлайн · 15 из 15 игр».
             </p>
           </details>
           <details>
@@ -71,6 +78,38 @@
         <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
       </section>
       <div class="catalog" role="group" aria-label="Выберите игру">
+        <button type="button" class="cover-card" data-mode="race" aria-pressed="false">
+          <span class="art art-extra art-race"></span>
+          <span class="card-copy"><small>Картинг на время</small><strong>Гонки-призраки</strong><span>Проедьте круг по аквапарку и передайте руль. Следующий гонщик увидит призрак вашего карта.</span></span>
+        </button>
+        <button type="button" class="cover-card" data-mode="bridge" aria-pressed="false">
+          <span class="art art-extra art-bridge"></span>
+          <span class="card-copy"><small>Инженерная головоломка</small><strong>Мост над лавой</strong><span>Соедините берега и пустите по мосту вагонетку. Выдержат ли опоры?</span></span>
+        </button>
+        <button type="button" class="cover-card" data-mode="tactics" aria-pressed="false">
+          <span class="art art-extra art-tactics"></span>
+          <span class="card-copy"><small>Пошаговая тактика</small><strong>Ход команды</strong><span>Проведите двух героев через порталы. Монстры заранее показывают свой следующий ход.</span></span>
+        </button>
+        <button type="button" class="cover-card" data-mode="cafe" aria-pressed="false">
+          <span class="art art-extra art-cafe"></span>
+          <span class="card-copy"><small>Кулинарная игра</small><strong>Кафе для монстров</strong><span>Пеките вафли и блины, разливайте лимонад и успевайте отдавать заказы.</span></span>
+        </button>
+        <button type="button" class="cover-card" data-mode="cards" aria-pressed="false">
+          <span class="art art-extra art-cards"></span>
+          <span class="card-copy"><small>Сборка колоды</small><strong>Колода порталов</strong><span>Сыграйте карты семьи против монстров и выберите новую карту после победы.</span></span>
+        </button>
+        <button type="button" class="cover-card" data-mode="pinball" aria-pressed="false">
+          <span class="art art-extra art-pinball"></span>
+          <span class="card-copy"><small>Аркадный пинбол</small><strong>Пинбол миров</strong><span>Ловите шар двумя лопатками и зажигайте мишени на столах аквапарка и Края.</span></span>
+        </button>
+        <button type="button" class="cover-card" data-mode="photo" aria-pressed="false">
+          <span class="art art-extra art-photo"></span>
+          <span class="card-copy"><small>Фотоэкспедиция</small><strong>Фотоохота на монстров</strong><span>Поймайте в кадре огненный шар гаста, прыжок куба и искры эндермена.</span></span>
+        </button>
+        <button type="button" class="cover-card" data-mode="robot" aria-pressed="false">
+          <span class="art art-extra art-robot"></span>
+          <span class="card-copy"><small>Программирование</small><strong>Робот за изумрудом</strong><span>Составьте программу из шагов, поворотов и циклов. Соберите изумруды и вернитесь на базу.</span></span>
+        </button>
         <a class="cover-card" data-game-link="block-maze" href="./games/block-maze/">
           <span class="art art-maze"></span>
           <span class="card-copy"

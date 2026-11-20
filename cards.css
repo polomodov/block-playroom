@@ -1,0 +1,333 @@
+.deck-game {
+  --deck-gold: #f0cb82;
+  --deck-text: #fff0d5;
+  --deck-line: #7c695a;
+  border: 1px solid #766258;
+  border-radius: 14px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 40% 40%, #514039, #26202d 75%);
+  color: var(--deck-text);
+}
+.deck-game button {
+  cursor: pointer;
+  touch-action: manipulation;
+  color: inherit;
+  font: inherit;
+}
+.deck-game h3,
+.deck-game p {
+  margin: 0;
+}
+.deck-header {
+  padding: clamp(13px, 2vw, 24px);
+  background:
+    linear-gradient(90deg, #2d2536e0, #212737a6, transparent),
+    url('./assets/world-panoramas.webp') center top / 100% 400%;
+}
+.deck-game.aqua .deck-header {
+  background-position:
+    center,
+    center 67%;
+}
+.deck-game.end .deck-header {
+  background-image:
+    linear-gradient(90deg, #2d2536e0, #212737a6, transparent), url('./assets/realm-panoramas.webp');
+  background-size:
+    100% 100%,
+    100% 300%;
+  background-position: center, bottom;
+}
+.deck-header h2 {
+  font-size: clamp(22px, 3.7vw, 34px);
+  margin: 3px 0 0;
+  text-shadow: 0 2px 2px #131521;
+}
+.deck-header small {
+  color: var(--deck-gold);
+  font-weight: 700;
+}
+.deck-bar,
+.deck-handline {
+  display: flex;
+  gap: clamp(8px, 1.5vw, 20px);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.deck-bar {
+  background: #231e26;
+  padding: 5px clamp(10px, 2vw, 21px);
+  font-size: 0.92rem;
+}
+.deck-bar strong {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: auto;
+}
+.deck-bar i {
+  display: block;
+  width: 25px;
+  height: 39px;
+  background: url('./assets/maze-figures.webp') no-repeat;
+  background-size: 500% 200%;
+}
+.deck-bar b {
+  color: #ffbaad;
+}
+.deck-bar span {
+  color: #d9cbbb;
+}
+.deck-lanes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: clamp(8px, 1.7vw, 18px);
+}
+.deck-lane {
+  padding: 5px;
+  border: 1px solid #776554;
+  border-radius: 8px;
+  background: linear-gradient(170deg, #68514144, #17151e80);
+  display: flex;
+  flex-direction: column;
+  min-height: 110px;
+  min-width: 0;
+}
+.deck-lane label {
+  align-self: flex-start;
+  margin: 0 0 4px 3px;
+  color: #d6bd9a;
+  font-size: 0.72rem;
+}
+.deck-lane > div {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.deck-foe {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid #8e776251;
+  background: #30293078;
+  border-radius: 8px;
+}
+.deck-foe[aria-pressed='true'] {
+  border: 2px solid #fed58d;
+  padding: 3px;
+  background: #6d513b7d;
+}
+.deck-foe b {
+  font-size: clamp(0.69rem, 1.8vw, 0.91rem);
+  line-height: 1.15;
+}
+.deck-foe small {
+  font-size: 0.73rem;
+  color: #ffcebd;
+}
+.deck-beast {
+  width: clamp(32px, 5.7vw, 63px);
+  height: clamp(32px, 5.7vw, 63px);
+  display: block;
+  background: url('./assets/runner-monsters.webp') no-repeat;
+  background-size: 1600% 1700%;
+  filter: drop-shadow(0 2px 1px #1a1220);
+}
+.dancing .deck-beast {
+  animation: deck-jig 0.55s ease-in-out alternate infinite;
+}
+@keyframes deck-jig {
+  from {
+    transform: translateY(-1px) rotate(-8deg);
+  }
+  to {
+    transform: translateY(2px) rotate(8deg);
+  }
+}
+.deck-command {
+  padding: clamp(10px, 2vw, 20px);
+  border-top: 1px solid #69564c;
+  background: #2a242b;
+}
+.deck-command p {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #e4d3bd;
+}
+.deck-command .deck-note {
+  color: #ffdfa5;
+  margin-bottom: 8px;
+}
+.deck-handline {
+  margin-bottom: 8px;
+}
+.deck-handline h3,
+.deck-command h3 {
+  font-size: 1.05rem;
+}
+.deck-handline b {
+  font-size: 0.88rem;
+  color: #f3c77a;
+}
+.deck-handline button,
+.deck-retry {
+  margin-left: auto;
+  border: 1px solid #e4b978;
+  color: #342337;
+  background: #e5bf85;
+  border-radius: 7px;
+  padding: 6px 11px;
+  min-height: 36px;
+  font-weight: 700;
+}
+.deck-retry {
+  display: block;
+  margin: 12px 0;
+}
+.deck-hand {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(108px, 100%), 1fr));
+  gap: 6px;
+  margin: 10px 0;
+}
+.deck-card {
+  --light: #c5ddba;
+  --shade: #304b48;
+  --accent: #9fdcc1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  gap: 4px;
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  padding: 9px;
+  background: linear-gradient(153deg, var(--shade), #28242c 75%);
+  box-shadow: inset 0 0 0 3px #e4b96f0d;
+  min-height: 115px;
+  min-width: 0;
+}
+.deck-card.blue {
+  --shade: #39495e;
+  --light: #d7e8fa;
+  --accent: #9abbdf;
+}
+.deck-card.amber {
+  --shade: #73503a;
+  --light: #ffe1b0;
+  --accent: #e4b579;
+}
+.deck-card.lilac {
+  --shade: #5e4669;
+  --light: #eedaef;
+  --accent: #c3a6ce;
+}
+.deck-card .deck-cost {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 1.35em;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 0.76rem;
+  background: var(--accent);
+  color: #232127;
+  font-weight: 800;
+}
+.deck-card i {
+  font: 700 23px/1 system-ui;
+  color: var(--accent);
+  font-style: normal;
+}
+.deck-card strong {
+  color: var(--light);
+  font-size: 0.94rem;
+  line-height: 1.1;
+}
+.deck-card small {
+  font-size: 0.79rem;
+  line-height: 1.25;
+  color: #ecdfd2;
+}
+.deck-card:not(:disabled):hover,
+.deck-card:not(:disabled):focus-visible {
+  background: var(--shade);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.deck-card:disabled {
+  opacity: 0.62;
+  cursor: default;
+}
+.deck-command details {
+  margin-top: 7px;
+  font-size: 0.82rem;
+  color: #d4c6b8;
+}
+.deck-command summary {
+  cursor: pointer;
+  padding: 5px 0;
+}
+.deck-command ul {
+  columns: 2;
+  margin-top: 6px;
+  padding-left: 18px;
+}
+@media (max-width: 600px) {
+  .deck-hand {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .deck-card {
+    min-height: 95px;
+    padding: 7px;
+  }
+  .deck-card strong {
+    font-size: 0.84rem;
+  }
+  .deck-card small {
+    font-size: 0.72rem;
+  }
+  .deck-lane {
+    min-height: 95px;
+  }
+  .deck-lane label {
+    font-size: 0.66rem;
+  }
+  .deck-beast {
+    width: 32px;
+    height: 32px;
+  }
+  .deck-handline {
+    gap: 6px;
+  }
+  .deck-handline button {
+    font-size: 0.8rem;
+  }
+  .deck-lanes {
+    gap: 3px;
+    padding: 7px;
+  }
+  .deck-lane {
+    padding: 2px;
+  }
+  .deck-foe {
+    padding: 2px;
+  }
+  .deck-foe[aria-pressed='true'] {
+    padding: 1px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dancing .deck-beast {
+    animation: none;
+    transform: rotate(-7deg);
+  }
+}

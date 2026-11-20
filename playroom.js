@@ -4,7 +4,73 @@ import { mount as mystery } from './mystery.js';
 import { mount as rhythm } from './rhythm.js';
 import { titles, heroNames, slot, saveSlot, finishSlot, bindProgress } from './progress.js';
 
+import { mount as race } from './race.js';
+import { mount as bridge } from './bridge.js';
+import { mount as tactics } from './tactics.js';
+import { mount as cafe } from './cafe.js';
+import { mount as cards } from './cards.js';
+import { mount as pinball } from './pinball.js';
+import { mount as photo } from './photo.js';
+import { mount as robot } from './robot.js';
+
 const games = {
+  race: {
+    mount: race,
+    min: 1,
+    max: 1,
+    initial: ['kirill'],
+    hint: 'Выберите гонщика. Запись последнего круга станет соперником для следующего игрока.',
+  },
+  bridge: {
+    mount: bridge,
+    min: 1,
+    max: 1,
+    initial: ['maxim'],
+    hint: 'Выберите строителя. Уложите пролёты и укрепите мост перед испытанием.',
+  },
+  tactics: {
+    mount: tactics,
+    min: 2,
+    max: 2,
+    initial: ['mom', 'pasha'],
+    hint: 'Выберите двух героев. Ходите по очереди и следите за намерениями монстров.',
+  },
+  cafe: {
+    mount: cafe,
+    min: 1,
+    max: 1,
+    initial: ['dad'],
+    hint: 'Выберите повара на три смены. Снимайте готовое со станции и отдавайте заказ гостю.',
+  },
+  cards: {
+    mount: cards,
+    min: 1,
+    max: 1,
+    initial: ['maxim'],
+    hint: 'Выберите героя. Собирайте карты и сочетайте способности семьи в одном ходу.',
+  },
+  pinball: {
+    mount: pinball,
+    min: 1,
+    max: 1,
+    initial: ['kirill'],
+    hint: 'Выберите игрока и стол. Зарядите пружину и удерживайте шар в игре лопатками.',
+  },
+  photo: {
+    mount: photo,
+    min: 1,
+    max: 1,
+    initial: ['mom'],
+    hint: 'Выберите фотографа. Ловите особые моменты и собирайте снимки в семейный альбом.',
+  },
+  robot: {
+    mount: robot,
+    min: 1,
+    max: 1,
+    initial: ['pasha'],
+    hint: 'Выберите программиста. Давайте роботу команды и проверяйте маршрут на складе.',
+  },
+
   coop: {
     mount: cooperative,
     min: 2,
@@ -80,8 +146,19 @@ function drawSetup() {
   if (saved)
     q('resume-mode').textContent = 'Продолжить · ' + saved.players.map((h) => heroNames[h]).join(' и ');
 }
+const catalog = document.querySelector('.catalog');
+const coverCards = [...catalog.querySelectorAll('.cover-card')];
+const narrowCatalog = matchMedia('(max-width: 760px)');
+function placeSetup() {
+  const index = coverCards.findIndex((card) => card.dataset.mode === mode);
+  const columns = narrowCatalog.matches ? 2 : 4;
+  const lastInRow = Math.min(coverCards.length, (Math.floor(index / columns) + 1) * columns) - 1;
+  coverCards[lastInRow].after(q('setup'));
+}
+narrowCatalog.addEventListener('change', placeSetup);
 function choose(id) {
   mode = id;
+  placeSetup();
   const u = new URL(location.href);
   u.searchParams.set('game', id);
   history.replaceState(null, '', u);
@@ -212,3 +289,6 @@ window.addEventListener('pageshow', (e) => {
   if (e.persisted && session) pause();
 });
 const refresh = bindProgress(openGame, drawSetup);
+
+placeSetup();
+if (Object.hasOwn(games, fromUrl)) q('setup').scrollIntoView({ block: 'center' });

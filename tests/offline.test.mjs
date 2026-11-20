@@ -15,7 +15,17 @@ const manifest = [
   ['games/block-maze/assets/portraits.webp', 'same-image', 100],
   ['assets/portraits.png', 'same-image', 100],
 ];
-function setup() {
+function setup(previousRelease = false) {
+  const prefix = 'family-offline:/block-playroom/:';
+  const oldName = prefix + 'old';
+  const windows = ['playing', 'lobby'].map((id) => ({
+    id,
+    url: scope,
+    postMessage: (msg) => messages.push(msg),
+    navigate() {
+      throw new Error('Update interrupted an open window');
+    },
+  }));
   const handlers = {},
     stored = new Map(),
     requests = [],
@@ -38,9 +48,9 @@ function setup() {
   const self = {
     registration: { scope },
     clients: {
-      matchAll: async () => [{ url: scope, postMessage: (data) => messages.push(data) }],
+      matchAll: async () => windows,
       claim: async () => {},
-      get: async () => undefined,
+      get: async (id) => windows.find((w) => w.id === id),
     },
     addEventListener: (name, fn) => (handlers[name] = fn),
     skipWaiting: async () => {
@@ -48,17 +58,26 @@ function setup() {
     },
   };
   const routes = new Map();
-  const routesCache = { match: async (url) => routes.get(url)?.clone(), put: async (url, response) => routes.set(url, response) };
+  const routesCache = {
+    match: async (url) => routes.get(url)?.clone(),
+    put: async (url, response) => routes.set(url, response),
+  };
   const caches = {
-    open: async (name) => (name.endsWith(':routes') ? routesCache : cache),
-    keys: async () => [],
-    has: async () => false,
+    open: async (name) =>
+      name === oldName
+        ? { match: async (url) => (url === scope + 'photo.js' ? undefined : new Response('old release')) }
+        : name.endsWith(':routes')
+          ? routesCache
+          : cache,
+    keys: async () => (previousRelease ? [oldName, prefix + 'test'] : []),
+    has: async (name) => previousRelease && name === oldName,
     delete: async () => false,
   };
   runInNewContext(source, {
     self,
     importScripts: () => {},
     OFFLINE_FILES: manifest,
+    OFFLINE_GAME_COUNT: 15,
     OFFLINE_REVISION: 'test',
     caches,
     URL,
@@ -72,10 +91,11 @@ function setup() {
     handlers.fetch({ request: new Request(scope + path), respondWith: (p) => (result = p) });
     return result;
   };
-  async function status() {
+  async function status(clientId) {
     await new Promise((resolve, reject) =>
       handlers.message({
         data: 'offline-status',
+        source: { id: clientId },
         ports: [{ postMessage: (data) => responses.push(data) }],
         waitUntil: (p) => p.then(resolve, reject),
       }),
@@ -84,6 +104,8 @@ function setup() {
   }
   return {
     install,
+    activate: () =>
+      new Promise((resolve, reject) => handlers.activate({ waitUntil: (p) => p.then(resolve, reject) })),
     fetch,
     status,
     requests,
@@ -104,7 +126,7 @@ test('one offline copy per identical media file and separate copies of location-
   assert.equal(sw.requests.length, 6);
   const reply = await sw.status();
   assert.equal(reply.ready, true);
-  assert.equal(reply.games, 7);
+  assert.equal(reply.games, 15);
   assert.equal(reply.totalBytes, 220);
   assert.equal(reply.count, 6);
   assert.equal(sw.messages.at(-1).bytes, 220);
@@ -147,4 +169,18 @@ test('an interrupted pack cannot activate or report ready and its retry reuses v
   assert.equal((await sw.status()).ready, false);
   sw.setFailure('');
   assert.equal((await sw.status()).ready, true);
+});
+
+test('an upgrade preserves running seven-game windows and reports the expanded release to the next launcher', async () => {
+  const sw = setup(true);
+  await sw.install();
+  await sw.activate();
+  const old = await sw.status('playing');
+  assert.equal(old.ready, true);
+  assert.equal(old.pack, 'seven-games-v1');
+  assert.equal(old.games, 7);
+  assert.equal(old.library.games, 15);
+  const fresh = await sw.status('reopened');
+  assert.equal(fresh.games, 15);
+  assert.equal(fresh.pack, old.library.pack);
 });
