@@ -3,10 +3,10 @@
   --deck-text: #fff0d5;
   --deck-line: #7c695a;
   border: 1px solid #766258;
-  border-radius: 14px;
   overflow: hidden;
   background: radial-gradient(ellipse at 40% 40%, #514039, #26202d 75%);
   color: var(--deck-text);
+  border-radius: 4px;
 }
 .deck-game button {
   cursor: pointer;
@@ -82,22 +82,29 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   padding: clamp(8px, 1.7vw, 18px);
+  background:
+    linear-gradient(0deg, #152426da 0%, #172e2a40 60%, #1c242d40),
+    url('./assets/world-panoramas.webp') center top / 100% 400%;
+  border-block: 2px solid #85765f;
 }
 .deck-lane {
   padding: 5px;
-  border: 1px solid #776554;
-  border-radius: 8px;
-  background: linear-gradient(170deg, #68514144, #17151e80);
   display: flex;
   flex-direction: column;
   min-height: 110px;
   min-width: 0;
+  border: 1px solid #d8d4ad66;
+  border-bottom-width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(#27313233, #1a202a6e);
 }
 .deck-lane label {
   align-self: flex-start;
   margin: 0 0 4px 3px;
-  color: #d6bd9a;
   font-size: 0.72rem;
+  background: #182523d9;
+  padding: 2px 5px;
+  color: #f1e3bf;
 }
 .deck-lane > div {
   display: flex;
@@ -116,13 +123,13 @@
   max-width: 100%;
   padding: 4px;
   border: 1px solid #8e776251;
-  background: #30293078;
-  border-radius: 8px;
+  background: #20272beb;
+  border-radius: 2px;
 }
 .deck-foe[aria-pressed='true'] {
   border: 2px solid #fed58d;
   padding: 3px;
-  background: #6d513b7d;
+  background: #3a342cf0;
 }
 .deck-foe b {
   font-size: clamp(0.69rem, 1.8vw, 0.91rem);
@@ -136,9 +143,8 @@
   width: clamp(32px, 5.7vw, 63px);
   height: clamp(32px, 5.7vw, 63px);
   display: block;
-  background: url('./assets/runner-monsters.webp') no-repeat;
-  background-size: 1600% 1700%;
   filter: drop-shadow(0 2px 1px #1a1220);
+  image-rendering: auto;
 }
 .dancing .deck-beast {
   animation: deck-jig 0.55s ease-in-out alternate infinite;
@@ -208,12 +214,13 @@
   text-align: left;
   gap: 4px;
   border: 1px solid var(--accent);
-  border-radius: 9px;
   padding: 9px;
   background: linear-gradient(153deg, var(--shade), #28242c 75%);
   box-shadow: inset 0 0 0 3px #e4b96f0d;
   min-height: 115px;
   min-width: 0;
+  border-radius: 3px;
+  border-bottom: 4px solid var(--accent);
 }
 .deck-card.blue {
   --shade: #39495e;
@@ -241,11 +248,14 @@
   background: var(--accent);
   color: #232127;
   font-weight: 800;
+  z-index: 1;
 }
-.deck-card i {
-  font: 700 23px/1 system-ui;
+.deck-mark {
+  position: absolute;
+  top: 6px;
+  left: 7px;
+  font-size: 0.82rem;
   color: var(--accent);
-  font-style: normal;
 }
 .deck-card strong {
   color: var(--light);
@@ -330,4 +340,33 @@
     animation: none;
     transform: rotate(-7deg);
   }
+}
+.deck-game.aqua .deck-lanes {
+  background-position:
+    center,
+    center 66.67%;
+}
+.deck-game.end .deck-lanes {
+  background-image: linear-gradient(0deg, #272033c9, #1f1c3040), url('./assets/realm-panoramas.webp');
+  background-size:
+    auto,
+    100% 300%;
+  background-position: center, bottom;
+}
+.deck-illustration {
+  display: block;
+  width: 100%;
+  height: clamp(28px, 4vw, 50px);
+  margin: 0 auto 2px;
+  background-repeat: no-repeat;
+}
+.deck-illustration.landmark {
+  background-image: url('./games/block-maze/assets/maze-landmarks.webp');
+  background-size: 400% 500%;
+  width: clamp(42px, 6vw, 75px);
+}
+.deck-illustration.family {
+  background-image: url('./assets/maze-figures.webp');
+  background-size: 500% 200%;
+  width: clamp(17px, 2.4vw, 30px);
 }

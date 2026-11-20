@@ -1,3 +1,4 @@
+import { drawLandmark, material } from './arcade-scenery.js';
 import { heroNames } from './progress.js';
 
 const W = 360,
@@ -278,19 +279,16 @@ function line(g, coords, width, color) {
 function paintBoard(g, s) {
   const theme = tables[s.table],
     aqua = s.table === 'aqua';
-  const grad = g.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, theme.deep);
-  grad.addColorStop(0.52, theme.felt);
-  grad.addColorStop(1, theme.deep);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, W, H);
   g.save();
-  for (let i = 0; i < 110; i++) {
-    const x = (i * 71 + i * i * 17) % W,
-      y = (i * 139 + i * i * 7) % H;
-    if (aqua) line(g, [x, y, x + 4 + (i % 12), y - 2], 1, '#aaffec24');
-    else circle(g, x, y, i % 5 === 0 ? 1.5 : 0.75, '#eee1ff89');
-  }
+  g.imageSmoothingEnabled = false;
+  const world = aqua ? 'waterpark' : 'end';
+  g.fillStyle = g.createPattern(material(world), 'repeat');
+  g.fillRect(0, 0, W, H);
+  // The inlaid scenery is below the rails, ball and scoring lamps.
+  g.globalAlpha = 0.76;
+  drawLandmark(g, aqua ? 'water_slide' : 'crystal_spires', 45, 19, 102, 76);
+  drawLandmark(g, aqua ? 'wave_pool' : 'chorus_grove', 225, 31, 82, 61);
+  g.globalAlpha = 1;
   // Painted return chutes lead the eye from the bumpers to the flippers.
   g.strokeStyle = theme.line;
   g.lineWidth = 3;
@@ -303,26 +301,14 @@ function paintBoard(g, s) {
   }
   g.globalAlpha = 1;
   const t = s.ticks / 120;
-  if (aqua) {
-    circle(g, 153, 184, 25, '#123e50');
-    g.strokeStyle = '#76d8ca';
-    g.lineWidth = 2;
-    for (let j = 0; j < 3; j++) {
-      const a = (j * TAU) / 3 + t * 0.38;
-      g.beginPath();
-      g.arc(153, 184, 17, a, a + 1.6);
-      g.stroke();
-    }
-  } else {
-    g.fillStyle = '#af80c2';
-    g.fillRect(135, 168, 36, 26);
-    g.fillStyle = '#65537f';
-    g.fillRect(138, 191, 30, 7);
-    g.fillStyle = '#382f52';
-    g.fillRect(140, 177, 25, 9);
-    g.fillStyle = '#def5aa';
-    g.fillRect(145, 179, 5, 3);
-    g.fillRect(155, 179, 5, 3);
+  drawLandmark(g, aqua ? 'typhoon' : 'exit_portal', 105, 144, 96, 72);
+  g.strokeStyle = theme.light;
+  g.lineWidth = 1.5;
+  for (let j = 0; j < 3; j++) {
+    const a = (j * TAU) / 3 + t * 0.38;
+    g.beginPath();
+    g.ellipse(153, 202, 49, 12, 0, a, a + 0.95);
+    g.stroke();
   }
   g.fillStyle = '#fff1cb';
   g.font = 'bold 12px system-ui';
@@ -344,23 +330,12 @@ function paintBoard(g, s) {
     circle(g, p.x, p.y, r + 2, theme.line);
     circle(g, p.x, p.y, r, flash ? '#fff7cd' : theme.lights[i]);
     circle(g, p.x, p.y, r - 5, theme.deep);
-    if (aqua) {
-      g.strokeStyle = theme.lights[i];
-      g.lineWidth = 3;
-      g.beginPath();
-      g.arc(p.x, p.y, r - 10, -2.5, 2);
-      g.quadraticCurveTo(p.x + 8, p.y + 4, p.x + 4, p.y - 3);
-      g.stroke();
-    } else {
-      g.fillStyle = theme.lights[i];
-      g.beginPath();
-      g.moveTo(p.x, p.y - 13);
-      g.lineTo(p.x + 9, p.y - 1);
-      g.lineTo(p.x, p.y + 13);
-      g.lineTo(p.x - 9, p.y - 1);
-      g.closePath();
-      g.fill();
-    }
+    const target = aqua
+      ? ['wave_pool', 'water_slide', 'typhoon'][i]
+      : ['crystal_spires', 'chorus_grove', 'exit_portal'][i];
+    drawLandmark(g, target, p.x - r + 3, p.y - r + 4, 2 * r - 6, 2 * r - 10);
+    g.fillStyle = flash ? '#fff3be' : theme.lights[i];
+    g.fillRect(p.x - 4, p.y + r - 5, 8, 2);
   }
   for (let i = 0; i < 2; i++) {
     const f = flipper(i, s.angles[i]);

@@ -1,3 +1,4 @@
+import { material, drawLandmark, landmarkAtlas } from './arcade-scenery.js';
 import { heroNames } from './progress.js';
 
 // Distance around the closed spline is measured in pixels. Ghost and driver use the same coordinates.
@@ -191,12 +192,6 @@ export function ghostAt(record, tick) {
 }
 const seconds = (ticks) => (ticks / 60).toFixed(2).replace('.', ',') + ' с';
 
-function circle(g, x, y, r, color) {
-  g.beginPath();
-  g.arc(x, y, r, 0, TAU);
-  g.fillStyle = color;
-  g.fill();
-}
 function stroke(g, color, width, draw) {
   g.strokeStyle = color;
   g.lineWidth = width;
@@ -204,44 +199,41 @@ function stroke(g, color, width, draw) {
   draw();
   g.stroke();
 }
+function parasolDeck(g, x, y) {
+  g.save();
+  g.translate(x, y);
+  g.fillStyle = '#1f5461';
+  g.fillRect(-26, 4, 58, 27);
+  g.fillStyle = '#827059';
+  g.fillRect(-29, 0, 58, 27);
+  for (let i = 0; i < 5; i++) {
+    g.fillStyle = i % 2 ? '#bc9f72' : '#c8ae7b';
+    g.fillRect(-28, i * 5, 56, 4);
+  }
+  g.fillStyle = '#584e43';
+  g.fillRect(-2, -10, 4, 28);
+  g.fillStyle = '#f4d9a6';
+  g.fillRect(-1, -10, 2, 26);
+  for (let row = 0; row < 6; row++) {
+    const radius = 4 + row * 3;
+    g.fillStyle = row === 5 ? '#a95044' : '#df6851';
+    g.fillRect(-radius, -20 + row * 3, radius * 2, 3);
+    g.fillStyle = '#ffda85';
+    g.fillRect(-Math.floor(radius / 2), -20 + row * 3, Math.ceil(radius / 2), 3);
+  }
+  g.restore();
+}
 function paintCourse(g) {
-  const water = g.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  water.addColorStop(0, '#17496a');
-  water.addColorStop(0.55, '#167d8a');
-  water.addColorStop(1, '#19465c');
-  g.fillStyle = water;
+  g.imageSmoothingEnabled = false;
+  g.fillStyle = g.createPattern(material('waterpark', '#'), 'repeat');
   g.fillRect(0, 0, WIDTH, HEIGHT);
-  for (let i = 0; i < 230; i++) {
-    const x = (i * 131.7) % WIDTH,
-      y = (i * 71.13) % HEIGHT;
-    stroke(g, i % 3 ? '#7ee2d232' : '#c2ffdf70', 2, () => {
-      g.moveTo(x, y);
-      g.quadraticCurveTo(x + 5, y + 3, x + 11 + (i % 9), y);
-    });
-  }
-  for (const [x, y, scale] of [
-    [44, 55, 0.8],
-    [304, 42, 0.7],
-    [356, 381, 0.75],
-    [684, 319, 1],
-    [182, 220, 0.85],
-  ]) {
-    g.save();
-    g.translate(x, y);
-    g.scale(scale, scale);
-    circle(g, 2, 4, 18, '#235668');
-    circle(g, 0, 0, 17, '#e8c97c');
-    for (let k = 0; k < 8; k++) {
-      g.rotate(TAU / 8);
-      g.fillStyle = k % 2 ? '#286a46' : '#3a9b57';
-      g.beginPath();
-      g.moveTo(0, 0);
-      g.quadraticCurveTo(-11, -13, 0, -23);
-      g.quadraticCurveTo(6, -12, 0, 0);
-      g.fill();
-    }
-    g.restore();
-  }
+  // The rides are painted before the road, so they never obscure the driving line.
+  parasolDeck(g, 68, 49);
+  parasolDeck(g, 575, 349);
+  parasolDeck(g, 629, 365);
+  drawLandmark(g, 'water_slide', 126, 137, 136);
+  drawLandmark(g, 'typhoon', 266, 157, 175);
+  drawLandmark(g, 'wave_pool', 500, 112, 130);
   const line = () => {
     g.moveTo(path[0].x, path[0].y);
     for (const p of path) g.lineTo(p.x, p.y);
@@ -254,7 +246,7 @@ function paintCourse(g) {
   stroke(g, '#f98d68', ROAD * 2 + 6, line);
   g.setLineDash([]);
   stroke(g, '#345461', ROAD * 2, line);
-  stroke(g, '#456573', ROAD * 2 - 7, line);
+  stroke(g, g.createPattern(material('waterpark'), 'repeat'), ROAD * 2 - 5, line);
   g.setLineDash([5, 11]);
   stroke(g, '#d5e4d65c', 1.3, line);
   g.setLineDash([]);
@@ -298,21 +290,6 @@ function paintCourse(g) {
       });
     g.restore();
   }
-  // Spiral slide in the infield.
-  function slide() {
-    g.moveTo(370, 218);
-    for (let i = 0; i < 140; i++) {
-      const a = i * 0.072,
-        r = 4 + i * 0.21;
-      g.lineTo(370 + Math.cos(a) * r * 1.4, 218 + Math.sin(a) * r * 0.66);
-    }
-    g.bezierCurveTo(305, 210, 338, 269, 265, 264);
-  }
-  g.lineCap = 'round';
-  stroke(g, '#1c5368', 15, slide);
-  stroke(g, '#ffbb58', 12, slide);
-  stroke(g, '#e38845', 5, slide);
-  g.lineCap = 'butt';
 }
 function kart(g, t, hero, ghost, boost) {
   g.save();
@@ -332,12 +309,18 @@ function kart(g, t, hero, ghost, boost) {
   g.fillRect(-7, -8, 5, 16);
   g.fillRect(3, -8, 5, 16);
   g.fillStyle = ghost ? '#d0f6ff' : colors[hero];
-  g.beginPath();
-  g.roundRect(-11, -6, 22, 12, 4);
-  g.fill();
+  g.fillRect(-10, -5, 19, 10);
+  g.fillRect(-8, -6, 15, 12);
+  g.fillStyle = '#c5dcdb';
+  g.fillRect(-10, -5, 18, 1);
+  g.fillStyle = '#375961';
+  g.fillRect(-10, 4, 18, 2);
   g.fillStyle = '#304154';
   g.fillRect(-3, -4, 6, 8);
-  circle(g, -1, 0, 3, ghost ? '#fff' : '#e4ae80');
+  g.fillStyle = ghost ? '#e5ffff' : '#e4ae80';
+  g.fillRect(-3, -2, 5, 4);
+  g.fillStyle = ghost ? '#b5d9da' : '#4d3d34';
+  g.fillRect(-4, -3, 3, 6);
   g.fillStyle = '#fff2a8';
   g.fillRect(8, -4, 2, 2);
   g.fillRect(8, 2, 2, 2);
@@ -370,7 +353,9 @@ export function mount(host, { players, saved, save, finish }) {
   const layer = document.createElement('canvas');
   layer.width = WIDTH;
   layer.height = HEIGHT;
-  paintCourse(layer.getContext('2d'));
+  const courseContext = layer.getContext('2d');
+  const atlas = landmarkAtlas();
+  paintCourse(courseContext);
   const portrait = document.createElement('span');
   portrait.className = 'face face-' + s.hero;
   q('.race-driver').append(portrait, document.createTextNode('За рулём · ' + heroNames[s.hero]));
@@ -379,6 +364,14 @@ export function mount(host, { players, saved, save, finish }) {
     : 'Первый заезд запишет соперника';
   const abort = new AbortController(),
     opt = { signal: abort.signal };
+  atlas.addEventListener(
+    'load',
+    () => {
+      paintCourse(courseContext);
+      paint();
+    },
+    opt,
+  );
   const pressed = new Set(),
     keys = {
       ArrowLeft: 'left',

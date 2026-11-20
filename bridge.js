@@ -1,3 +1,4 @@
+import { drawLandmark, material } from './arcade-scenery.js';
 // Elastic deck joints distribute the moving load to adjacent spans, struts and suspension cables.
 export const crossings = [
   {
@@ -193,6 +194,7 @@ function drawBridge(g, s, img, figures, hero, time) {
   const testing = s.phase !== 'build',
     sag = deflections(s, testing ? s.cart : -10).map((v) => Math.min(27, v));
   const dy = (i) => deckY + sag[i];
+  g.imageSmoothingEnabled = false;
   const grad = g.createLinearGradient(0, 0, 0, H);
   grad.addColorStop(0, '#3b243b');
   grad.addColorStop(0.52, '#853923');
@@ -200,26 +202,15 @@ function drawBridge(g, s, img, figures, hero, time) {
   g.fillStyle = grad;
   g.fillRect(0, 0, W, H);
   if (img.naturalWidth) {
-    g.save();
-    g.globalAlpha = 0.71;
-    g.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight / 3, 0, 0, W, 156);
-    g.restore();
+    g.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight / 3, 0, 0, W, H);
   }
-  for (let i = 0; i < 13; i++) {
-    const x = i * 63 + Math.sin(i * 1.5) * 30,
-      y = 118 + Math.sin(i * 9) * 24;
-    polygon(
-      g,
-      [
-        [x - 44, 230],
-        [x - 26, y + 16],
-        [x, y],
-        [x + 20, y + 12],
-        [x + 36, 230],
-      ],
-      '#642f35',
-    );
-  }
+  // On the far bank the lava pours past basalt stacks; the crossing remains in the foreground.
+  drawLandmark(g, 'basalt_columns', 35, 111, 154);
+  drawLandmark(g, 'lavafall', 210, 123, 183);
+  drawLandmark(g, 'basalt_columns', 478, 125, 160);
+  drawLandmark(g, 'crimson_fungi', 570, 130, 151);
+  g.save();
+  g.globalAlpha = 0.58;
   polygon(
     g,
     [
@@ -234,12 +225,13 @@ function drawBridge(g, s, img, figures, hero, time) {
       [740, H],
       [0, H],
     ],
-    '#ed6730',
+    g.createPattern(material('nether', '~'), 'repeat'),
   );
-  for (let i = 0; i < 29; i++) {
+  g.restore();
+  for (let i = 0; i < 12; i++) {
     const x = ((i * 137 + time * (4 + (i % 3))) % 800) - 40,
       y = 263 + ((i * 47) % 82);
-    line(g, x, y, x + 12 + ((i * 29) % 74), y, 2 + (i % 4), i % 2 ? '#ffae41' : '#c54932');
+    line(g, x, y, x + 8 + ((i * 29) % 24), y, 2, i % 2 ? '#ffd05b' : '#ea782d');
   }
   for (const x of [startX, endX]) {
     const dir = x === startX ? -1 : 1;
@@ -254,7 +246,7 @@ function drawBridge(g, s, img, figures, hero, time) {
         [x + dir * 55, H],
         [x + dir * 161, H],
       ],
-      '#493342',
+      g.createPattern(material('nether', '#'), 'repeat'),
     );
     line(g, x + dir * 117, deckY - 4, x, deckY - 4, 8, '#dfa367');
     for (let i = 0; i < 10; i++) {

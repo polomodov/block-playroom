@@ -1,3 +1,5 @@
+import { drawLandmark, material } from './arcade-scenery.js';
+import { drawGem } from './games/block-maze/maze-materials.js';
 // Courses use the same coordinates for drawing, aiming and fixed-step ball physics.
 const WIDTH = 680,
   HEIGHT = 360,
@@ -358,7 +360,11 @@ function stroke(g, color, width, points) {
   g.stroke();
 }
 
-function paintTurf(g, c) {
+const holeArt = [
+  ['temple', 'stone_mask'], ['arcade', 'carousel'], ['waterpark', 'typhoon'],
+  ['store', 'living_room'], ['nether', 'basalt_columns'], ['castle', 'gatehouse'], ['end', 'crystal_spires'],
+];
+function paintTurf(g, c, world) {
   const [outer, grass, stripe, edge, stone] = c.colors;
   g.fillStyle = outer;
   g.fillRect(0, 0, WIDTH, HEIGHT);
@@ -400,6 +406,11 @@ function paintTurf(g, c) {
       [x + 1, y - 3],
     ]);
   }
+  g.save();
+  g.globalAlpha = 0.22;
+  g.fillStyle = g.createPattern(material(world), 'repeat');
+  g.fillRect(EDGE, EDGE, WIDTH - 2 * EDGE, HEIGHT - 2 * EDGE);
+  g.restore();
   const shade = g.createLinearGradient(0, 0, WIDTH, HEIGHT);
   shade.addColorStop(0, '#fff7b810');
   shade.addColorStop(0.6, '#ffffff00');
@@ -606,6 +617,7 @@ function drawFlag(g, c, time) {
   g.fill();
   g.fillStyle = '#fff2bb';
   g.fillRect(x + 2, y - 31, 3, 8);
+  drawGem(g, x, y - 36, Math.floor(time * 0.8) % 4 === 0);
 }
 
 function drawBall(g, b, color, active) {
@@ -629,11 +641,16 @@ function drawCourse(canvas, state, time, figures) {
     c = courses[state.hole],
     b = state.balls[state.turn];
   g.setTransform(canvas.width / WIDTH, 0, 0, canvas.height / HEIGHT, 0, 0);
-  paintTurf(g, c);
+  paintTurf(g, c, holeArt[state.hole][0]);
   for (const r of c.hazards) paintLiquid(g, r, state.hole, time);
   paintSpecial(g, c, time, b);
   for (const r of c.walls) paintWall(g, r, c, state.hole);
   for (const p of c.bumpers) paintBumper(g, p, c, state.hole, time);
+  // The miniature belongs to the obstacle. Its ground footprint stays inside the collision rail.
+  const plinth = c.walls[0];
+  const width = Math.min(68, plinth.w + 20);
+  drawLandmark(g, holeArt[state.hole][1], plinth.x + (plinth.w - width) / 2,
+    plinth.y + Math.min(52, plinth.h) - width * 2 / 3, width);
   const [sx, sy] = c.tee;
   g.fillStyle = '#1e443e59';
   g.fillRect(sx - 11, sy - 9, 22, 18);
@@ -813,6 +830,10 @@ export function mount(host, { saved, players, save, finish }) {
           state.strokes[i][state.hole] +
           ' · всего ' +
           state.strokes[i].reduce((a, b) => a + b, 0);
+        const portrait = document.createElement('i');
+        portrait.className = 'face face-' + id;
+        portrait.setAttribute('aria-hidden', 'true');
+        el.prepend(portrait);
         el.append(name, score);
         return el;
       }),

@@ -1,3 +1,4 @@
+import { trackGem as gem } from '../classic-arcade-art.js';
 import { atlas, box, line, oval, poly } from './scene-art.js?v=jump-1';
 import { drawDragonCloud, drawDragonWarning } from './dragon-art.js';
 
@@ -14,18 +15,6 @@ function sparkle(c,x,y,r,col) {
   poly(c,col,[x,y-r,x+r*.22,y-r*.19,x+r*.76,y,x+r*.19,y+r*.18,x,y+r,x-r*.2,y+r*.17,x-r*.75,y,x-r*.2,y-r*.2]);
 }
 function shadow(c,x,y,w,h){oval(c,x,y,w,h,'rgba(12,19,30,.32)');}
-
-function gem(c,p,s,o) {
-  const u=p.unit*.13,turn=s.time*3.6+o.id*1.36,cy=p.y-u*(1.95+.16*Math.sin(turn));
-  shadow(c,p.x,p.y,u*.49,u*.13);
-  c.save();c.translate(p.x,cy);c.scale(u*(.77+.18*Math.cos(turn)),u);
-  poly(c,'#184c44',[-.64,-.59,-.17,-1,.42,-.77,.71,-.44,.58,.52,.02,1.06,-.58,.57]);
-  poly(c,'#a9ffe2',[-.55,-.51,-.15,-.87,.39,-.69,.58,-.43,.21,-.27,-.29,-.28]);
-  poly(c,'#5ff2a7',[-.29,-.28,.21,-.27,.20,.51,-.01,.91,-.28,.45]);
-  poly(c,'#31cb95',[-.58,-.45,-.29,-.28,-.28,.45,-.01,.91,-.5,.48]);
-  poly(c,'#139775',[.21,-.27,.58,-.43,.46,.45,-.01,.91,.20,.51]);
-  if(Math.cos(turn)>.1)sparkle(c,-.31,-.51,.28,'#f7fff0');c.restore();
-}
 
 function fret(c,y,w,dir,ink) {
   for(const s of [-1,1])line(c,ink,.026,[-w/2+s*.014,y-dir*.06,s*.014,y+dir*.06,w/2+s*.014,y-dir*.06]);

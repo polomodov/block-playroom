@@ -1,0 +1,35 @@
+/* The two side-view games use the labyrinth's portrait and panorama originals. */
+:root {
+  --amber: #d8fa68;
+  --green: #d8fa68;
+  --amber-deep: #7f9750;
+}
+body {
+  background: radial-gradient(ellipse at 14% 5%, #365a5366, transparent 48rem), #101719;
+}
+.cover, .banner { background: #23382f; overflow: hidden; }
+.cover:before { content: none; }
+.classic-arcade-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.cover:after, .banner:before {
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, #0e1c1cee, #132422c2 27%, #13201d20 60%, transparent 80%);
+}
+.cover-copy, .banner-content { position: relative; z-index: 2; }
+.hero-picture .portrait, .portrait.hud-portrait, .portrait-art {
+  background-image: url('./block-maze/assets/hero-portraits.webp');
+}
+.portrait[data-hero='pasha'], [data-hero='pasha'] .portrait-art {
+  background-image: url('./block-maze/assets/pasha-portrait.webp');
+}
+@media (max-width: 620px) {
+  .cover:after, .banner:before {
+    background: linear-gradient(90deg, #122422e0, #1224229c 35%, transparent 76%);
+  }
+}

@@ -7,6 +7,7 @@
 }
 .cafe-banner {
   min-height: 108px;
+  gap: 12px;
   padding: 17px 22px;
   display: flex;
   align-items: end;
@@ -22,10 +23,29 @@
   z-index: -1;
   background:
     linear-gradient(90deg, #38252df2, #39252db0 58%, #30202b10),
-    url('./assets/adventure-covers.webp') right top/400% 200%;
+    url('./assets/world-panoramas.webp') center 33.3333% / auto 400%;
   background-size:
     100% 100%,
-    400% 200%;
+    auto 400%;
+}
+.cafe-banner .cafe-avatar {
+  width: clamp(45px, 8vw, 86px);
+  height: auto;
+  aspect-ratio: 4 / 3;
+  flex: none;
+  align-self: center;
+  outline: 2px solid #f4cb85;
+  border-radius: 2px;
+}
+.cafe-banner::after {
+  content: '';
+  margin-left: auto;
+  align-self: flex-end;
+  width: min(22%, 135px);
+  aspect-ratio: 3 / 2;
+  flex: none;
+  background: url('./games/block-maze/assets/maze-landmarks.webp') 33.3333% 0 / 400% 500%;
+  image-rendering: pixelated;
 }
 .cafe-game h2,
 .cafe-game h3,
@@ -128,8 +148,7 @@
 .cafe-guest {
   width: 43px;
   height: 43px;
-  background: url('./assets/runner-monsters.webp') no-repeat;
-  background-size: 1600% 1700%;
+  image-rendering: pixelated;
   flex: none;
 }
 .cafe-ticket > span:last-child {

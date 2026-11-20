@@ -110,15 +110,12 @@
   border: 1px solid #638087;
   border-radius: 8px;
 }
-.coop-team i {
-  display: block;
-  background: #8af4ed;
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 50%;
-}
-.coop-team [data-actor='1'] i {
-  background: #ffc98a;
+.coop-team i.face {
+  width: clamp(27px, 3.8vw, 43px);
+  height: auto;
+  aspect-ratio: 4 / 3;
+  flex: none;
+  border-radius: 2px;
 }
 .coop-team [aria-pressed='true'] {
   color: #121f27;
@@ -128,9 +125,6 @@
 .coop-team [aria-pressed='true'][data-actor='1'] {
   background: #ffc98a;
   border-color: #ffdfaa;
-}
-.coop-team [aria-pressed='true'] i {
-  background: #233941;
 }
 .coop-game .coop-switch,
 .coop-game .coop-hint,

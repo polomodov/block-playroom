@@ -62,10 +62,50 @@ function embedPage(html, name) {
       if (!Object.hasOwn(releases, target)) throw new Error('Unbundled game link: ' + target);
       return before + '../' + target + '/"';
     });
+  if (name !== 'block-maze') {
+    html = requiredReplace(html, 'href="../collection.css">', 'href="../collection.css">\n    <link rel="stylesheet" href="../classic-arcade.css">', page);
+    html = html.replace(/\s*<link rel="preload"[^>]*(?:jump|runner)-cover\.webp[^>]*>/, '');
+  }
   return html;
+}
+// Keep the games' own camera, action timing and input. Only their painting hooks
+// change when they are packaged beside the reference labyrinth.
+function classicModule(path, source, name) {
+  const file = name + '/' + path;
+  const imports = (names) => "import { " + names + " } from '../classic-arcade-art.js';\n";
+  if (name === 'block-jump' && path === 'actors-art.js') {
+    let art = requiredReplace(source, 'torso(c,s.heroId,h);', "if (!paintedPart(c, s.heroId, 'coat')) torso(c,s.heroId,h);", file);
+    art = requiredReplace(art, 'head(c,s.heroId,h,s.time%3.8>3.66);', "if (!paintedPart(c, s.heroId, 'face')) head(c,s.heroId,h,s.time%3.8>3.66);", file);
+    art = requiredReplace(art, 'front,h) {\n  const swing', 'front,h,id) {\n  const swing', file);
+    art = requiredReplace(art, 'function arm(c,phase,run,air,ascent,front,h)', 'function arm(c,phase,run,air,ascent,front,h,id)', file);
+    art = requiredReplace(art, '  stroke(c,sign*.75,-8,kneeX', "  if (paintedLimb(c,id,'leg',front,sign*.75,-8,kneeX,kneeY,footX,footY)) return;\n  stroke(c,sign*.75,-8,kneeX", file);
+    art = requiredReplace(art, '  stroke(c,-1.45,-14.15,elbowX', "  if (paintedLimb(c,id,'arm',front,-1.45,-14.15,elbowX,-11.25,palmX,palmY)) return;\n  stroke(c,-1.45,-14.15,elbowX", file);
+    art = requiredReplace(art, /(leg|arm)\(c,m\.phase([^;]+),h\);/g, '$1(c,m.phase$2,h,s.heroId);', file);
+    return imports('paintedPart, paintedLimb') + art;
+  }
+  if (name === 'block-jump' && path === 'renderer.js') {
+    let art = requiredReplace(source, /const gemCut = \[[\s\S]*?(?=function checkpoint\()/, '', file);
+    art = requiredReplace(art, 'c.drawImage(scene.scenery,-camera*.36,0,scene.scenery.width/density,HEIGHT);', '$&\n  jumpScenery(c, level, camera);', file);
+    return imports('platformGem as gem, jumpScenery') + art;
+  }
+  if (name === 'block-dash' && path === 'actors.js') {
+    return imports('trackGem as gem') + requiredReplace(source, /function gem\(c,p,s,o\) \{[\s\S]*?(?=function fret\()/, '', file);
+  }
+  if (name === 'block-dash' && path === 'scene-art.js') {
+    return imports('stonePaving') + requiredReplace(source, "const g=skin.getContext('2d');", "$&\n  stonePaving(g, t.row, index);", file);
+  }
+  if (name !== 'block-maze' && path === 'game.js') {
+    const platform = name === 'block-jump';
+    const art = platform
+      ? "import { terrainLayer as floor } from './world-art.js?v=studio-1';\n"
+      : "import { projection as view, drawTrack as road, themes } from './scene-art.js?v=jump-1';\n";
+    return imports('watchClassicCover') + art + source + '\nwatchClassicCover(' + (platform ? '{ floor }' : '{ view, road, themes }') + ');\n';
+  }
+  return source;
 }
 function adapt(path, bytes, name) {
   if (path === 'index.html') return Buffer.from(embedPage(bytes.toString(), name));
+  if (name !== 'block-maze' && path.endsWith('.js')) bytes = Buffer.from(classicModule(path, bytes.toString(), name));
   if (path === 'game.js') return Buffer.from("import { enterCollectionGame } from '../collection-navigation.js';\n" +
     bytes.toString() + '\nenterCollectionGame();\n');
   if (path === 'progress.js') return Buffer.from(requiredReplace(bytes.toString(),

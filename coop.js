@@ -1,3 +1,4 @@
+import { drawLandmark, material } from './arcade-scenery.js';
 // Each cell is a step. Lowercase a/b are pressure plates, uppercase A/B their gates.
 // Stepping on lever x/y latches that gate for both partners for the rest of the room.
 const HEROES = { kirill: 'Кирилл', maxim: 'Максим', mom: 'Мама', dad: 'Папа', pasha: 'Паша' };
@@ -173,6 +174,12 @@ const CHANNELS = [
   ['#5ff3dd', '#167b77', 'I'],
   ['#ffb969', '#b16c35', 'II'],
 ];
+const motifs = [
+  ['temple', 'stone_mask', 'brazier'], ['arcade', 'carousel', 'claw'],
+  ['waterpark', 'typhoon', 'water_slide'], ['store', 'living_room', 'warehouse'],
+  ['nether', 'lavafall', 'crimson_fungi'], ['castle', 'gatehouse', 'pumpkin_patch'],
+  ['end', 'crystal_spires', 'chorus_grove'],
+];
 const MARK = '#ffe69b';
 const TAU = Math.PI * 2;
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -237,7 +244,7 @@ function ambient(g, room, index, time, image) {
   }
   g.restore();
 }
-function floor(g, room, c, i, x, y) {
+function floor(g, room, c, i, x, y, texture) {
   const [light, mid, dark] = room.surface,
     v = (i * 37) % 61;
   box(g, '#131d2b88', x + 3, y + 7, TX, TY);
@@ -246,6 +253,10 @@ function floor(g, room, c, i, x, y) {
   box(g, light, x + 2, y, TX - 3, 2);
   box(g, light + '5c', x + 2, y + 2, 2, TY - 6);
   box(g, '#1321312b', x + 4, y + TY - 5, TX - 6, 2);
+  g.save();
+  g.globalAlpha = 0.28;
+  g.drawImage(texture, 5, 6, 47, 40, x + 3, y + 3, TX - 6, TY - 8);
+  g.restore();
   const marks = room.motif;
   if (marks === 'wood') {
     for (let k = 1; k <= 2; k++) box(g, '#62493945', x + 5, y + k * 14, TX - 9, 1);
@@ -404,6 +415,10 @@ function paintBoard(g, state, images, walks, openness, now) {
   const room = rooms[state.room],
     top = Y0(room);
   ambient(g, room, state.room, now, images[state.room < 4 ? 'world' : 'realm']);
+  const texture = material(motifs[state.room][0]);
+  // Landmarks rise behind the walkable tiles, keeping both routes and switches visible.
+  drawLandmark(g, motifs[state.room][1], 43, top - 120, 168);
+  drawLandmark(g, motifs[state.room][2], W - 192, top - 98, 144);
   for (let row = 0; row < room.rows.length; row++) {
     for (let col = 0; col < WIDTH; col++) {
       const i = row * WIDTH + col,
@@ -413,7 +428,7 @@ function paintBoard(g, state, images, walks, openness, now) {
         y = top + row * TY,
         mx = x + TX / 2,
         my = y + TY / 2;
-      floor(g, room, c, i, x, y);
+      floor(g, room, c, i, x, y, texture);
       if (c === 'a' || c === 'b') pressure(g, mx, my, gateBit(c) - 1, occupied(state, i), now);
       if (c === 'x' || c === 'y') lever(g, mx, my, gateBit(c) - 1, Boolean(state.latched & gateBit(c)));
       if (c === 'A' || c === 'B') gate(g, mx, my, gateBit(c) - 1, openness[gateBit(c) - 1]);
@@ -510,6 +525,7 @@ export function mount(host, { saved, players, save, finish }) {
   function refreshTeam() {
     actorButtons.forEach((button, i) => {
       button.querySelector('b').textContent = HEROES[state.players[i]];
+      button.querySelector('i').className = 'face face-' + state.players[i];
       button.setAttribute('aria-pressed', String(i === state.active));
     });
   }
