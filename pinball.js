@@ -6,9 +6,18 @@ const W = 360,
   R = 6,
   DT = 1 / 120,
   TAU = Math.PI * 2;
-const tables = {
+const classicBumpers = [
+  [88, 136, 23],
+  [222, 110, 23],
+  [198, 214, 23],
+];
+export const tables = {
   aqua: {
     title: 'Тайфун',
+    world: 'waterpark',
+    props: ['wave_pool', 'water_slide', 'typhoon'],
+    layout: classicBumpers,
+    task: 'Зажги три горки для «Тайфуна»',
     place: 'Аквапарк',
     name: 'Тайфун',
     targets: ['Горка «Волна»', 'Горка «Кобра»', 'Горка «Радуга»'],
@@ -21,6 +30,10 @@ const tables = {
   },
   end: {
     title: 'Башня шалкера',
+    world: 'end',
+    props: ['crystal_spires', 'chorus_grove', 'exit_portal'],
+    layout: classicBumpers,
+    task: 'Собери три кристалла. Шалкер перенесёт шар наверх',
     place: 'Край',
     name: 'Шалкер',
     targets: ['Кристалл луны', 'Кристалл звёзд', 'Кристалл эха'],
@@ -30,6 +43,123 @@ const tables = {
     light: '#edc8ff',
     accent: '#e6dc83',
     lights: ['#d795ff', '#99e5ec', '#f4d48c'],
+  },
+  temple: {
+    title: 'Каменный оракул',
+    place: 'Храм изумруда',
+    name: 'Оракул',
+    world: 'temple',
+    props: ['brazier', 'stone_mask', 'brazier'],
+    targets: ['Восточная чаша', 'Золотая маска', 'Западная чаша'],
+    task: 'Зажги два алтаря и маску оракула',
+    layout: [
+      [71, 120, 18],
+      [165, 159, 28],
+      [257, 127, 18],
+    ],
+    guides: [
+      [90, 249, 125, 227],
+      [223, 228, 255, 246],
+    ],
+    gravity: 415,
+    deep: '#204138',
+    line: '#69937b',
+    light: '#cfebaa',
+    accent: '#efba69',
+    lights: ['#e8a66b', '#81e8a2', '#ebda8c'],
+  },
+  arcade: {
+    title: 'Карусель огней',
+    place: 'Игровой центр',
+    name: 'Карусель',
+    world: 'arcade',
+    props: ['slide', 'claw', 'carousel'],
+    targets: ['Горка', 'Автомат с призами', 'Карусель'],
+    task: 'Попади во все три аттракциона',
+    layout: [
+      [86, 169, 22],
+      [169, 109, 20],
+      [235, 200, 26],
+    ],
+    guides: [[66, 243, 104, 225]],
+    gravity: 430,
+    deep: '#363455',
+    line: '#8b739c',
+    light: '#d1eaf6',
+    accent: '#efa0ae',
+    lights: ['#ef9aae', '#80e0d7', '#f3d37b'],
+  },
+  store: {
+    title: 'Склад заказов',
+    place: 'Мебельный магазин',
+    name: 'Подъёмник',
+    world: 'store',
+    props: ['living_room', 'warehouse', 'show_kitchen'],
+    targets: ['Кресло', 'Склад', 'Кухня'],
+    task: 'Собери заказ с трёх полок',
+    layout: [
+      [71, 143, 21],
+      [174, 189, 20],
+      [251, 91, 19],
+    ],
+    guides: [
+      [111, 95, 129, 122],
+      [212, 243, 249, 251],
+    ],
+    gravity: 462,
+    deep: '#48403b',
+    line: '#a1886c',
+    light: '#f3dca2',
+    accent: '#83c4c1',
+    lights: ['#edd282', '#9cd8b4', '#eca17a'],
+  },
+  nether: {
+    title: 'Кузница гастов',
+    place: 'Нижний мир',
+    name: 'Кузница',
+    world: 'nether',
+    props: ['basalt_columns', 'crimson_fungi', 'lavafall'],
+    targets: ['Базальт', 'Багровый гриб', 'Лавопад'],
+    task: 'Разожги три жерла кузницы',
+    layout: [
+      [85, 99, 21],
+      [230, 157, 27],
+      [133, 223, 18],
+    ],
+    guides: [
+      [65, 194, 88, 209],
+      [255, 105, 268, 80],
+    ],
+    gravity: 495,
+    deep: '#472e39',
+    line: '#945d58',
+    light: '#ffe09a',
+    accent: '#eaa58a',
+    lights: ['#ff965f', '#fcbb83', '#e07891'],
+  },
+  castle: {
+    title: 'Ведьмины часы',
+    place: 'Замок на Хеллоуин',
+    name: 'Полночь',
+    world: 'castle',
+    props: ['pumpkin_patch', 'cauldron', 'gatehouse'],
+    targets: ['Тыквы', 'Котёл', 'Часовая башня'],
+    task: 'Разбуди три огня до полуночи',
+    layout: [
+      [89, 205, 20],
+      [141, 98, 24],
+      [249, 167, 19],
+    ],
+    guides: [
+      [99, 145, 126, 159],
+      [199, 232, 223, 215],
+    ],
+    gravity: 400,
+    deep: '#382f48',
+    line: '#877696',
+    light: '#d9ebc6',
+    accent: '#efaf69',
+    lights: ['#efae72', '#a9db91', '#cca9f2'],
   },
 };
 const walls = [
@@ -57,11 +187,8 @@ const walls = [
   [77, 193, 49, 220],
   [259, 193, 287, 220],
 ];
-const bumpers = [
-  { x: 88, y: 136, r: 23 },
-  { x: 222, y: 110, r: 23 },
-  { x: 198, y: 214, r: 23 },
-];
+// The hinged one-way gate lifts for the upward serve and directs a returning ball back onto the table.
+const laneGate = [314, 101, 345, 78];
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const ghostBall = () => ({ x: 331, y: 441, vx: 0, vy: 0 });
 const FLIP_LENGTH = 62,
@@ -201,26 +328,28 @@ export function tickPinball(s, left = false, right = false) {
     }
     return;
   }
-  b.vy += 445 * DT;
+  const theme = tables[s.table];
+  b.vy += (theme.gravity ?? 445) * DT;
   b.x += b.vx * DT;
   b.y += b.vy * DT;
   b.vx *= 0.99964;
   b.vy *= 0.99988;
   for (const w of walls) segment(b, ...w, 2);
+  for (const rail of theme.guides ?? []) segment(b, ...rail, 2);
+  if (b.vy > 0) segment(b, ...laneGate, 2);
   for (let i = 0; i < 2; i++) {
     const speed = ((s.angles[i] - previous[i]) * (i ? -1 : 1)) / DT;
     segment(b, ...flipper(i, s.angles[i]), 4.5, speed);
   }
-  for (let i = 0; i < bumpers.length; i++) {
-    const p = bumpers[i],
-      dx = b.x - p.x,
-      dy = b.y - p.y,
+  for (const [i, [x, y, radius]] of theme.layout.entries()) {
+    const dx = b.x - x,
+      dy = b.y - y,
       dist = Math.hypot(dx, dy);
-    if (dist >= p.r + R) continue;
+    if (dist >= radius + R) continue;
     const nx = dist ? dx / dist : 0,
       ny = dist ? dy / dist : -1;
-    b.x = p.x + nx * (p.r + R);
-    b.y = p.y + ny * (p.r + R);
+    b.x = x + nx * (radius + R);
+    b.y = y + ny * (radius + R);
     if (s.flash[i] > 0) {
       bounce(b, nx, ny, 0, 0, 0.88);
       continue;
@@ -277,17 +406,15 @@ function line(g, coords, width, color) {
   g.stroke();
 }
 function paintBoard(g, s) {
-  const theme = tables[s.table],
-    aqua = s.table === 'aqua';
+  const theme = tables[s.table];
   g.save();
   g.imageSmoothingEnabled = false;
-  const world = aqua ? 'waterpark' : 'end';
-  g.fillStyle = g.createPattern(material(world), 'repeat');
+  g.fillStyle = g.createPattern(material(theme.world), 'repeat');
   g.fillRect(0, 0, W, H);
   // The inlaid scenery is below the rails, ball and scoring lamps.
   g.globalAlpha = 0.76;
-  drawLandmark(g, aqua ? 'water_slide' : 'crystal_spires', 45, 19, 102, 76);
-  drawLandmark(g, aqua ? 'wave_pool' : 'chorus_grove', 225, 31, 82, 61);
+  drawLandmark(g, theme.props[0], 45, 19, 102, 76);
+  drawLandmark(g, theme.props[1], 225, 31, 82, 61);
   g.globalAlpha = 1;
   // Painted return chutes lead the eye from the bumpers to the flippers.
   g.strokeStyle = theme.line;
@@ -301,7 +428,7 @@ function paintBoard(g, s) {
   }
   g.globalAlpha = 1;
   const t = s.ticks / 120;
-  drawLandmark(g, aqua ? 'typhoon' : 'exit_portal', 105, 144, 96, 72);
+  drawLandmark(g, theme.props[2], 105, 144, 96, 72);
   g.strokeStyle = theme.light;
   g.lineWidth = 1.5;
   for (let j = 0; j < 3; j++) {
@@ -317,25 +444,24 @@ function paintBoard(g, s) {
   for (let i = 0; i < 3; i++) {
     circle(g, 130 + i * 24, 301, 5, s.hits & (1 << i) ? theme.lights[i] : '#172c37');
   }
-  for (const w of walls) {
+  for (const w of [...walls, ...(theme.guides ?? [])]) {
     line(g, [w[0] + 1, w[1] + 2, w[2] + 1, w[3] + 2], 7, '#102735');
     line(g, w, 5, theme.line);
     line(g, w, 2, theme.light);
   }
-  for (let i = 0; i < 3; i++) {
-    const p = bumpers[i],
-      flash = s.flash[i] / 0.24,
-      r = p.r;
-    circle(g, p.x + 2, p.y + 4, r + 3, '#172635');
-    circle(g, p.x, p.y, r + 2, theme.line);
-    circle(g, p.x, p.y, r, flash ? '#fff7cd' : theme.lights[i]);
-    circle(g, p.x, p.y, r - 5, theme.deep);
-    const target = aqua
-      ? ['wave_pool', 'water_slide', 'typhoon'][i]
-      : ['crystal_spires', 'chorus_grove', 'exit_portal'][i];
-    drawLandmark(g, target, p.x - r + 3, p.y - r + 4, 2 * r - 6, 2 * r - 10);
+  const gateOpen = s.phase === 'play' && s.ball.vy < 0 && s.ball.x > 314 && Math.abs(s.ball.y - 91) < 30;
+  line(g, gateOpen ? [345, 47, 345, 78] : laneGate, 3, theme.light);
+  circle(g, 345, 78, 3, theme.line);
+  for (const [i, [x, y, r]] of theme.layout.entries()) {
+    const flash = s.flash[i] / 0.24;
+    circle(g, x + 2, y + 4, r + 3, '#172635');
+    circle(g, x, y, r + 2, theme.line);
+    circle(g, x, y, r, flash ? '#fff7cd' : theme.lights[i]);
+    circle(g, x, y, r - 5, theme.deep);
+    const target = theme.props[i];
+    drawLandmark(g, target, x - r + 3, y - r + 4, 2 * r - 6, 2 * r - 10);
     g.fillStyle = flash ? '#fff3be' : theme.lights[i];
-    g.fillRect(p.x - 4, p.y + r - 5, 8, 2);
+    g.fillRect(x - 4, y + r - 5, 8, 2);
   }
   for (let i = 0; i < 2; i++) {
     const f = flipper(i, s.angles[i]);
@@ -363,7 +489,7 @@ export function mount(host, { players, saved, save, finish }) {
   const hero = players[0];
   let s = restorePinball(saved, hero);
   host.innerHTML =
-    '<section class="pin-game"><div class="pin-field"><canvas width="360" height="480" aria-label="Стол пинбола с двумя флипперами и тремя мишенями"></canvas><div class="pin-controls"><button type="button" class="pin-left" aria-label="Левый флиппер">◀ Левый</button><button type="button" class="pin-right" aria-label="Правый флиппер">Правый ▶</button></div></div><div class="pin-panel"><label class="pin-table">Стол <select><option value="aqua">Аквапарк · Тайфун</option><option value="end">Край · Башня шалкера</option></select></label><div class="pin-header"><small class="pin-player"><span class="face"></span><span></span></small><h2 class="pin-title"></h2></div><div class="pin-scorebar"><span class="pin-score"></span><span class="pin-balls"></span></div><p class="pin-task"></p><p class="pin-status" role="status"></p><label class="pin-power">Сила запуска <output></output><input type="range" min="55" max="100"></label><button class="pin-launch" type="button">Запустить шар</button><p class="pin-help">Нажимай два флиппера под столом. На клавиатуре — ← и →, пробел запускает шар.</p></div></section>';
+    '<section class="pin-game"><div class="pin-field"><canvas width="360" height="480" aria-label="Стол пинбола с двумя флипперами и тремя мишенями"></canvas><div class="pin-controls"><button type="button" class="pin-left" aria-label="Левый флиппер">◀ Левый</button><button type="button" class="pin-right" aria-label="Правый флиппер">Правый ▶</button></div></div><div class="pin-panel"><label class="pin-table">Стол <select></select></label><div class="pin-header"><small class="pin-player"><span class="face"></span><span></span></small><h2 class="pin-title"></h2></div><div class="pin-scorebar"><span class="pin-score"></span><span class="pin-balls"></span></div><p class="pin-task"></p><p class="pin-status" role="status"></p><label class="pin-power">Сила запуска <output></output><input type="range" min="55" max="100"></label><button class="pin-launch" type="button">Запустить шар</button><p class="pin-help">Нажимай два флиппера под столом. На клавиатуре — ← и →, пробел запускает шар.</p></div></section>';
   const q = (x) => host.querySelector(x),
     g = q('canvas').getContext('2d'),
     table = q('select'),
@@ -372,6 +498,8 @@ export function mount(host, { players, saved, save, finish }) {
     balls = q('.pin-balls'),
     power = q('input'),
     launch = q('.pin-launch');
+  for (const [id, choice] of Object.entries(tables))
+    table.add(new Option(choice.place + ' · ' + choice.title, id));
   const abort = new AbortController(),
     opt = { signal: abort.signal },
     held = [false, false],
@@ -398,13 +526,7 @@ export function mount(host, { players, saved, save, finish }) {
     score.textContent = 'Очки · ' + s.score;
     balls.textContent = 'Шары · ' + s.balls;
     const count = [1, 2, 4].filter((bit) => s.hits & bit).length;
-    q('.pin-task').textContent =
-      (s.table === 'aqua'
-        ? 'Зажги три горки для «Тайфуна»'
-        : 'Собери три кристалла. Шалкер перенесёт шар наверх') +
-      ' · ' +
-      count +
-      '/3';
+    q('.pin-task').textContent = tables[s.table].task + ' · ' + count + '/3';
     const msg = {
       ready: 'Выбери стол и запускай шар.',
       launch: 'Шар в игре',

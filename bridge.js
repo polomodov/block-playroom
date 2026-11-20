@@ -31,6 +31,26 @@ export const crossings = [
     stock: [1, 2],
     hint: 'Тяжёлая вагонетка с кристаллами! Поддержи и середину, и длинные пролёты по краям.',
   },
+  {
+    name: 'Две базальтовые сваи', bays: 6, load: 21, limit: 15,
+    posts: [1, 2, 4, 5], ropes: [], stock: [2, 0],
+    hint: 'Две опоры на шесть настилов. Раздели переправу на короткие пролёты.',
+  },
+  {
+    name: 'Подвесной перевал', bays: 6, load: 23, limit: 16.8,
+    posts: [], ropes: [1, 2, 3, 4, 5], stock: [0, 2],
+    hint: 'Под мостом нет ни одной скалы. Подхвати настил двумя тросами с береговых мачт.',
+  },
+  {
+    name: 'Путь к кузнице', bays: 7, load: 27, limit: 18.5,
+    posts: [1, 3, 5], ropes: [2, 4, 6], stock: [2, 1],
+    hint: 'Вагонетка везёт руду. Две деревянные опоры несут основной вес, трос страхует длинный пролёт.',
+  },
+  {
+    name: 'Обсидиановый виадук', bays: 7, load: 30, limit: 21,
+    posts: [2, 4, 5], ropes: [1, 3, 6], stock: [1, 2],
+    hint: 'Самый тяжёлый груз. Для двух тросов выбери стыки, которые далеко от единственной опоры.',
+  },
 ];
 const heroIds = ['kirill', 'maxim', 'mom', 'dad', 'pasha'];
 export function newBridge(level = 0, score = 0) {
@@ -187,13 +207,96 @@ function rect(ctx, x, y, w, h, color) {
   ctx.fillStyle = color;
   ctx.fillRect(x, y, w, h);
 }
-function drawBridge(g, s, img, figures, hero, time) {
+const fallDuration = 0.92;
+function brokenSpan(s) {
+  return Math.min(s.deck.length - 1, Math.floor(s.cart));
+}
+function repairTip(s) {
+  const c = crossings[s.level];
+  const options = [];
+  for (const [type, joints] of [
+    ['post', c.posts],
+    ['rope', c.ropes],
+  ]) {
+    for (const joint of joints) if (!s.supports[joint]) options.push({ type, joint });
+  }
+  options.sort((a, b) => Math.abs(a.joint - s.cart) - Math.abs(b.joint - s.cart));
+  const closest = options[0];
+  if (!closest) return 'Вернись к чертежу и переставь опоры.';
+  const { type, joint } = closest;
+  const available = stockUsed(s, type) < c.stock[type === 'post' ? 0 : 1];
+  const verb = available ? (type === 'post' ? 'Поставь' : 'Натяни') : 'Переставь';
+  return (
+    verb +
+    (type === 'post' ? ' опору ▲' : ' трос ◇') +
+    ' между участками ' +
+    joint +
+    ' и ' +
+    (joint + 1) +
+    '.'
+  );
+}
+function brokenDeckHalf(g, x, y, dx, depth, tilt) {
+  const length = Math.hypot(dx, depth);
+  g.save();
+  g.translate(x, y);
+  g.scale(Math.sign(dx), 1);
+  g.rotate(Math.atan2(depth, Math.abs(dx)) + tilt);
+  polygon(
+    g,
+    [
+      [0, -4],
+      [length - 5, -4],
+      [length + 3, -2],
+      [length - 4, 1],
+      [length + 1, 3],
+      [length - 7, 6],
+      [length - 2, 9],
+      [0, 10],
+    ],
+    '#684632',
+  );
+  polygon(
+    g,
+    [
+      [0, -5],
+      [length - 5, -5],
+      [length + 3, -2],
+      [length - 4, 0],
+      [length, 2],
+      [0, 3],
+    ],
+    '#e0a566',
+  );
+  line(g, 0, -4, length - 7, -4, 2, '#f5c985');
+  for (let peg = 14; peg < length - 7; peg += 20) line(g, peg, -4, peg, 3, 2, '#76503b');
+  line(g, length - 7, 4, length - 2, 6, 2, '#ffdb99');
+  g.restore();
+}
+function lavaSplash(g, x, y, impact) {
+  if (impact <= 0) return;
+  const reach = Math.sin(impact * Math.PI * 0.75);
+  for (let i = 0; i < 9; i++) {
+    const sign = i % 2 ? -1 : 1;
+    const radius = (14 + i * 4) * reach;
+    const height = (5 + (i % 4) * 5) * reach;
+    rect(g, x + sign * radius, y - height, 3 + (i % 3), 3, i % 2 ? '#ffc759' : '#ffe58a');
+  }
+  line(g, x - 20 * reach, y + 1, x - 4 * reach, y, 3, '#ffd680');
+  line(g, x + 8 * reach, y + 2, x + 33 * reach, y + 1, 3, '#ffc954');
+}
+function drawBridge(g, s, img, figures, hero, time, collapse) {
   const c = crossings[s.level],
     pitch = (endX - startX) / c.bays,
     sx = (i) => startX + i * pitch;
   const testing = s.phase !== 'build',
     sag = deflections(s, testing ? s.cart : -10).map((v) => Math.min(27, v));
   const dy = (i) => deckY + sag[i];
+  const broken = s.phase === 'broken';
+  const bay = brokenSpan(s);
+  const split = Math.min(0.78, Math.max(0.22, s.cart - bay));
+  const fold = Math.min(1, Math.max(0, (collapse - 0.08) / 0.65)) ** 1.25;
+  const drop = Math.min(1, Math.max(0, (collapse - (s.reason === 'sag' ? 0.17 : 0)) / 0.68));
   g.imageSmoothingEnabled = false;
   const grad = g.createLinearGradient(0, 0, 0, H);
   grad.addColorStop(0, '#3b243b');
@@ -298,6 +401,17 @@ function drawBridge(g, s, img, figures, hero, time) {
       }
       continue;
     }
+    if (broken && s.reason === 'sag' && j === bay) {
+      const depth = (yy - y) * split;
+      brokenDeckHalf(g, x, y, pitch * split, depth, fold * 1.13);
+      brokenDeckHalf(g, xx, yy, -pitch * (1 - split), depth - (yy - y), fold * 1.21);
+      if (fold < 1 && collapse > 0.08) {
+        for (let i = 0; i < 5; i++) {
+          rect(g, sx(j + split) + (i - 2) * 11 * fold, y + depth + 6 + (57 + i * 9) * fold, 5, 3, '#ffd297');
+        }
+      }
+      continue;
+    }
     line(g, x, y + 5, xx, yy + 5, 12, '#684632');
     line(g, x, y, xx, yy, 8, '#d9a266');
     for (let p = 0.12; p < 1; p += 0.17) {
@@ -306,14 +420,18 @@ function drawBridge(g, s, img, figures, hero, time) {
       line(g, ax, ay - 5, ax, ay + 3, 2, '#704b35');
     }
   }
-  let spot = s.phase === 'build' ? -0.24 : s.cart;
-  let j = Math.min(c.bays - 1, Math.max(0, Math.floor(spot))),
-    f = Math.max(0, spot - j);
-  const cx = sx(spot),
-    cy = (s.phase === 'build' ? deckY : dy(j) * (1 - f) + dy(j + 1) * f) + (s.phase === 'broken' ? 12 : 0);
+  const spot = s.phase === 'build' ? -0.24 : s.cart;
+  const j = Math.min(c.bays - 1, Math.max(0, Math.floor(spot)));
+  const f = Math.max(0, spot - j);
+  const trackY = s.phase === 'build' ? deckY : dy(j) * (1 - f) + dy(j + 1) * f;
+  const groundY = 294;
+  const fallX = sx(bay + (s.reason === 'gap' ? 0.35 : split));
+  const cx = sx(spot) + (broken ? (fallX - sx(spot)) * Math.sin((drop * Math.PI) / 2) : 0);
+  const cy = trackY + (broken ? (groundY - trackY) * drop * drop : 0);
+  const slope = Math.atan2(dy(j + 1) - dy(j), pitch);
   g.save();
   g.translate(cx, cy);
-  g.rotate(s.phase === 'broken' ? 0.22 : Math.atan2(dy(j + 1) - dy(j), pitch));
+  g.rotate(slope + (broken ? (s.reason === 'gap' ? 0.82 : -0.66) * drop : 0));
   if (figures.naturalWidth) {
     const h = figures.naturalHeight / 2,
       w = figures.naturalWidth / 5;
@@ -339,6 +457,7 @@ function drawBridge(g, s, img, figures, hero, time) {
     rect(g, x - 1, -5, 2, 2, '#ebc889');
   }
   g.restore();
+  if (broken) lavaSplash(g, cx, groundY + 3, Math.min(1, Math.max(0, (collapse - 0.85) / 0.15)));
 }
 export function mount(host, { players = [], saved, save, finish }) {
   let s = restoreBridge(saved),
@@ -348,21 +467,51 @@ export function mount(host, { players = [], saved, save, finish }) {
     last = 0,
     elapsed = 0,
     autosave = 0;
+  let collapse = s.phase === 'broken' ? 1 : 0;
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const hero = players[0] || 'kirill';
   host.innerHTML =
-    '<section class="br-game"><header><small>Инженерная мастерская · Нижний мир</small><h2></h2><p class="br-hint"></p></header><div class="br-work"><div class="br-board"><canvas width="740" height="346" aria-label="Переправа над лавой"></canvas><div class="br-places" role="group" aria-label="Части моста"></div></div><div class="br-controls"><div class="br-parts"></div><div class="br-meter"><span>Прогиб настила</span><meter min="0" max="1" value="0"></meter></div><p class="br-status" role="status"></p><button class="br-go" type="button"></button></div></div></section>';
+    '<section class="br-game"><header><small>Инженерная мастерская · Нижний мир</small><h2></h2><p class="br-hint"></p></header><div class="br-work"><div class="br-board"><canvas width="740" height="346" aria-label="Переправа над лавой"></canvas><div class="br-places" role="group" aria-label="Части моста"></div></div><div class="br-controls"><div class="br-parts"></div><div class="br-meter"><span class="br-meter-label"></span><span class="br-gauge" aria-hidden="true"><i></i></span><meter min="0" max="1" value="0" aria-label="Наибольший прогиб настила"></meter></div><p class="br-status" role="status"></p><button class="br-go" type="button"></button></div></div></section>';
   const q = (t) => host.querySelector(t),
     g = q('canvas').getContext('2d'),
     places = q('.br-places'),
-    go = q('.br-go');
+    go = q('.br-go'),
+    board = q('.br-board'),
+    meter = q('.br-meter'),
+    meterLabel = q('.br-meter-label'),
+    gauge = q('meter');
   const img = new Image();
   img.src = new URL('./assets/realm-panoramas.webp', import.meta.url);
   const actors = new Image();
   actors.src = new URL('./assets/maze-figures.webp', import.meta.url);
   const snap = () => save({ ...s, deck: [...s.deck], supports: [...s.supports] });
+  function updateMeter() {
+    const gap = s.phase === 'broken' && s.reason === 'gap';
+    const fraction = Math.min(1, s.peak);
+    const percent = Math.round(s.peak * 100);
+    meter.dataset.state = gap
+      ? 'gap'
+      : s.reason === 'sag'
+        ? 'overload'
+        : fraction >= 0.75
+          ? 'warning'
+          : 'normal';
+    meterLabel.textContent = gap
+      ? 'Нет настила'
+      : (s.reason === 'sag' ? 'Перегрузка' : 'Прогиб') + ' · ' + percent + '%';
+    meter.style.setProperty('--load', fraction * 100 + '%');
+    gauge.hidden = gap;
+    gauge.value = fraction;
+    gauge.setAttribute('aria-valuetext', percent + '% от предела');
+  }
+  function paint() {
+    if (s.phase === 'broken') board.dataset.collapse = collapse === 1 ? 'settled' : 'falling';
+    else delete board.dataset.collapse;
+    drawBridge(g, s, img, actors, hero, motion.matches ? 0 : elapsed, collapse);
+  }
   function update(message = '') {
     const c = crossings[s.level];
-    q('h2').textContent = s.level + 1 + '/3 · ' + c.name;
+    q('h2').textContent = (s.level + 1) + '/' + crossings.length + ' · ' + c.name;
     q('.br-hint').textContent = c.hint;
     q('.br-parts').textContent =
       'Настилы ' +
@@ -412,7 +561,8 @@ export function mount(host, { players = [], saved, save, finish }) {
       sockets('post', c.posts, 'Опора', '▲', 70);
       sockets('rope', c.ropes, 'Трос', '◇', 25);
     }
-    const span = Math.min(c.bays, Math.floor(s.cart) + 1);
+    const span = brokenSpan(s) + 1;
+    board.dataset.phase = s.phase;
     q('.br-status').textContent =
       message ||
       {
@@ -420,10 +570,8 @@ export function mount(host, { players = [], saved, save, finish }) {
         test: 'Вагонетка на мосту. Следи за прогибом.',
         broken:
           s.reason === 'gap'
-            ? 'На участке ' + span + ' нет настила. Вернись к чертежу.'
-            : 'Настил прогнулся у участка ' +
-              span +
-              '. Переставь опору или натяни трос ближе к середине пролёта.',
+            ? 'Вагонетка провалилась. На участке ' + span + ' нет настила. Добавь настил ' + span + '.'
+            : 'Настил сломался на участке ' + span + '. ' + repairTip(s),
         passed: 'Вагонетка на другом берегу. Мост выдержал!',
       }[s.phase];
     go.disabled = s.phase === 'test';
@@ -431,22 +579,24 @@ export function mount(host, { players = [], saved, save, finish }) {
       build: 'Пустить вагонетку',
       test: 'Проверка моста…',
       broken: 'Вернуться к чертежу',
-      passed: s.level === 2 ? 'Завершить стройку' : 'Следующая переправа',
+      passed: s.level === crossings.length - 1 ? 'Завершить стройку' : 'Следующая переправа',
     }[s.phase];
-    q('meter').value = s.peak;
-    drawBridge(g, s, img, actors, hero, elapsed);
+    updateMeter();
+    paint();
   }
   go.addEventListener('click', () => {
     if (paused || disposed) return;
-    if (s.phase === 'broken') repairBridge(s);
-    else if (s.phase === 'passed') {
+    if (s.phase === 'broken') {
+      repairBridge(s);
+      collapse = 0;
+    } else if (s.phase === 'passed') {
       const score =
         s.score +
         100 +
         10 * (crossings[s.level].stock.reduce((a, b) => a + b, 0) - s.supports.filter(Boolean).length);
       if (s.level === crossings.length - 1) {
         paused = true;
-        finish({ summary: 'Построены три моста через лаву · ' + score + ' очков', score });
+        finish({ summary: 'Переправы через лаву: ' + crossings.length + ' из ' + crossings.length + ' · ' + score + ' очков', score });
         return;
       }
       s = newBridge(s.level + 1, score);
@@ -461,9 +611,10 @@ export function mount(host, { players = [], saved, save, finish }) {
     elapsed += dt;
     if (s.phase === 'test') {
       advanceBridge(s, dt);
-      q('meter').value = s.peak;
+      updateMeter();
       autosave += dt;
       if (s.phase !== 'test') {
+        if (s.phase === 'broken') collapse = motion.matches ? 1 : 0;
         update();
         snap();
       } else if (autosave >= 1) {
@@ -471,7 +622,8 @@ export function mount(host, { players = [], saved, save, finish }) {
         snap();
       }
     }
-    drawBridge(g, s, img, actors, hero, elapsed);
+    if (s.phase === 'broken') collapse = motion.matches ? 1 : Math.min(1, collapse + dt / fallDuration);
+    paint();
     frame = requestAnimationFrame(loop);
   }
   update();

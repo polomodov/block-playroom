@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRhythm, listen, stepRhythm, strike } from '../rhythm.js';
+import { createRhythm, listen, stepRhythm, strike, songs } from '../rhythm.js';
 
 const copy = (state) => createRhythm(JSON.parse(JSON.stringify(state)));
 function begin(song = 'temple') {
@@ -77,5 +77,28 @@ test('повреждённое сохранение возвращает к вы
     { firstAt: 7 },
   ]) {
     assert.deepEqual(createRhythm({ ...s, ...extra }), createRhythm());
+  }
+});
+
+test('в семи мирах можно сыграть все три разные фразы с максимальной точностью и продолжить с любой ноты', () => {
+  assert.equal(new Set(songs.map((song) => song.place)).size, 7);
+  assert.equal(new Set(songs.map((song) => JSON.stringify(song.riffs))).size, songs.length);
+  for (const song of songs) {
+    let state = createRhythm();
+    state.song = song.id;
+    let expectedScore = 0;
+    for (const [round, riff] of song.riffs.entries()) {
+      state.round = round;
+      listen(state);
+      stepRhythm(state, 20);
+      for (const [i, [note, beat]] of riff.entries()) {
+        if (i) stepRhythm(state, ((beat - riff[i - 1][1]) * 60) / song.bpm);
+        assert.ok(strike(state, note), song.title);
+        state = copy(state);
+      }
+      expectedScore += riff.length * 15;
+      assert.equal(state.phase, 'phrase');
+      assert.equal(state.score, expectedScore);
+    }
   }
 });

@@ -45,6 +45,51 @@ export const missions = [
       { name: 'Эндермен', kind: 'enderman', path: [27, 28, 29, 23, 29, 28] },
     ],
   },
+  {
+    name: 'Круг у карусели',
+    world: 'Игровой центр',
+    scene: 'arcade',
+    map: ['0..#*G', '.#....', '..*#..', '#...#.', '1.*...'],
+    patrols: [
+      { name: 'Слизень', kind: 'slime', path: [1, 2, 8, 2] },
+      { name: 'Паук', kind: 'spider', path: [12, 13, 19, 13] },
+      { name: 'Зомби', kind: 'zombie', path: [16, 17, 11, 10] },
+    ],
+  },
+  {
+    name: 'Дежурные у бассейна',
+    world: 'Аквапарк',
+    scene: 'waterpark',
+    map: ['0..#*G', '.##...', '..*...', '.#..#.', '1..*..'],
+    patrols: [
+      { name: 'Утопленник', kind: 'drowned', path: [12, 13, 14, 13] },
+      { name: 'Страж', kind: 'guardian', path: [15, 16, 17, 11, 10, 9] },
+      { name: 'Слизень', kind: 'slime', path: [26, 27, 21, 20] },
+    ],
+  },
+  {
+    name: 'Ночная инвентаризация',
+    world: 'Мебельный магазин',
+    scene: 'store',
+    map: ['0..*#G', '.##...', '...#..', '.#*.*.', '1.....'],
+    patrols: [
+      { name: 'Паук', kind: 'spider', path: [1, 2, 3, 2] },
+      { name: 'Скелет', kind: 'skeleton', path: [16, 17, 23, 22] },
+      { name: 'Ведьма', kind: 'witch', path: [12, 13, 14, 20, 14, 13] },
+    ],
+  },
+  {
+    name: 'Четыре дозора',
+    world: 'Замок на Хеллоуин',
+    scene: 'castle',
+    map: ['0..#*G', '..#...', '*...#.', '.#*...', '1...*.'],
+    patrols: [
+      { name: 'Скелет', kind: 'skeleton', path: [1, 2, 1, 7] },
+      { name: 'Ведьма', kind: 'witch', path: [12, 13, 14, 20, 14, 13] },
+      { name: 'Паук', kind: 'spider', path: [22, 23, 29, 28] },
+      { name: 'Призрак', kind: 'ghost', path: [9, 10, 11, 5, 4, 10] },
+    ],
+  },
 ];
 const board = (level) => missions[level].map.join('');
 const validTeam = (team) =>
@@ -64,11 +109,12 @@ function neighbors(cell) {
     (c) => int(c, 0, WIDTH * HEIGHT - 1) && distance(c, cell) === 1,
   );
 }
-function makeMission(team, level, totalTurns = 0) {
+function makeMission(team, level, totalTurns = 0, startLevel = 0) {
   const map = board(level);
   return {
     version: 1,
     team: [...team],
+    startLevel,
     level,
     round: 1,
     totalTurns,
@@ -103,6 +149,7 @@ export function createTactics(players, saved = null) {
     !int(s.round, 1, Number.MAX_SAFE_INTEGER) ||
     !int(s.totalTurns, 0, Number.MAX_SAFE_INTEGER) ||
     !int(s.active, 0, 1) ||
+    !int(s.startLevel ?? 0, 0, s.level) ||
     !int(s.health, 0, 4) ||
     !int(s.stride, 0, 2) ||
     !['play', 'lost', 'clear', 'won'].includes(s.phase) ||
@@ -122,7 +169,7 @@ export function createTactics(players, saved = null) {
     )
   )
     return fresh();
-  return structuredClone(s);
+  return { ...structuredClone(s), startLevel: s.startLevel ?? 0 };
 }
 const nextIndex = (g, path) => (g.index + g.dir + path.length) % path.length;
 export function plans(s) {
@@ -152,11 +199,16 @@ function spent(s) {
   s.stride = 0;
   if (!s.used[1 - s.active]) s.active = 1 - s.active;
 }
+function choosingMission(s) {
+  return s.phase === 'play' && !s.totalTurns && s.round === 1 && !s.stride && !s.used.some(Boolean);
+}
 export function tacticsTurn(prev, act) {
+  if (act.type === 'mission' && choosingMission(prev) && int(act.level, 0, missions.length - 1))
+    return makeMission(prev.team, act.level, 0, act.level);
   if (act.type === 'next' && prev.phase === 'clear')
-    return makeMission(prev.team, prev.level + 1, prev.totalTurns);
+    return makeMission(prev.team, prev.level + 1, prev.totalTurns, prev.startLevel);
   if (act.type === 'retry' && prev.phase === 'lost')
-    return makeMission(prev.team, prev.level, prev.totalTurns);
+    return makeMission(prev.team, prev.level, prev.totalTurns, prev.startLevel);
   if (prev.phase !== 'play') return prev;
   const s = structuredClone(prev),
     a = s.active,
@@ -185,7 +237,10 @@ export function tacticsTurn(prev, act) {
     if (hero === 'kirill' || hero === 'mom') {
       s.stride = hero === 'kirill' ? 2 : 1;
       s.veil[a] = hero === 'mom';
-      s.message = hero === 'mom' ? 'Мама невидима. Выберите соседнюю клетку.' : 'Выберите клетку для рывка.';
+      s.message =
+        hero === 'mom'
+          ? 'Мама невидима. Выберите соседнюю клетку.'
+          : 'Для рывка нажмите на клетку или выберите её стрелками и нажмите Enter.';
     } else {
       const near = p.map((g, i) => ({ i, d: distance(s.positions[a], g.from) })).sort((x, y) => x.d - y.d);
       if (hero === 'maxim') s.guards[near[0].i].rest = 2;
@@ -245,6 +300,10 @@ const scenery = {
   temple: ['stone_mask', 'brazier'],
   lava: ['basalt_columns', 'crimson_fungi'],
   end: ['crystal_spires', 'chorus_grove'],
+  arcade: ['carousel', 'claw'],
+  waterpark: ['typhoon', 'water_slide'],
+  store: ['warehouse', 'show_kitchen'],
+  castle: ['pumpkin_patch', 'cauldron'],
 };
 function fixture(name) {
   return (
@@ -265,8 +324,8 @@ export function mount(host, { players, saved, save, finish }) {
     s = result;
     if (s.phase === 'won') {
       finish({
-        summary: 'Три портала открыты · раундов ' + s.totalTurns,
-        score: Math.max(1, 180 - s.totalTurns),
+        summary: 'Открыто порталов · ' + (missions.length - s.startLevel) + ' · раундов ' + s.totalTurns,
+        score: Math.max(1, 60 * (missions.length - s.startLevel) - s.totalTurns),
       });
       return;
     }
@@ -348,6 +407,24 @@ export function mount(host, { players, saved, save, finish }) {
           '</small></span></button>',
       )
       .join('');
+    const picker = choosingMission(s)
+      ? '<label class="tac-mission">Начать с миссии <select>' +
+        missions
+          .map(
+            (mission, i) =>
+              '<option value="' +
+              i +
+              '" ' +
+              (i === s.level ? 'selected' : '') +
+              '>' +
+              (i + 1) +
+              '. ' +
+              mission.name +
+              '</option>',
+          )
+          .join('') +
+        '</select></label>'
+      : '';
     host.innerHTML =
       '<section class="tac-game ' +
       m.scene +
@@ -355,9 +432,13 @@ export function mount(host, { players, saved, save, finish }) {
       m.world +
       ' · Миссия ' +
       (s.level + 1) +
-      '/3</small><h2>' +
+      '/' +
+      missions.length +
+      '</small><h2>' +
       m.name +
-      '</h2><p>Соберите ◆ и доберитесь до портала ◉. Красный восклицательный знак отмечает следующий шаг стража.</p></header>' +
+      '</h2><p>Соберите ◆ и доберитесь до портала ◉. Красный восклицательный знак отмечает следующий шаг стража.</p>' +
+      picker +
+      '</header>' +
       '<div class="tac-stats"><b>Раунд ' +
       s.round +
       '</b><span>♥ ' +
@@ -365,7 +446,7 @@ export function mount(host, { players, saved, save, finish }) {
       '/4</span><span>◆ Осталось ' +
       s.gems.length +
       '</span></div>' +
-      '<div class="tac-layout"><div class="tac-board" aria-label="Тактическое поле">' +
+      '<div class="tac-layout"><div class="tac-board" tabindex="-1" aria-label="Тактическое поле">' +
       cells +
       '</div><div class="tac-command"><div class="tac-team">' +
       roster +
@@ -391,7 +472,7 @@ export function mount(host, { players, saved, save, finish }) {
           '">' +
           (s.phase === 'clear' ? 'Следующая миссия →' : 'Попробовать миссию снова') +
           '</button>') +
-      '<details><summary>Клавиатура</summary><small>Стрелки — шаг. Q — второй герой, E — способность, F — ход монстров. Для длинного рывка нажмите на клетку.</small></details></div></div></section>';
+      '<details><summary>Клавиатура</summary><small>Стрелки — шаг. Q — второй герой, E — способность, F — ход монстров. Во время рывка выбирайте клетку стрелками и подтверждайте клавишей Enter.</small></details></div></div></section>';
     const world = m.scene === 'lava' ? 'nether' : m.scene;
     if (!floors.has(world)) floors.set(world, 'url(' + material(world).toDataURL() + ')');
     host.querySelector('.tac-board').style.setProperty('--stone', floors.get(world));
@@ -406,6 +487,14 @@ export function mount(host, { players, saved, save, finish }) {
     host.querySelector('.tac-cue').textContent = s.message;
   }
   host.addEventListener(
+    'change',
+    (event) => {
+      if (event.target.matches('.tac-mission select'))
+        go({ type: 'mission', level: Number(event.target.value) });
+    },
+    { signal: events.signal },
+  );
+  host.addEventListener(
     'click',
     (e) => {
       const b = e.target.closest('button');
@@ -419,13 +508,36 @@ export function mount(host, { players, saved, save, finish }) {
   document.addEventListener(
     'keydown',
     (e) => {
-      if (paused || disposed || s.phase !== 'play' || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (
+        paused ||
+        disposed ||
+        e.target.tagName === 'SELECT' ||
+        s.phase !== 'play' ||
+        e.repeat ||
+        e.altKey ||
+        e.ctrlKey ||
+        e.metaKey
+      )
+        return;
       const delta = { ArrowUp: -WIDTH, ArrowDown: WIDTH, ArrowRight: 1, ArrowLeft: -1 };
       if (Object.hasOwn(delta, e.key)) {
         e.preventDefault();
-        const here = s.positions[s.active],
-          dest = here + delta[e.key];
-        if (distance(here, dest) === 1) go({ type: 'move', cell: dest });
+        const here = s.positions[s.active];
+        if (s.stride === 2) {
+          // A dash can turn a corner. Let arrows move the focus until the player
+          // activates the destination's own button with Enter or Space.
+          const focused = document.activeElement;
+          const from =
+            host.contains(focused) && focused.hasAttribute('data-cell') ? Number(focused.dataset.cell) : here;
+          const dest = from + delta[e.key];
+          if (!neighbors(from).includes(dest)) return;
+          if (dest === here) host.querySelector('.tac-board').focus({ preventScroll: true });
+          else if (steps(s).includes(dest))
+            host.querySelector('[data-cell="' + dest + '"]').focus({ preventScroll: true });
+        } else {
+          const dest = here + delta[e.key];
+          if (steps(s).includes(dest)) go({ type: 'move', cell: dest });
+        }
       } else if (e.code === 'KeyQ') {
         e.preventDefault();
         go({ type: 'select', index: 1 - s.active });

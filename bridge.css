@@ -87,9 +87,44 @@
   color: #decccc;
   font-size: 0.83rem;
 }
+.br-meter {
+  --ink: #8bcda6;
+  --load: 0%;
+}
+.br-meter[data-state='warning'] {
+  --ink: #ffd270;
+}
+.br-meter[data-state='overload'],
+.br-meter[data-state='gap'] {
+  --ink: #ff9384;
+  color: var(--ink);
+  font-weight: 700;
+}
+.br-meter[data-state='gap'] .br-gauge {
+  display: none;
+}
+.br-gauge {
+  display: block;
+  width: 76px;
+  height: 9px;
+  border: 1px solid #9b8077;
+  background: #231e26;
+}
+.br-gauge i {
+  display: block;
+  width: var(--load);
+  height: 100%;
+  background: var(--ink);
+}
 .br-meter meter {
-  width: 90px;
-  height: 1rem;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.br-board[data-phase='broken'] {
+  border-color: #e68a76;
 }
 .br-status {
   margin: 2px 0;

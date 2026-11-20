@@ -72,7 +72,7 @@ export const catalog = {
   },
 };
 const signature = { kirill: 'slide', maxim: 'hit', mom: 'veil', dad: 'boo', pasha: 'guitar' };
-const encounters = [
+export const encounters = [
   {
     world: 'Храм изумруда',
     title: 'Мшистый порог',
@@ -96,12 +96,63 @@ const encounters = [
   },
   {
     world: 'Край',
-    title: 'Последний портал',
+    title: 'Обсидиановая арка',
     className: 'end',
     foes: [
       ['Эндермен', 'enderman', 7, 2],
       ['Шалкер', 'shulker', 8, 3],
       ['Призрак', 'ghost', 6, 2],
+    ],
+    rewards: ['echo', 'wave', 'comet'],
+  },
+  // Keep the first three encounters in order so installed copies resume their
+  // original room with the same guardians, card piles and rewards already earned.
+  {
+    world: 'Игровой центр',
+    title: 'Карусель стражей',
+    className: 'arcade',
+    rule: 'Карусель крутится после каждого хода. Соседние стражи расходятся по разным тропам.',
+    foes: [
+      ['Слизень', 'slime', 6, 1],
+      ['Скелет', 'skeleton', 7, 2],
+      ['Крипер', 'creeper', 7, 2],
+    ],
+    rewards: ['wave', 'comet', 'lantern'],
+  },
+  {
+    world: 'Мебельный магазин',
+    title: 'Проход между стеллажами',
+    className: 'store',
+    rule: 'Стражи на одной тропе бьют на 1 сильнее, пока их хотя бы двое.',
+    lanes: [0, 0, 2],
+    foes: [
+      ['Паук', 'spider', 7, 2],
+      ['Зомби', 'zombie', 8, 2],
+      ['Эндермен', 'enderman', 8, 2],
+    ],
+    rewards: ['echo', 'lantern', 'comet'],
+  },
+  {
+    world: 'Нижний мир',
+    title: 'Огненная переправа',
+    className: 'nether',
+    rule: 'Лава каждый ход нагревает следующую тропу. Удар стража на ней сильнее на 2.',
+    foes: [
+      ['Магмовый куб', 'magma_cube', 8, 2],
+      ['Ифрит', 'blaze', 7, 2],
+      ['Гаст', 'ghast', 8, 2],
+    ],
+    rewards: ['wave', 'echo', 'lantern'],
+  },
+  {
+    world: 'Замок на Хеллоуин',
+    title: 'Ворота полуночи',
+    className: 'castle',
+    rule: 'Пока ведьма охраняет ворота, призрак и тыквенный страж бьют на 1 сильнее.',
+    foes: [
+      ['Ведьма', 'witch', 8, 2],
+      ['Призрак', 'ghost', 7, 2],
+      ['Тыквенный страж', 'pumpkin_guard', 9, 3],
     ],
     rewards: [],
   },
@@ -147,7 +198,7 @@ function battle(hero, level, deck, seed, health, bonus = null, previous = 0) {
     discard: [],
     table: [],
     bonus,
-    foes: encounters[level].foes.map((f, i) => ({ hp: f[2], lane: i, dance: false })),
+    foes: encounters[level].foes.map((f, i) => ({ hp: f[2], lane: encounters[level].lanes?.[i] ?? i, dance: false })),
     note: 'Выберите стража, затем карту. Цифра в углу карты — её цена в энергии.',
   };
   const opening = level === 0 ? ['boo', 'guitar', signature[hero]] : [bonus];
@@ -207,7 +258,12 @@ export function restoreCards(saved, hero) {
 export function incoming(s, i) {
   const f = s.foes[i];
   if (!f.hp || f.dance) return 0;
-  return encounters[s.level].foes[i][3] + ((s.turn + i) % 3 === 0 ? 1 : 0);
+  const room = encounters[s.level];
+  let damage = room.foes[i][3] + ((s.turn + i) % 3 === 0 ? 1 : 0);
+  if (room.className === 'store' && s.foes.some((other, j) => j !== i && other.hp && other.lane === f.lane)) damage++;
+  if (room.className === 'nether' && f.lane === (s.turn - 1) % 3) damage += 2;
+  if (room.className === 'castle' && i > 0 && s.foes[0].hp) damage++;
+  return damage;
 }
 function damage(f, amt) {
   f.hp = Math.max(0, f.hp - amt);
@@ -248,6 +304,11 @@ export function cardsTurn(prev, act) {
       return s;
     }
     s.turn++;
+    if (encounters[s.level].className === 'arcade') {
+      s.foes.forEach((f, i) => {
+        if (f.hp) f.lane = (f.lane + (i % 2 ? 2 : 1)) % 3;
+      });
+    }
     s.energy = 3;
     take(s, 5);
     s.note = lost
@@ -384,7 +445,7 @@ export function mount(host, { players, saved, save, finish }) {
     if (s.phase === 'won') {
       const turns = s.previous + s.turn;
       finish({
-        summary: 'Открыто три портала · ходов ' + turns + ' · карт в колоде ' + s.deck.length,
+        summary: 'Открыто порталов ' + encounters.length + ' · ходов ' + turns + ' · карт в колоде ' + s.deck.length,
         score: Math.max(1, 150 - turns + s.health),
       });
       return;
@@ -427,7 +488,9 @@ export function mount(host, { players, saved, save, finish }) {
           })
           .join('');
         return (
-          '<div class="deck-lane"><label>Тропа ' + (lane + 1) + '</label><div>' + enemies + '</div></div>'
+          '<div class="deck-lane"><label>Тропа ' + (lane + 1) +
+          (room.className === 'nether' && lane === (s.turn - 1) % 3 ? ' · Лава' : '') +
+          '</label><div>' + enemies + '</div></div>'
         );
       })
       .join('');
@@ -448,9 +511,9 @@ export function mount(host, { players, saved, save, finish }) {
       room.world +
       ' · Портал ' +
       (s.level + 1) +
-      ' из 3</small><h2>' +
+      ' из ' + encounters.length + '</small><h2>' +
       room.title +
-      '</h2></header>' +
+      '</h2>' + (room.rule ? '<p>' + room.rule + '</p>' : '') + '</header>' +
       '<div class="deck-bar"><strong><i style="background-position:' +
       HEROES.indexOf(s.hero) * 25 +
       '% 0"></i>' +

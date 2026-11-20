@@ -38,6 +38,27 @@ export const assignments = [
     idle: 'Эндермен бродит между колоннами',
     color: '#d39dff',
   },
+  {
+    name: 'Луч в «Тайфуне»', subject: 'Древний страж', monster: 'elder_guardian', sheet: 'world', row: 2,
+    goal: 'Наведи рамку на глаз стража в момент зарядки луча.', action: 'Глаз стража светится!',
+    idle: 'Страж плывёт между горками', color: '#94ffff', props: ['wave_pool', 'typhoon'], window: [1.5, 3.3],
+  },
+  {
+    name: 'Лучник в торговом зале', subject: 'Скелет', monster: 'skeleton', sheet: 'world', row: 3,
+    goal: 'Сними скелета, когда он отводит тетиву.', action: 'Скелет натягивает лук!',
+    idle: 'Лучник патрулирует склад', color: '#ffc578', props: ['show_kitchen', 'warehouse'], window: [2.4, 4.1],
+  },
+  {
+    name: 'Шорох у храма', subject: 'Крипер', monster: 'creeper', sheet: 'world', row: 0,
+    goal: 'Поймай вспышку крипера перед взрывом.', action: 'Крипер раздувается и мигает!',
+    idle: 'Крипер крадётся к воротам', color: '#d1ff85', props: ['brazier', 'stone_mask'], window: [3.1, 4.5],
+  },
+  {
+    name: 'Фонарь привратника', subject: 'Тыквенный страж', monster: 'pumpkin_guard', sheet: 'realm', row: 1,
+    goal: 'Поймай момент, когда страж поднимает фонарь у ворот замка.',
+    action: 'Привратник зажигает фонарь!', idle: 'Страж обходит тыквы', color: '#ffb35e',
+    props: ['pumpkin_patch', 'gatehouse'], window: [1.1, 2.5],
+  },
 ];
 const WIDTH = 800,
   HEIGHT = 340,
@@ -92,13 +113,21 @@ export function restorePhoto(saved) {
 export function wildlife(stage, time) {
   const beat = time % 6.4,
     loop = Math.floor(time / 6.4);
-  const special = beat >= 2 && beat < 4.3;
-  const travel = stage === 2 ? (loop % 2 === 0 ? 1 : -1) : 1;
+  const scene = assignments[stage];
+  const [begin, end] = scene.window || [2, 4.3];
+  const special = beat >= begin && beat < end;
+  // Jump as soon as the warning ends. During the shutter window the original trajectory
+  // stays identical, so photographs stored by older versions still frame the same pose.
+  const jumps = loop + (beat >= 4.3 ? 1 : 0);
+  const travel = stage === 2 && jumps % 2 === 1 ? -1 : 1;
   const x = WIDTH / 2 + travel * (212 * Math.sin(time * 0.52 + stage * 1.6) + 33 * Math.cos(time * 0.87));
   let y = 178 + Math.sin(time * 1.5) * 14;
   if (stage === 1) y = 230 - (beat >= 4.3 ? Math.sin(((beat - 4.3) * Math.PI) / 2.1) * 86 : 0);
   if (stage === 2) y = 196 + Math.cos(time * 0.7) * 16;
-  return { x, y, special, beat };
+  if (scene.monster === 'elder_guardian') y = 182 + 51 * Math.sin(time * 1.35);
+  if (scene.monster === 'skeleton') y = 222 + 5 * Math.sin(time * 3.4);
+  if (scene.monster === 'creeper') y = 211 + 17 * Math.cos(time * 1.9);
+  return { x, y, special, beat, preparation: clamp((beat - begin) / (end - begin), 0, 1) };
 }
 export function snapPhoto(s, hero) {
   if (s.shots.length > s.stage) return { message: 'Кадр уже в альбоме.' };
@@ -128,12 +157,18 @@ function bestAlbum() {
     return [];
   }
 }
+export function bestByStage(shots) {
+  const photos = new Map();
+  for (const shot of shots) {
+    if (!photos.has(shot.stage) || shot.stars >= photos.get(shot.stage).stars) photos.set(shot.stage, shot);
+  }
+  return photos;
+}
 function remember(shot) {
-  const a = bestAlbum();
-  const previous = a.find((s) => s.stage === shot.stage);
-  if (previous && previous.stars > shot.stars) return;
+  const photos = bestByStage([...bestAlbum(), shot]);
+  if (photos.get(shot.stage) !== shot) return;
   try {
-    localStorage.setItem(albumKey, JSON.stringify([...a.filter((s) => s.stage !== shot.stage), shot]));
+    localStorage.setItem(albumKey, JSON.stringify([...photos.values()]));
   } catch {
     /* The current expedition still keeps its photographs. */
   }
@@ -143,15 +178,15 @@ function paintScene(g, images, stage, time) {
     animal = wildlife(stage, time);
   g.fillStyle = stage === 2 ? '#362949' : '#733930';
   g.fillRect(0, 0, WIDTH, HEIGHT);
-  const panorama = images.realm;
+  const panorama = images[scene.sheet];
   if (panorama.naturalWidth) {
-    const h = panorama.naturalHeight / 3,
+    const h = panorama.naturalHeight / (scene.sheet === 'world' ? 4 : 3),
       sw = (h * WIDTH) / HEIGHT,
       available = panorama.naturalWidth - sw;
     const sourceX = available * (0.48 + 0.13 * Math.sin(time * 0.19 + stage));
     g.drawImage(panorama, sourceX, scene.row * h, sw, h, 0, 0, WIDTH, HEIGHT);
   }
-  const foreground = stage === 2 ? ['crystal_spires', 'chorus_grove'] : ['basalt_columns', 'crimson_fungi'];
+  const foreground = scene.props || (stage === 2 ? ['crystal_spires', 'chorus_grove'] : ['basalt_columns', 'crimson_fungi']);
   drawLandmark(g, foreground[0], -50, HEIGHT - 140, 212);
   drawLandmark(g, foreground[1], WIDTH - 171, HEIGHT - 126, 194);
   const shade = g.createLinearGradient(0, 0, 0, HEIGHT);
@@ -167,9 +202,9 @@ function paintScene(g, images, stage, time) {
   }
   const subject = { type: scene.monster, dir: 'down' };
   if (animal.special) {
-    const progress = (animal.beat - 2) / 2.3;
+    const progress = animal.preparation;
     subject.windup = PREPARATION[subject.type] * Math.max(0.02, 1 - progress);
-    subject.aim = { dir: 'down' };
+    subject.aim = { dir: scene.monster === 'skeleton' ? 'right' : 'down' };
   } else if (stage === 1 && animal.beat >= 4.3) {
     subject.leap = { from: [0, 0], to: [1, 0], progress: (animal.beat - 4.3) / 2.1 };
   }
@@ -229,7 +264,7 @@ export function mount(host, { players, saved, save, finish }) {
     canvas = q('.photo-field'),
     g = canvas.getContext('2d'),
     shutter = q('.photo-shutter');
-  const images = { realm: new Image() };
+  const images = { realm: new Image(), world: new Image() };
   const keys = new Set();
   let paused = false,
     disposed = false,
@@ -255,8 +290,7 @@ export function mount(host, { players, saved, save, finish }) {
     return el;
   }
   function album() {
-    const photos = new Map(bestAlbum().map((shot) => [shot.stage, shot]));
-    for (const shot of s.shots) photos.set(shot.stage, shot);
+    const photos = bestByStage([...bestAlbum(), ...s.shots]);
     const shelf = q('.photo-prints');
     shelf.replaceChildren();
     for (const [i, stage] of assignments.entries()) {
@@ -292,7 +326,7 @@ export function mount(host, { players, saved, save, finish }) {
     q('.photo-goal').textContent = scene.goal;
     q('.photo-counter').textContent = 'Задание ' + (s.stage + 1) + ' / ' + assignments.length;
     shutter.textContent = reviewed()
-      ? s.stage === 2
+      ? s.stage === assignments.length - 1
         ? 'Завершить экспедицию'
         : 'Следующее задание'
       : 'Снять кадр';
@@ -302,9 +336,9 @@ export function mount(host, { players, saved, save, finish }) {
   function take() {
     if (paused || disposed) return;
     if (reviewed()) {
-      if (s.stage === 2) {
+      if (s.stage === assignments.length - 1) {
         const stars = s.shots.reduce((n, shot) => n + shot.stars, 0);
-        finish({ score: stars, summary: 'Три снимка в альбоме · ' + stars + ' из 9 звёзд' });
+        finish({ score: stars, summary: 'Снимков в альбоме: ' + s.shots.length + ' · ' + stars + ' из ' + (assignments.length * 3) + ' звёзд' });
         return;
       }
       s.stage++;
@@ -380,9 +414,10 @@ export function mount(host, { players, saved, save, finish }) {
     }
     raf = requestAnimationFrame(loop);
   }
-  for (const image of [images.realm, landmarkAtlas()]) {
+  for (const image of [...Object.values(images), landmarkAtlas()]) {
     image.addEventListener('load', () => { if (!disposed) update(); }, opts);
   }
+  images.world.src = new URL('./assets/world-panoramas.webp', import.meta.url);
   images.realm.src = new URL('./assets/realm-panoramas.webp', import.meta.url);
   update();
   raf = requestAnimationFrame(loop);

@@ -90,6 +90,17 @@ test('a moving ball, whirlpool and shulker flight resume deterministically', () 
     }
     const saved = JSON.parse(JSON.stringify(game));
     const resumed = restoreGolf(saved, ['dad']);
+    assert.equal(resumed.event, game.event, 'restoring an active ride keeps its cue');
+    if (h) {
+      for (let tick = 0; tick < 140 && game.balls[0].ride; tick++) {
+        stepGolf(resumed);
+        stepGolf(game);
+      }
+      assert.equal(game.balls[0].ride, null);
+      assert.equal(resumed.balls[0].ride, null);
+      assert.equal(game.event, '', 'the ride announcement ends on release');
+      assert.equal(resumed.event, '');
+    }
     settle(game);
     settle(resumed);
     assert.deepEqual(resumed.balls, game.balls);

@@ -40,7 +40,7 @@ const games = {
     min: 1,
     max: 1,
     initial: ['dad'],
-    hint: 'Выберите повара на три смены. Снимайте готовое со станции и отдавайте заказ гостю.',
+    hint: 'Выберите повара на семь смен. Снимайте готовое со станции и отдавайте заказ гостю.',
   },
   cards: {
     mount: cards,
@@ -195,12 +195,12 @@ function openGame(saved = null) {
   q('game-title').textContent = titles[id];
   host.replaceChildren();
   window.scrollTo(0, 0);
-  saveSlot(round, saved?.payload ?? null);
+  saveSlot(round, saved?.payload ?? null, { onlyIfCurrent: Boolean(saved) });
   controller = games[id].mount(host, {
     players: round.players,
     saved: saved?.payload ?? null,
     save(payload) {
-      if (session === round) saveSlot(round, payload);
+      if (session === round) saveSlot(round, payload, { onlyIfCurrent: true });
     },
     finish(result) {
       if (session !== round) return;

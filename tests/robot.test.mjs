@@ -11,15 +11,22 @@ import {
   resetRobot,
   restoreRobot,
 } from '../robot.js';
+import { robotRoutes } from './robot-routes.mjs';
+
 const codes = { f: 'forward', l: 'left', r: 'right', '[': 'loop', ']': 'end' };
 const make = (text) => [...text].map((c) => codes[c]);
 test('every warehouse can deliver all gems with a legal program within its space budget', () => {
-  for (const [level, program] of ['fffrffrf', '[fffr]f', '[ffrfl]f'].entries()) {
+  assert.equal(robotRoutes.length, warehouses.length);
+  for (const [level, program] of robotRoutes.entries()) {
     const s = createRobot(level);
     for (const cmd of make(program)) assert.equal(insertCommand(s, cmd), true);
     assert.equal(runProgram(s), '');
-    while (s.phase === 'run') stepRobot(s);
-    assert.equal(s.phase, 'passed');
+    const { steps } = compileProgram(s.program);
+    for (let i = 0; i < steps.length && s.phase === 'run'; i++) {
+      stepRobot(s, steps);
+      assert.deepEqual(restoreRobot(JSON.parse(JSON.stringify(s))), s);
+    }
+    assert.equal(s.phase, 'passed', warehouses[level].name);
     assert.equal(s.gems.length, warehouses[level].rows.join('').split('g').length - 1);
     assert.equal(warehouses[level].rows.join('')[s.cell], 'E');
   }
@@ -64,4 +71,17 @@ test('suspended loop playback resumes at the same source and warehouse position'
   assert.equal(restored.phase, 'passed');
   assert.deepEqual(restored, s);
   assert.equal(restoreRobot({ ...s, program: ['bad'] }).level, 0);
+});
+
+test('сохранение из прежнего третьего зала восстанавливает законченную доставку и заработанные очки', () => {
+  const program = make('[ffrfl]f');
+  const s = restoreRobot({
+    version: 1, level: 2, score: 235, program, cursor: program.length,
+    phase: 'passed', pc: compileProgram(program).steps.length, elapsed: 0,
+  });
+  assert.equal(s.phase, 'passed');
+  assert.equal(s.level, 2);
+  assert.equal(s.score, 235);
+  assert.equal(warehouses[s.level].rows.join('')[s.cell], 'E');
+  assert.equal(s.gems.length, 3);
 });

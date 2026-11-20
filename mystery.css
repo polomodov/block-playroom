@@ -13,9 +13,27 @@
   padding: 16px 22px;
   background:
     linear-gradient(90deg, #1c222bf2, #22232ac9 60%, #24243260),
-    url('./assets/world-panoramas.webp') center bottom/auto 400%;
+    var(--case-panorama) center var(--case-row) / auto var(--case-height);
 }
-.case-banner small,
+.case-picker {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.case-picker select {
+  max-width: 100%;
+  padding: .3rem .45rem;
+  font: inherit;
+  color: #fff3d7;
+  background: #283937;
+  border: 1px solid #9f9978;
+}
+.case-room:disabled {
+  opacity: .62;
+  border-style: dashed;
+}
+.case-picker,
 .case-line span {
   color: #ffcf8d;
   font-weight: 700;

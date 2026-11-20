@@ -278,3 +278,44 @@
 .tac-cell.gate .tac-fixture {
   opacity: 0.9;
 }
+
+.arcade .tac-banner {
+  background-position:
+    center,
+    center 33.33%;
+}
+.waterpark .tac-banner {
+  background-position:
+    center,
+    center 66.67%;
+}
+.store .tac-banner {
+  background-position: center, bottom;
+}
+.castle .tac-banner {
+  background-image:
+    linear-gradient(90deg, #29202eed, #231e2ec4 58%, #29202e30), url('./assets/realm-panoramas.webp');
+  background-size:
+    100% 100%,
+    100% 300%;
+  background-position: center;
+}
+.tac-mission {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+.tac-mission select {
+  font: inherit;
+  color: inherit;
+  border: 1px solid #647a6c;
+  border-radius: 4px;
+  padding: 5px;
+  background: #213632;
+}
+.tac-cell:focus-visible {
+  outline: 3px solid #fff4b7;
+  outline-offset: -4px;
+}

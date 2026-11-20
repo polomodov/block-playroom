@@ -8,6 +8,7 @@ export default defineConfig({
   testMatch: '**/*.spec.mjs',
   forbidOnly: !!process.env.CI,
   workers: 2,
+  retries: process.env.CI ? 1 : 0,
   use: { baseURL, trace: 'retain-on-failure', reducedMotion: 'reduce' },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

@@ -1,4 +1,5 @@
 import { enterCollectionGame } from '../collection-navigation.js';
+import { beginArcadeRound } from './progress.js';
 import { watchClassicCover } from '../classic-arcade-art.js';
 import { projection as view, drawTrack as road, themes } from './scene-art.js?v=jump-1';
 import { HEROES, WORLDS } from './worlds.js';
@@ -156,6 +157,7 @@ function animate(now) {
 
 function start(restored = null) {
   if (!restored?.state) restored = null;
+  if (!restored) beginArcadeRound();
   stopLoop();
   stopSolo();
   if (dialog.open) dialog.close();

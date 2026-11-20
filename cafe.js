@@ -14,7 +14,7 @@ const guests = [
   ['Шалкер', 'shulker'],
   ['Эндермен', 'enderman'],
 ];
-const shifts = [
+export const shifts = [
   {
     name: 'Завтрак перед каруселью',
     needed: 3,
@@ -49,6 +49,22 @@ const shifts = [
       [0, 0, 0],
     ],
   },
+  {
+    name: 'Пикник у «Тайфуна»', place: 'Киоск аквапарка', scene: 'waterpark', needed: 5, interval: 6, patience: 28,
+    orders: [[2, 2], [0, 2], [1, 2, 2], [0, 0, 2], [2, 2, 2], [0, 1, 2]],
+  },
+  {
+    name: 'Обед на складе', place: 'Столовая мебельного магазина', scene: 'store', needed: 6, interval: 6, patience: 30,
+    orders: [[1, 1], [0, 2], [0, 0], [1, 0, 2], [1, 1, 2], [0, 1], [2, 2, 0]],
+  },
+  {
+    name: 'Полночные сладости', place: 'Буфет в замке', scene: 'castle', needed: 6, interval: 5.5, patience: 31,
+    orders: [[0, 0], [1, 1, 1], [2, 2], [0, 0, 2], [1, 0, 1], [0, 1, 2], [0, 1, 1]],
+  },
+  {
+    name: 'Ужин у портала', place: 'Кафе Края', scene: 'end', needed: 7, interval: 5.5, patience: 32,
+    orders: [[2, 1, 2], [0, 0], [1, 1, 0], [0, 2, 1], [0, 2, 0], [1, 1, 2], [2, 0, 1], [0, 0, 1]],
+  },
 ];
 export function newCafe(shift = 0, previous = 0) {
   return {
@@ -70,7 +86,7 @@ export function restoreCafe(v) {
   if (
     !v ||
     v.version !== 1 ||
-    !validCount(v.shift, 2) ||
+    !validCount(v.shift, shifts.length - 1) ||
     !['brief', 'open', 'won', 'retry'].includes(v.phase)
   )
     return newCafe();
@@ -257,11 +273,14 @@ export function mount(host, { saved, players, save, finish }) {
   function render() {
     const level = shifts[s.shift];
     q('h2').textContent = level.name;
+    const banner = q('.cafe-banner');
+    banner.dataset.scene = level.scene || 'arcade';
+    banner.querySelector('small').textContent = level.place || 'Кафе игрового центра';
     q('.cafe-chef').textContent = 'Сегодня готовит ' + heroNames[hero];
     q('.cafe-hud').textContent =
       'Смена ' +
       (s.shift + 1) +
-      ' из 3 · Гостей обслужено ' +
+      ' из ' + shifts.length + ' · Гостей обслужено ' +
       s.sent +
       ' / ' +
       level.needed +
@@ -272,7 +291,7 @@ export function mount(host, { saved, players, save, finish }) {
         ? 'Открыть кафе'
         : s.phase === 'retry'
           ? 'Повторить смену'
-          : s.shift === 2
+          : s.shift === shifts.length - 1
             ? 'Закрыть кафе'
             : 'Следующая смена';
     for (let i = 0; i < menu.length; i++) {
@@ -360,13 +379,15 @@ export function mount(host, { saved, players, save, finish }) {
     'click',
     () => {
       if (paused || disposed) return;
-      if (s.phase === 'won' && s.shift === 2) {
+      if (s.phase === 'won' && s.shift === shifts.length - 1) {
         const total = s.sent + s.previous;
-        finish({ score: total, summary: 'Три смены в кафе · обслужено гостей ' + total });
+        finish({ score: total, summary: 'Смен в кафе: ' + shifts.length + ' · обслужено гостей ' + total });
         return;
       }
       if (s.phase === 'won') s = newCafe(s.shift + 1, s.previous + s.sent);
       else if (s.phase === 'retry') s = newCafe(s.shift, s.previous);
+      orderList.replaceChildren();
+      orderEls.clear();
       s.phase = 'open';
       advanceCafe(s, 0);
       last = null;

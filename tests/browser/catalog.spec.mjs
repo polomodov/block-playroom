@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { robotRoutes } from '../robot-routes.mjs';
 
 test.use({ serviceWorkers: 'block' }); // The offline suite exercises installation separately.
 
@@ -217,54 +218,70 @@ function arcadeSave(page, id) {
 }
 
 for (const arcade of arcades) {
-  test(arcade.id + ' — вход и восстановление через игротеку', async ({ page, isMobile }) => {
+  test(arcade.id + ' — вход и восстановление через игротеку', async ({ context, page, isMobile }) => {
+    const original = await context.newPage();
+    const play = controls(original, isMobile);
+    await original.goto('./');
+    await play('[data-game-link="' + arcade.id + '"]');
+    await expect(original).toHaveURL(new RegExp('/games/' + arcade.id + '/$'));
+    await play('#play');
+    await expect(original.locator('#arena')).toBeVisible();
+    await arcade.play(original, play, isMobile);
+    const hud = original.locator(arcade.hud);
+    await expect(hud).toHaveText(arcade.id === 'block-maze' ? /^[1-9]\d*\s*\// : /[1-9]/);
+    await play('#pause');
+    await expect(original.locator('#resume')).toBeVisible();
+    const displayed = await hud.textContent();
+    const { savedAt, ...checkpoint } = await arcadeSave(original, arcade.id);
+    if (arcade.id === 'block-dash') expect(checkpoint.lane).toBe(1);
+    await play('[data-collection-home]');
+    await expect(original.locator('#continue-saved')).toBeVisible();
+    const persisted = await arcadeSave(original, arcade.id);
+    expect(persisted).toMatchObject(checkpoint);
+    expect((await original.pageErrors()).map((error) => error.message)).toEqual([]);
+    await original.close();
+
+    // Open an independent document in the same browser profile. Check the stored
+    // payload before any arcade code can restore or autosave it.
     const press = controls(page, isMobile);
     await page.goto('./');
-    await press('[data-game-link="' + arcade.id + '"]');
-    await expect(page).toHaveURL(new RegExp('/games/' + arcade.id + '/$'));
-    await press('#play');
-    await expect(page.locator('#arena')).toBeVisible();
-    await arcade.play(page, press, isMobile);
-    await expect(page.locator(arcade.hud)).toHaveText(/[1-9]/);
-    await press('#pause');
-    await expect(page.locator('#resume')).toBeVisible();
-    const displayed = await page.locator(arcade.hud).textContent();
-    const saved = await arcadeSave(page, arcade.id);
-    if (arcade.id === 'block-dash') expect(saved.lane).toBe(1);
-    await press('[data-collection-home]');
-    await expect(page.locator('.catalog')).toBeVisible();
-    await page.reload();
+    expect(await arcadeSave(page, arcade.id)).toEqual(persisted);
     await press('#continue-saved');
     await expect(page.locator('#arena')).toBeVisible();
     await expect(page.locator('#resume')).toBeVisible();
     await expect(page.locator(arcade.hud)).toHaveText(displayed);
-    const { savedAt, ...checkpoint } = saved;
     expect(await arcadeSave(page, arcade.id)).toMatchObject(checkpoint);
     await press('#resume');
     await expect(page.locator('#resume')).toBeHidden();
   });
 }
 
-test('доставка во всех трёх залах записывает одну победу и освобождает сохранение', async ({
+test('доставка во всех семи залах записывает одну победу и освобождает сохранение', async ({
   page,
   isMobile,
 }) => {
   const press = controls(page, isMobile);
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   await openMode(page, press, 'robot');
-  const forward = 'forward',
-    right = 'right';
-  const routes = [
-    { program: [forward, forward, forward, right, forward, forward, right, forward], steps: 8 },
-    { program: ['loop', forward, forward, forward, right, 'end', forward], steps: 13 },
-    { program: ['loop', forward, forward, right, forward, 'left', 'end', forward], steps: 16 },
-  ];
-  for (const [index, { program, steps }] of routes.entries()) {
+  const commands = { f: 'forward', r: 'right', l: 'left', '[': 'loop', ']': 'end' };
+  for (const [index, route] of robotRoutes.entries()) {
+    const program = Array.from(route, (key) => commands[key]);
+    const steps = route.replace(/\[([flr]+)\]/g, (_, group) => group.repeat(3));
+    await expect(page.locator('.rb-game h2')).toContainText((index + 1) + '/' + robotRoutes.length);
     for (const cmd of program) await press('[data-cmd="' + cmd + '"]');
     // One press executes one instruction, including each iteration of a loop.
-    for (let step = 0; step < steps; step++) await press('.rb-step');
+    for (let step = 0; step < steps.length; step++) {
+      await press('.rb-step');
+      if (index === 3 && step === 1) {
+        await press('#go-lobby');
+        await page.reload();
+        await press('#continue-saved');
+        await press('#sheet-action');
+        await expect(page.locator('.rb-game h2')).toContainText('4/7');
+      }
+    }
     await expect(page.locator('.rb-status')).toHaveText('Все изумруды доставлены на станцию!');
-    await expect(page.locator('.rb-main')).toHaveText(index === 2 ? 'Завершить доставку' : 'Следующий зал');
+    await expect(page.locator('.rb-main')).toHaveText(index === robotRoutes.length - 1 ? 'Завершить доставку' : 'Следующий зал');
     await press('.rb-main');
   }
   await expect(page.locator('#sheet-title')).toHaveText('Игра пройдена!');
@@ -273,6 +290,6 @@ test('доставка во всех трёх залах записывает о
   const results = page.locator('#game-history li');
   await expect(results).toHaveCount(1);
   await expect(results).toContainText(['Робот за изумрудом · Паша']);
-  await expect(results).toContainText(['Робот доставил изумруды из трёх залов']);
+  await expect(results).toContainText(['7 из 7']);
   await expect(page.locator('#continue-saved')).toBeHidden();
 });
