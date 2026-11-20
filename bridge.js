@@ -459,7 +459,7 @@ function drawBridge(g, s, img, figures, hero, time, collapse) {
   g.restore();
   if (broken) lavaSplash(g, cx, groundY + 3, Math.min(1, Math.max(0, (collapse - 0.85) / 0.15)));
 }
-export function mount(host, { players = [], saved, save, finish }) {
+export function mount(host, { players = [], saved, save, finish, cue = () => {} }) {
   let s = restoreBridge(saved),
     paused = false,
     disposed = false,
@@ -541,6 +541,7 @@ export function mount(host, { players = [], saved, save, finish }) {
         b.addEventListener('click', () => {
           if (paused || disposed) return;
           const ok = togglePart(s, type, i);
+          if (ok && !active) cue('bridge-' + type);
           update(ok ? '' : 'Все детали этого вида заняты. Нажми на установленную, чтобы перенести её.');
           places
             .querySelector('[data-part="' + type + '"][data-joint="' + i + '"]')
@@ -600,7 +601,10 @@ export function mount(host, { players = [], saved, save, finish }) {
         return;
       }
       s = newBridge(s.level + 1, score);
-    } else if (s.phase === 'build') startBridge(s);
+    } else if (s.phase === 'build') {
+      startBridge(s);
+      cue('bridge-roll');
+    }
     update();
     snap();
   });
@@ -610,11 +614,16 @@ export function mount(host, { players = [], saved, save, finish }) {
     last = t;
     elapsed += dt;
     if (s.phase === 'test') {
+      const previousPeak = s.peak;
       advanceBridge(s, dt);
+      if (s.phase === 'test' && previousPeak < 0.8 && s.peak >= 0.8) cue('bridge-creak');
       updateMeter();
       autosave += dt;
       if (s.phase !== 'test') {
-        if (s.phase === 'broken') collapse = motion.matches ? 1 : 0;
+        if (s.phase === 'broken') {
+          collapse = motion.matches ? 1 : 0;
+          cue(s.reason === 'sag' ? 'bridge-snap' : 'bridge-drop');
+        } else cue('bridge-arrive');
         update();
         snap();
       } else if (autosave >= 1) {

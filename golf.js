@@ -301,6 +301,7 @@ export function stepGolf(state, dt = STEP) {
     b.vx *= speed / oldSpeed;
     b.vy *= speed / oldSpeed;
   }
+  const incomingX = b.vx, incomingY = b.vy;
   b.x += b.vx * dt;
   b.y += b.vy * dt;
   if (b.x < EDGE + BALL) rebound(b, 1, 0, EDGE + BALL - b.x, RESTITUTION);
@@ -343,6 +344,8 @@ export function stepGolf(state, dt = STEP) {
     b.vx = 0;
     b.vy = 0;
     passTurn(state);
+  } else if (Math.hypot(b.vx - incomingX, b.vy - incomingY) > 60) {
+    return 'bank';
   }
 }
 
@@ -718,7 +721,7 @@ export function golfSummary(state) {
   };
 }
 
-export function mount(host, { saved, players, save, finish }) {
+export function mount(host, { saved, players, save, finish, cue = () => {} }) {
   const state = restoreGolf(saved, players);
   const figures = new Image();
   figures.src = new URL('./assets/maze-figures.webp', import.meta.url);
@@ -866,6 +869,7 @@ export function mount(host, { saved, players, save, finish }) {
   }
   function strike() {
     if (paused || destroyed || finished || !golfStrike(state)) return;
+    cue('golf-strike');
     accumulator = 0;
     refresh();
     persist();
@@ -887,6 +891,7 @@ export function mount(host, { saved, players, save, finish }) {
     paint();
     persist();
   }
+  const ballSounds = { sunk: 'golf-cup', penalty: 'golf-hazard', typhoon: 'golf-swirl', shulker: 'golf-lift' };
   function tick(now) {
     if (destroyed || paused || finished) return;
     const elapsed = lastTime === null ? 0 : Math.min((now - lastTime) / 1000, 0.08);
@@ -895,10 +900,13 @@ export function mount(host, { saved, players, save, finish }) {
     accumulator += elapsed;
     const phase = state.phase,
       event = state.event;
+    let banked = false;
     while (accumulator >= STEP) {
-      if (state.phase === 'rolling') stepGolf(state);
+      if (state.phase === 'rolling' && stepGolf(state) === 'bank') banked = true;
       accumulator -= STEP;
     }
+    if (state.event !== event && ballSounds[state.event]) cue(ballSounds[state.event]);
+    else if (banked) cue('golf-bank');
     if (state.phase !== phase || state.event !== event) {
       refresh();
       if (state.phase === 'card' && state.hole === courses.length - 1) {

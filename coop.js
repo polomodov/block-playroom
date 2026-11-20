@@ -448,7 +448,7 @@ function paintBoard(g, state, images, walks, openness, now) {
     figure(g, images.fig, state.players[f.i], f.i, f.x, f.y, f.dir, f.t, f.i === state.active);
 }
 
-export function mount(host, { saved, players, save, finish }) {
+export function mount(host, { saved, players, save, finish, cue = () => {} }) {
   const css = new URL('./coop.css', import.meta.url).href;
   if (![...document.querySelectorAll('link[rel="stylesheet"]')].some((link) => link.href === css)) {
     const link = document.createElement('link');
@@ -558,6 +558,7 @@ export function mount(host, { saved, players, save, finish }) {
     if (paused || done || roomWon(state) || state.active === i) return;
     cancelHold();
     state.active = i;
+    cue('coop-handoff');
     refreshTeam();
     status.textContent = 'Ходит ' + activeName() + '.';
     persist();
@@ -580,7 +581,10 @@ export function mount(host, { saved, players, save, finish }) {
       return;
     }
     walk[i] = { from, dir, at: motion ? sceneTime : -1 };
+    if (result === 'lever') cue('coop-latch');
+    if (result === 'plate') cue('coop-plate');
     if (roomWon(state)) {
+      cue('coop-exit');
       cancelHold();
       win.hidden = false;
       status.textContent = 'Оба героя добрались до выхода.';

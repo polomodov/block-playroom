@@ -14,7 +14,7 @@ const releases = {
   'block-dash': '9ab83636d4fece6de85d6c863d6b797c2c1981d2',
 };
 const check = process.argv.includes('--check');
-const ignored = new Set(['manifest.webmanifest', 'offline.js', 'offline.css', 'assets/app-192.png',
+const ignored = new Set(['manifest.webmanifest', 'offline.js', 'offline.css', 'audio.js', 'assets/app-192.png',
   'assets/app-512.png', 'assets/app-maskable-512.png', 'assets/jump-share.png', 'assets/runner-share.jpg',
   'assets/share/story.png', 'assets/share/family.png']);
 
@@ -156,6 +156,14 @@ function sync(name, revision, temp) {
     if (actual !== integrity) throw new Error('Invalid upstream checksum for ' + name + '/' + path);
     files.set(path, adapt(path, original, name));
   }
+  // Playroom editions use the collection mixer and keep the original guitar performance.
+  // Apply the per-game entry-point patch to the adapted release without modifying the sibling checkout.
+  const audioDir = join(temp, name + '-audio');
+  mkdirSync(audioDir);
+  const entry = join(audioDir, 'game.js');
+  writeFileSync(entry, files.get('game.js'));
+  git(audioDir, 'apply', '--no-index', join(root, 'scripts/arcade-audio', name + '.patch'));
+  files.set('game.js', readFileSync(entry));
   files.set('LICENSE', source('LICENSE'));
   files.set('assets/FONT-LICENSE.txt', source('assets/FONT-LICENSE.txt'));
 

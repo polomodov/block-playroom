@@ -340,7 +340,7 @@ function drawRobot(g, s, time, animation, backdrop) {
   dot(g, 0, -k * 0.28, k * 0.065, '#ffe19b');
   g.restore();
 }
-export function mount(host, { saved, players = [], save, finish }) {
+export function mount(host, { saved, players = [], save, finish, cue = () => {} }) {
   let s = restoreRobot(saved),
     paused = false,
     disposed = false,
@@ -376,6 +376,7 @@ export function mount(host, { saved, players = [], save, finish }) {
       () => {
         if (paused || disposed) return;
         const ok = insertCommand(s, key);
+        if (ok) cue('robot-key');
         update(ok ? '' : 'В программе заняты все места. Используй повтор или удали команду.');
         snap();
       },
@@ -448,7 +449,11 @@ export function mount(host, { saved, players = [], save, finish }) {
   }
   function step() {
     anim = { cell: s.cell, dir: s.direction, t: 0 };
+    const collected = s.gems.length;
     stepRobot(s, compiled);
+    if (s.phase === 'failed') cue('robot-error');
+    else if (s.phase === 'passed') cue('robot-dock');
+    else if (s.gems.length > collected) cue('robot-gem');
     s.elapsed = 0;
     update();
     snap();
@@ -456,6 +461,7 @@ export function mount(host, { saved, players = [], save, finish }) {
   function run(isManual) {
     const error = runProgram(s);
     if (error) {
+      cue('robot-error');
       update(error);
       return;
     }
@@ -465,6 +471,7 @@ export function mount(host, { saved, players = [], save, finish }) {
     anim = { cell: s.cell, dir: s.direction, t: 1 };
     if (isManual) step();
     else {
+      cue('robot-run');
       update();
       snap();
     }

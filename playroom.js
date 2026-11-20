@@ -1,3 +1,4 @@
+import { gameAudio } from './game-audio.js';
 import { mount as cooperative } from './coop.js';
 import { mount as golf } from './golf.js';
 import { mount as mystery } from './mystery.js';
@@ -180,6 +181,7 @@ function closeSheet() {
   if (dialog.open) dialog.close();
 }
 function openGame(saved = null) {
+  gameAudio.silence();
   closeSheet();
   const id = saved?.mode || mode;
   const round = {
@@ -197,6 +199,8 @@ function openGame(saved = null) {
   window.scrollTo(0, 0);
   saveSlot(round, saved?.payload ?? null, { onlyIfCurrent: Boolean(saved) });
   controller = games[id].mount(host, {
+    audio: gameAudio,
+    cue: gameAudio.cue,
     players: round.players,
     saved: saved?.payload ?? null,
     save(payload) {
@@ -214,10 +218,12 @@ function openGame(saved = null) {
 }
 function pause() {
   if (!session || sheetState) return;
+  gameAudio.silence();
   controller?.pause();
   sheet('paused', 'Пауза', 'Можно вернуться к игре с этого места.', 'Продолжить');
 }
 function back() {
+  gameAudio.silence();
   if (controller) {
     if (session) controller.pause();
     controller.destroy();
@@ -291,6 +297,8 @@ window.addEventListener('pagehide', () => {
 window.addEventListener('pageshow', (e) => {
   if (e.persisted && session) pause();
 });
+gameAudio.bindButton(q('lobby-sound'));
+gameAudio.bindButton(q('game-sound'));
 const refresh = bindProgress(openGame, drawSetup);
 
 placeSetup();

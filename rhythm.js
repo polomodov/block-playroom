@@ -2,10 +2,10 @@ import { drawLandmark } from './arcade-scenery.js';
 import { drawMazeMonster } from './games/block-maze/maze-monsters.js';
 
 const NOTES = [
-  { name: 'До', key: 'A', hz: 261.63, color: '#ffab82', shape: '●' },
-  { name: 'Ре', key: 'S', hz: 293.66, color: '#8dddc7', shape: '◆' },
-  { name: 'Ми', key: 'D', hz: 329.63, color: '#f2cf78', shape: '▲' },
-  { name: 'Соль', key: 'F', hz: 392, color: '#c7abff', shape: '■' },
+  { name: 'До', key: 'A', sound: 'rhythm-c', color: '#ffab82', shape: '●' },
+  { name: 'Ре', key: 'S', sound: 'rhythm-d', color: '#8dddc7', shape: '◆' },
+  { name: 'Ми', key: 'D', sound: 'rhythm-e', color: '#f2cf78', shape: '▲' },
+  { name: 'Соль', key: 'F', sound: 'rhythm-g', color: '#c7abff', shape: '■' },
 ];
 export const songs = [
   {
@@ -249,83 +249,15 @@ export function strike(s, note) {
   return true;
 }
 
-// Picked string with a bright transient and a quicker-decaying first overtone.
-function makeInstrument() {
-  let context,
-    enabled = false;
-  const voices = new Set();
-  function silence() {
-    for (const v of voices) {
-      try {
-        v.stop();
-      } catch {}
-    }
-    voices.clear();
-  }
-  function enable(value) {
-    enabled = value;
-    if (!value) {
-      silence();
-      return;
-    }
-    const Audio = window.AudioContext || window.webkitAudioContext;
-    if (!Audio) {
-      enabled = false;
-      return;
-    }
-    try {
-      context ??= new Audio();
-      context.resume().catch(() => {});
-    } catch {
-      enabled = false;
-    }
-  }
-  function play(note) {
-    if (!enabled || context?.state !== 'running') return;
-    const now = context.currentTime;
-    for (const [ratio, amp, tail] of [
-      [1, 0.14, 0.38],
-      [2, 0.045, 0.17],
-      [3, 0.018, 0.1],
-    ]) {
-      const osc = context.createOscillator(),
-        env = context.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = NOTES[note].hz * ratio;
-      env.gain.setValueAtTime(0.0001, now);
-      env.gain.exponentialRampToValueAtTime(amp, now + 0.008);
-      env.gain.exponentialRampToValueAtTime(0.0001, now + tail);
-      osc.connect(env).connect(context.destination);
-      voices.add(osc);
-      osc.onended = () => {
-        voices.delete(osc);
-        osc.disconnect();
-        env.disconnect();
-      };
-      osc.start(now);
-      osc.stop(now + tail + 0.01);
-    }
-  }
-  return {
-    play,
-    enable,
-    silence,
-    get enabled() {
-      return enabled;
-    },
-    destroy() {
-      silence();
-      context?.close().catch(() => {});
-    },
-  };
-}
-export function mount(host, { saved, players = [], save, finish }) {
-  const state = createRhythm(saved),
-    instrument = makeInstrument();
+export function mount(host, { saved, players = [], save, finish, cue = () => {}, audio }) {
+  const state = createRhythm(saved);
+  const song = songOf(state.song);
+  // A resumed demonstration starts with the next beat, even if the previous note is still lit.
+  const playedBeat = state.elapsed * song.bpm / 60 - 1;
   let paused = false,
     frame = 0,
     previous = null,
-    lastNote = -1,
+    lastNote = state.phase === 'listen' ? song.riffs[state.round].findLastIndex(([, beat]) => beat <= playedBeat) : -1,
     flashUntil = 0,
     lit = -1,
     lastSave = 0,
@@ -345,8 +277,9 @@ export function mount(host, { saved, players = [], save, finish }) {
     sequence = get('.rh-sequence'),
     primary = get('.rh-action'),
     repeat = get('.rh-repeat'),
-    cue = get('.rh-cue'),
+    cueLabel = get('.rh-cue'),
     sound = get('.rh-sound');
+  const unbindSound = audio?.bindButton(sound);
   for (const song of songs) {
     const opt = new Option(song.title + ' · ' + song.place, song.id);
     select.add(opt);
@@ -401,7 +334,7 @@ export function mount(host, { saved, players = [], save, finish }) {
   function pulse(note) {
     lit = note;
     flashUntil = state.elapsed + 0.18;
-    instrument.play(note);
+    cue(NOTES[note].sound);
     noteButtons.forEach((b, i) => b.classList.toggle('rh-lit', i === note));
     root.style.setProperty('--pulse', NOTES[note].color);
     root.classList.add('rh-strum');
@@ -436,7 +369,7 @@ export function mount(host, { saved, players = [], save, finish }) {
         '».',
       phrase: 'Фраза сыграна! В ритме ' + state.hits + ' из ' + riff.length + '.',
     };
-    cue.textContent = texts[phase];
+    cueLabel.textContent = texts[phase];
     root.dataset.phase = phase;
     sequence.replaceChildren();
     riff.forEach(([n, beat], i) => {
@@ -515,17 +448,6 @@ export function mount(host, { saved, players = [], save, finish }) {
     },
     { signal: events.signal },
   );
-  sound.addEventListener(
-    'click',
-    () => {
-      if (paused) return;
-      instrument.enable(!instrument.enabled);
-      sound.setAttribute('aria-pressed', String(instrument.enabled));
-      sound.textContent = instrument.enabled ? 'Выключить звук' : 'Включить звук';
-      if (instrument.enabled) instrument.play(0);
-    },
-    { signal: events.signal },
-  );
   function key(e) {
     if (
       disposed ||
@@ -588,7 +510,6 @@ export function mount(host, { saved, players = [], save, finish }) {
       paused = true;
       cancelAnimationFrame(frame);
       previous = null;
-      instrument.silence();
       commit();
     },
     resume() {
@@ -601,7 +522,7 @@ export function mount(host, { saved, players = [], save, finish }) {
       disposed = true;
       cancelAnimationFrame(frame);
       events.abort();
-      instrument.destroy();
+      unbindSound?.();
     },
   };
 }

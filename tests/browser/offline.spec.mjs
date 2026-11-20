@@ -69,6 +69,8 @@ test('весь пакет переживает отключение сервер
     // This is the only online navigation in the entire browser profile.
     await page.goto(server.url);
     await ready(page);
+    await page.locator('#lobby-sound').click();
+    await expect(page.locator('#lobby-sound')).toHaveAttribute('aria-pressed', 'true');
     const start = await page.evaluate(async () => {
       const manifestURL = document.querySelector('link[rel="manifest"]').href;
       const manifest = await (await fetch(manifestURL)).json();
@@ -95,6 +97,7 @@ test('весь пакет переживает отключение сервер
     });
     expect(unlistedRequestFailed).toBe(true);
     await verifyOfflineFiles(page);
+    await expect(page.locator('#lobby-sound')).toHaveAttribute('aria-pressed', 'true');
 
     await page.locator('[data-game-link="block-maze"]').click();
     await page.locator('#play').click();
@@ -106,6 +109,10 @@ test('весь пакет переживает отключение сервер
     await page.locator('[data-mode="mystery"]').click();
     await page.locator('#start-mode').click();
     await page.locator('[data-room="0"]').click();
+    await expect.poll(() => page.evaluate(async () => {
+      const { gameAudio } = await import('./game-audio.js');
+      return gameAudio.instrument()?.context.state;
+    })).toBe('running');
     await page.locator('.case-search').click();
     await expect(page.locator('.case-count')).toHaveText('Улики 1/3');
     await page.locator('#go-lobby').click();

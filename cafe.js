@@ -230,7 +230,7 @@ function dishPicture(i) {
   }
   return canvas;
 }
-export function mount(host, { saved, players, save, finish }) {
+export function mount(host, { saved, players, save, finish, cue = () => {} }) {
   let s = restoreCafe(saved),
     paused = false,
     disposed = false,
@@ -364,13 +364,18 @@ export function mount(host, { saved, players, save, finish }) {
   }
   function cook(i) {
     if (paused || disposed || s.phase !== 'open') return;
+    const before = stovePhase(s, i);
     note.textContent = useStation(s, i);
+    if (before === 'empty') cue(['cafe-iron', 'cafe-pan', 'cafe-pour'][i]);
+    else if (s.stoves[i] === null) cue(before === 'ready' ? 'cafe-plate' : 'cafe-scrub');
     render();
     saveNow();
   }
   function deliver(id) {
     if (paused || disposed || s.phase !== 'open') return;
-    note.textContent = serve(s, id) ? 'Заказ выдан!' : 'Сначала собери заказ на подносе.';
+    const served = serve(s, id);
+    note.textContent = served ? 'Заказ выдан!' : 'Сначала собери заказ на подносе.';
+    if (served) cue(s.phase === 'won' ? 'cafe-shift' : 'cafe-serve');
     if (s.phase === 'won') describe();
     render();
     saveNow();
@@ -414,7 +419,14 @@ export function mount(host, { saved, players, save, finish }) {
     const dt = last === null ? 0 : Math.min(0.25, (now - last) / 1000);
     last = now;
     if (s.phase === 'open') {
+      const previousTime = s.time;
       advanceCafe(s, dt);
+      if (s.phase === 'retry') cue('cafe-close');
+      else if (s.stoves.some((start, i) => {
+        if (start === null) return false;
+        const readyAt = start + menu[i].time;
+        return previousTime < readyAt && s.time >= readyAt;
+      })) cue('cafe-ready');
       if (s.phase !== 'open') {
         describe();
         render();
