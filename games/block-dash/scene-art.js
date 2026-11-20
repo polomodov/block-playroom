@@ -12,7 +12,7 @@ export const themes = {
 const images = new Map();
 export function atlas(name) {
   let img=images.get(name);
-  if (!img) {img=new Image(); img.src=new URL('./assets/'+name+'.webp'+(name==='runner-slide'?'?v=clean-1':''),import.meta.url).href; images.set(name,img);}
+  if (!img) {img=new Image(); img.src=new URL('./assets/'+name+'.webp'+(name==='runner-slide'||name==='runner-jump'?'?v=lossy-1':''),import.meta.url).href; images.set(name,img);}
   return img.complete && img.naturalWidth ? img : null;
 }
 

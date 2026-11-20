@@ -18,3 +18,8 @@ dialog > a.collection-home { display: flex; margin: .8rem auto 0; width: max-con
 @media (max-width: 540px), (max-height: 500px) {
   #arena a.collection-home { min-height: 30px; padding: .2rem .4rem; font-size: 12px; }
 }
+/* Phone held sideways: the extra home link must not push the maze controls off screen. */
+@media (orientation: landscape) and (max-height: 340px) {
+  #arena .arena-header a.collection-home { min-height: 26px; }
+  #arena .board-wrap ~ .actions #ability { min-height: 0; padding-block: 8px; }
+}

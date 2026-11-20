@@ -339,3 +339,19 @@ p {
     transform: none;
   }
 }
+
+/* Phone held sideways: keep the game bar slim so the board gets the height. */
+@media (orientation: landscape) and (max-height: 540px) {
+  #arena {
+    max-width: none;
+    padding: max(6px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+  .playbar {
+    margin-bottom: 6px;
+  }
+  .playbar button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+}

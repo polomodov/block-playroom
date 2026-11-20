@@ -16,7 +16,13 @@
     />
     <meta
       property="og:image"
-      content="https://games.polomodov.tech/block-playroom/assets/playroom-covers.webp"
+      content="https://games.polomodov.tech/block-playroom/assets/share/playroom.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Четыре сцены игротеки: храм, мини-гольф, детектив и гитарный концерт"
     />
     <link rel="icon" href="./assets/mark.svg" />
     <link rel="stylesheet" href="./style.css" />
@@ -64,7 +70,7 @@
         <button type="button" id="continue-saved" hidden>Продолжить последнюю игру</button>
         <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
       </section>
-      <div class="catalog" aria-label="Выберите игру">
+      <div class="catalog" role="group" aria-label="Выберите игру">
         <a class="cover-card" data-game-link="block-maze" href="./games/block-maze/">
           <span class="art art-maze"></span>
           <span class="card-copy"

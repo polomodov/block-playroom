@@ -9,6 +9,10 @@ const resources = new Map();
 const uniqueAssets = new Map();
 const directories = new Set();
 let totalBytes = 0;
+// Pages opened before this version activated keep reading the previous release,
+// so a sprite sheet or script loaded mid-game always matches the code already running.
+let previousCache = null;
+let previousClients = new Set();
 
 for (const [path, integrity, bytes] of OFFLINE_FILES) {
   const url = new URL(path, base).href;
@@ -62,6 +66,13 @@ async function fillCache() {
     await broadcast(done, bytes);
   }
 }
+async function dropPreviousWhenUnused() {
+  if (!previousCache) return;
+  for (const id of previousClients) if (await self.clients.get(id)) return;
+  await caches.delete(previousCache);
+  previousCache = null;
+  previousClients = new Set();
+}
 let filling;
 function completePack() {
   if (!filling)
@@ -78,15 +89,19 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       let legacy = false;
-      for (const name of await caches.keys()) {
-        if (!name.startsWith(prefix) || name === cacheName) continue;
+      const open = await self.clients.matchAll({ type: 'window' });
+      const older = (await caches.keys()).filter((name) => name.startsWith(prefix) && name !== cacheName);
+      // Keep the newest older release (the one open pages were loaded from).
+      previousCache = open.length && older.length ? older[older.length - 1] : null;
+      previousClients = new Set(previousCache ? open.map((client) => client.id) : []);
+      for (const name of older) {
         const old = await caches.open(name);
         if (
           (await old.match(new URL('index.html', base).href)) &&
           !(await old.match(new URL('games/block-maze/index.html', base).href))
         )
           legacy = true;
-        await caches.delete(name);
+        if (name !== previousCache) await caches.delete(name);
       }
       await self.clients.claim();
       // The previous four-game launcher predates controllerchange handling.
@@ -116,6 +131,7 @@ self.addEventListener('message', (event) => {
     (async () => {
       try {
         await completePack();
+        await dropPreviousWhenUnused();
         event.ports[0].postMessage({
           ready: true,
           pack,
@@ -125,6 +141,9 @@ self.addEventListener('message', (event) => {
           revision: OFFLINE_REVISION,
         });
       } catch {
+        // The site may already serve a newer release whose files no longer match
+        // this worker's checksums. Ask the browser to fetch that release instead.
+        self.registration.update?.().catch(() => {});
         event.ports[0].postMessage({ ready: false, pack });
       }
     })(),
@@ -144,6 +163,10 @@ self.addEventListener('fetch', (event) => {
   if (!key) return;
   event.respondWith(
     (async () => {
+      if (previousCache && previousClients.has(event.clientId)) {
+        const old = await caches.open(previousCache).then((c) => c.match(key));
+        if (old) return old;
+      }
       const cache = await caches.open(cacheName);
       const cached = await cache.match(key);
       if (cached) return cached;

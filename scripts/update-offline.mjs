@@ -13,6 +13,8 @@ async function walk(dir) {
   for (const item of await readdir(join(root, dir), { withFileTypes: true })) {
     const path = dir ? dir + '/' + item.name : item.name;
     if (item.name.startsWith('.')) continue;
+    // Link-preview images are fetched by messengers, never by the games.
+    if (path === 'assets/share') continue;
     if (item.isDirectory() && (dir || ['assets', 'games'].includes(item.name))) {
       paths.push(...(await walk(path)));
     }
