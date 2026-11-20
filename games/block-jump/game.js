@@ -1,4 +1,6 @@
 import { enterCollectionGame } from '../collection-navigation.js';
+import { watchClassicCover } from '../classic-arcade-art.js';
+import { terrainLayer as floor } from './world-art.js?v=studio-1';
 import { LEVELS } from './levels.js?v=living-worlds-1';
 import { createRun, restoreRun } from './physics.js?v=offline-1';
 import { drawRun } from './renderer.js?v=dragon-flight-1';
@@ -445,5 +447,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) leave
 const saved = loadSavedGame();
 if (saved && !restoreRun(saved)) clearSavedGame();
 bindProgress({onResume: resumeSavedGame});
+
+watchClassicCover({ floor });
 
 enterCollectionGame();

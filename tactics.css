@@ -1,6 +1,4 @@
 .tac-game {
-  --grass: #49695b;
-  --dark: #293f3e;
   --highlight: #adf2bf;
   color: #fbf4e2;
   background: #172625;
@@ -9,13 +7,9 @@
   overflow: hidden;
 }
 .tac-game.lava {
-  --grass: #79514d;
-  --dark: #47373e;
   --highlight: #ffd0a1;
 }
 .tac-game.end {
-  --grass: #685e80;
-  --dark: #3e3650;
   --highlight: #ded0ff;
 }
 .tac-banner {
@@ -72,11 +66,11 @@
 .tac-board {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 3px;
   padding: 5px;
-  border: 1px solid #52685c;
-  border-radius: 9px;
-  background: #192325;
+  background: #152423;
+  border: 2px solid #728475;
+  border-radius: 2px;
+  gap: 2px;
 }
 .tac-cell,
 .tac-command button {
@@ -93,17 +87,14 @@
   min-width: 0;
   min-height: 0;
   aspect-ratio: 1.12;
-  background: linear-gradient(155deg, var(--grass), var(--dark));
   border: 1px solid #acbd905a;
   border-bottom: 3px solid #1b3332;
   padding: 0;
-  border-radius: 4px;
   overflow: hidden;
   opacity: 1;
-}
-.tac-cell:nth-child(odd) {
-  background-color: #8a8d61;
-  background-blend-mode: multiply;
+  background: #314941 var(--stone) repeat;
+  background-size: 145%;
+  border-radius: 1px;
 }
 .tac-cell:disabled {
   cursor: default;
@@ -111,18 +102,16 @@
   opacity: 1;
 }
 .tac-cell.rock {
-  background:
-    repeating-linear-gradient(0deg, transparent 0 6px, #273c3d 6px 8px),
-    repeating-linear-gradient(88deg, #536966 0 31%, #394e4f 32% 35%, #677571 36% 69%, #354f4d 70% 73%);
   border-color: #536462;
   border-bottom-width: 6px;
+  background: linear-gradient(#636e60, #41544c 80%, #34453e 81%);
 }
 .tac-cell.reachable {
   border: 2px solid var(--highlight);
   box-shadow: inset 0 0 11px #e2ffd120;
 }
 .tac-cell.danger {
-  background: repeating-linear-gradient(135deg, #82474e 0 9px, #663d47 9px 15px);
+  background: repeating-linear-gradient(135deg, #762c3760 0 7px, #ae4f5480 7px 10px), var(--stone);
 }
 .tac-cell.reachable:hover {
   filter: brightness(1.2);
@@ -150,8 +139,9 @@
   max-width: 60%;
 }
 .tac-monster {
-  background-image: url('./assets/runner-monsters.webp');
-  background-size: 1600% 1700%;
+  max-width: 83%;
+  height: 90%;
+  object-fit: contain;
 }
 .tac-sprite.sleep {
   transform: rotate(-13deg);
@@ -160,19 +150,11 @@
 .tac-sprite.current {
   filter: drop-shadow(0 0 2px white);
 }
-.tac-gem,
-.tac-portal {
+.tac-gem {
+  width: 46%;
+  height: auto;
   justify-self: center;
   align-self: center;
-  text-shadow: 0 2px 2px #14362c;
-  line-height: 1;
-  color: #84ffd3;
-  font-size: clamp(18px, 3.8vw, 36px);
-}
-.tac-portal {
-  color: #e4ccff;
-  font-size: clamp(25px, 5vw, 45px);
-  text-shadow: 0 0 13px #b68cff;
 }
 .tac-mark {
   position: absolute;
@@ -193,9 +175,10 @@
 .tac-command button {
   background: #344746;
   border: 1px solid #6c8880;
-  border-radius: 7px;
   padding: 8px;
   min-height: 42px;
+  border-radius: 3px;
+  border-bottom-width: 3px;
 }
 .tac-command button:disabled {
   opacity: 0.6;
@@ -279,4 +262,19 @@
 }
 .tac-command summary {
   cursor: pointer;
+}
+.lava .tac-cell.rock {
+  background: linear-gradient(#664746, #482e3e);
+}
+.end .tac-cell.rock {
+  background: linear-gradient(#625667, #40394f);
+}
+.tac-fixture {
+  position: absolute;
+  inset: 2% 2% 4%;
+  background: url('./games/block-maze/assets/maze-landmarks.webp') no-repeat;
+  background-size: 400% 500%;
+}
+.tac-cell.gate .tac-fixture {
+  opacity: 0.9;
 }

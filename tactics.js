@@ -1,3 +1,6 @@
+import { landmarkPosition, material } from './arcade-scenery.js';
+import { drawGem } from './games/block-maze/maze-materials.js';
+import { monsterPortrait } from './maze-portraits.js';
 import { heroNames } from './progress.js';
 
 const HEROES = Object.keys(heroNames);
@@ -17,8 +20,8 @@ export const missions = [
     scene: 'temple',
     map: ['0...*G', '.#....', '....#.', '.#..*.', '1.....'],
     patrols: [
-      { name: 'Скелет', row: 4, path: [8, 9, 15, 14] },
-      { name: 'Паук', row: 2, path: [22, 28, 27, 21] },
+      { name: 'Скелет', kind: 'skeleton', path: [8, 9, 15, 14] },
+      { name: 'Паук', kind: 'spider', path: [22, 28, 27, 21] },
     ],
   },
   {
@@ -27,8 +30,8 @@ export const missions = [
     scene: 'lava',
     map: ['*..#.G', '.0...*', '.#.#..', '*...#.', '1.....'],
     patrols: [
-      { name: 'Магмовый куб', row: 11, path: [1, 2, 8, 7] },
-      { name: 'Гаст', row: 10, path: [28, 29, 23, 17, 16, 10, 11, 17, 23, 29] },
+      { name: 'Магмовый куб', kind: 'magma_cube', path: [1, 2, 8, 7] },
+      { name: 'Гаст', kind: 'ghast', path: [28, 29, 23, 17, 16, 10, 11, 17, 23, 29] },
     ],
   },
   {
@@ -37,9 +40,9 @@ export const missions = [
     scene: 'end',
     map: ['0#..*G', '...#..', '.*..*.', '..#.#.', '1.....'],
     patrols: [
-      { name: 'Эндермен', row: 9, path: [7, 8, 14, 13] },
-      { name: 'Шалкер', row: 16, path: [16, 10, 11, 17] },
-      { name: 'Эндермен', row: 9, path: [27, 28, 29, 23, 29, 28] },
+      { name: 'Эндермен', kind: 'enderman', path: [7, 8, 14, 13] },
+      { name: 'Шалкер', kind: 'shulker', path: [16, 10, 11, 17] },
+      { name: 'Эндермен', kind: 'enderman', path: [27, 28, 29, 23, 29, 28] },
     ],
   },
 ];
@@ -228,15 +231,26 @@ export function tacticsTurn(prev, act) {
 function cellName(c) {
   return 'АБВГДЕ'[c % WIDTH] + (1 + Math.floor(c / WIDTH));
 }
-function sprite(row, monster, extra = '') {
-  const position = monster ? '0 ' + (row * 100) / 16 + '%' : row * 25 + '% 0';
+function heroSprite(hero, extra = '') {
   return (
-    '<i aria-hidden="true" class="tac-sprite ' +
-    (monster ? 'tac-monster ' : 'tac-hero ') +
+    '<i aria-hidden="true" class="tac-sprite tac-hero ' +
     extra +
     '" style="background-position:' +
-    position +
-    '"></i>'
+    HEROES.indexOf(hero) * 25 +
+    '% 0"></i>'
+  );
+}
+const floors = new Map();
+const scenery = {
+  temple: ['stone_mask', 'brazier'],
+  lava: ['basalt_columns', 'crimson_fungi'],
+  end: ['crystal_spires', 'chorus_grove'],
+};
+function fixture(name) {
+  return (
+    '<span aria-hidden="true" class="tac-fixture" style="background-position:' +
+    landmarkPosition(name) +
+    '"></span>'
   );
 }
 export function mount(host, { players, saved, save, finish }) {
@@ -278,10 +292,21 @@ export function mount(host, { players, saved, save, finish }) {
       ]
         .filter(Boolean)
         .join(', ');
+      let landmark = '';
+      if (symbol === 'G') landmark = fixture('exit_portal');
+      if (symbol === '#') landmark = fixture(scenery[m.scene][c % 2]);
       const icons =
-        occupants
-          .map((i) => sprite(HEROES.indexOf(s.team[i]), false, i === s.active ? 'current' : ''))
-          .join('') + monsters.map((g) => sprite(g.row, true, g.rest ? 'sleep' : '')).join('');
+        occupants.map((i) => heroSprite(s.team[i], i === s.active ? 'current' : '')).join('') +
+        monsters
+          .map(
+            (g) =>
+              '<i data-beast="' +
+              g.kind +
+              '" class="tac-sprite tac-monster ' +
+              (g.rest ? 'sleep' : '') +
+              '"></i>',
+          )
+          .join('');
       return (
         '<button type="button" class="tac-cell ' +
         (moves.includes(c) ? 'reachable ' : '') +
@@ -294,8 +319,10 @@ export function mount(host, { players, saved, save, finish }) {
         '" ' +
         (moves.includes(c) ? '' : 'disabled') +
         '>' +
-        (symbol === 'G' ? '<span class="tac-portal" aria-hidden="true">◉</span>' : '') +
-        (s.gems.includes(c) ? '<span class="tac-gem" aria-hidden="true">◆</span>' : '') +
+        landmark +
+        (s.gems.includes(c)
+          ? '<canvas class="tac-gem" aria-hidden="true" width="64" height="64"></canvas>'
+          : '') +
         '<span class="tac-stand">' +
         icons +
         '</span>' +
@@ -313,7 +340,7 @@ export function mount(host, { players, saved, save, finish }) {
           '" ' +
           (s.phase !== 'play' || s.used[i] || s.stride ? 'disabled' : '') +
           '>' +
-          sprite(HEROES.indexOf(id), false) +
+          heroSprite(id) +
           '<span><b>' +
           heroNames[id] +
           '</b><small>' +
@@ -365,6 +392,17 @@ export function mount(host, { players, saved, save, finish }) {
           (s.phase === 'clear' ? 'Следующая миссия →' : 'Попробовать миссию снова') +
           '</button>') +
       '<details><summary>Клавиатура</summary><small>Стрелки — шаг. Q — второй герой, E — способность, F — ход монстров. Для длинного рывка нажмите на клетку.</small></details></div></div></section>';
+    const world = m.scene === 'lava' ? 'nether' : m.scene;
+    if (!floors.has(world)) floors.set(world, 'url(' + material(world).toDataURL() + ')');
+    host.querySelector('.tac-board').style.setProperty('--stone', floors.get(world));
+    for (const placeholder of host.querySelectorAll('[data-beast]')) {
+      placeholder.replaceWith(monsterPortrait(placeholder.dataset.beast, placeholder.className));
+    }
+    for (const gem of host.querySelectorAll('.tac-gem')) {
+      const context = gem.getContext('2d');
+      context.scale(4, 4);
+      drawGem(context, 8, 8, true);
+    }
     host.querySelector('.tac-cue').textContent = s.message;
   }
   host.addEventListener(

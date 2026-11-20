@@ -1,3 +1,5 @@
+import { drawLandmark, landmarkAtlas } from './arcade-scenery.js';
+import { monsterPortrait } from './maze-portraits.js';
 // The furniture shop advances one turn per move, including the witch's patrol.
 export const rooms = [
   { name: 'Касса', item: 'till', clue: 0 },
@@ -11,10 +13,10 @@ export const rooms = [
   { name: 'Шкафы', item: 'wardrobe', stash: true },
 ];
 export const suspects = [
-  { name: 'Паук', stamp: 'круг', ribbon: 'синяя', row: 2 },
-  { name: 'Скелет', stamp: 'звезда', ribbon: 'синяя', row: 4 },
-  { name: 'Зомби', stamp: 'круг', ribbon: 'медная', row: 1 },
-  { name: 'Эндермен', stamp: 'звезда', ribbon: 'медная', row: 9 },
+  { name: 'Паук', stamp: 'круг', ribbon: 'синяя', type: 'spider' },
+  { name: 'Скелет', stamp: 'звезда', ribbon: 'синяя', type: 'skeleton' },
+  { name: 'Зомби', stamp: 'круг', ribbon: 'медная', type: 'zombie' },
+  { name: 'Эндермен', stamp: 'звезда', ribbon: 'медная', type: 'enderman' },
 ];
 const stashes = [3, 6, 8],
   patrol = [4, 5, 8, 7, 6, 3],
@@ -122,7 +124,10 @@ export function identify(s, id) {
 }
 function furnishing(canvas, item) {
   const g = canvas.getContext('2d');
+  g.clearRect(0, 0, canvas.width, canvas.height);
   g.imageSmoothingEnabled = false;
+  const showrooms = { sofa: 'living_room', desk: 'show_kitchen', shelf: 'warehouse' };
+  if (showrooms[item] && drawLandmark(g, showrooms[item], 3, 0, 84)) return;
   function face(points, color) {
     g.fillStyle = color;
     g.beginPath();
@@ -270,18 +275,18 @@ export function mount(host, { saved, players, save, finish }) {
     picture.height = 56;
     picture.setAttribute('aria-hidden', 'true');
     furnishing(picture, r.item);
+    if (!landmarkAtlas().complete) landmarkAtlas().addEventListener('load', () => furnishing(picture, r.item), { ...opts, once: true });
     const figure = make('span', 'case-figure');
     figure.style.backgroundPosition = heroes.indexOf(s.hero) * 25 + '% 0%';
     const badge = make('span', 'case-clue');
-    b.append(picture, figure, badge, make('span', 'case-label', r.name));
+    b.append(picture, figure, monsterPortrait('witch', 'case-witch'), badge, make('span', 'case-label', r.name));
     b.addEventListener('click', () => act(() => (i === s.position ? inspect(s) : walk(s, i))), opts);
     q('.case-map').append(b);
     cells.push(b);
   }
   const choices = suspects.map((person, i) => {
     const b = make('button', 'case-suspect'),
-      icon = make('span', 'case-beast');
-    icon.style.backgroundPosition = '0 ' + (person.row * 100) / 16 + '%';
+      icon = monsterPortrait(person.type, 'case-beast');
     b.append(
       icon,
       make('strong', '', person.name),

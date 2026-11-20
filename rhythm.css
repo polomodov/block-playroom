@@ -141,141 +141,12 @@
 }
 .rh-band {
   position: absolute;
-  inset: 8% 0 9%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: clamp(14px, 10vw, 130px);
-  z-index: 1;
-}
-.rh-pasha,
-.rh-monster {
-  position: relative;
-  flex: none;
-  transform-origin: 50% 95%;
-  filter: drop-shadow(1px 3px 2px #1c152d99);
-}
-.rh-pasha {
-  height: 100%;
-  aspect-ratio: 150 / 250;
-}
-.rh-pasha::before {
-  content: '';
-  position: absolute;
   inset: 0;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 54%,
-    69% 53%,
-    67% 76%,
-    100% 77%,
-    100% 100%,
-    0 100%,
-    0 77%,
-    19% 76%,
-    20% 55%,
-    0 59%
-  );
-  background: url('./assets/maze-figures.webp') 100% 0 / 500% 200%;
-}
-.rh-guitar {
-  position: absolute;
-  left: 18%;
-  top: 51%;
-  width: 47%;
-  height: 18%;
-  border-radius: 48% 51% 45% 46%;
-  border: 2px solid #623519;
-  transform: rotate(-27deg);
-  background:
-    radial-gradient(circle at 60% 43%, #38231c 0 16%, #f9d891 17% 22%, transparent 23%),
-    radial-gradient(ellipse at 32% 30%, #ffe19b, #c57942 80%);
-  box-shadow: inset 1px -3px #a35c34;
-}
-.rh-guitar i {
-  position: absolute;
-  left: 81%;
-  top: 31%;
-  width: 88%;
-  height: 24%;
-  border: 1px solid #533b31;
-  background: repeating-linear-gradient(90deg, #6c493d 0 12%, #d8af82 13% 15%);
-}
-.rh-guitar i::after {
-  content: '';
-  position: absolute;
-  left: 94%;
-  top: -45%;
-  width: 24%;
-  height: 180%;
-  border: 1px solid #543629;
-  border-radius: 30%;
-  background: #a27550;
-}
-
-.rh-pick,
-.rh-fret {
-  position: absolute;
-  display: block;
-  width: 27%;
-  height: 8%;
-  border-radius: 45%;
-  border: 1px solid #9b5927;
-  border-bottom-width: 2px;
-  background: linear-gradient(#e4a345, #b46e2c);
-  transform-origin: 10% 50%;
-}
-.rh-pick {
-  left: 7%;
-  top: 54%;
-  transform: rotate(27deg);
-}
-.rh-fret {
-  left: 64%;
-  top: 52%;
-  width: 14%;
-  height: 6%;
-  transform: rotate(-43deg);
-}
-.rh-pick::after,
-.rh-fret::after {
-  content: '';
-  position: absolute;
-  top: 8%;
-  left: 78%;
-  width: 55%;
-  height: 86%;
-  border-radius: 43%;
-  background: linear-gradient(#ffd19c, #db995c);
-  border-bottom: 1px solid #985b3b;
-}
-.rh-strum .rh-pick {
-  transform: rotate(8deg);
-}
-.rh-guitar b {
-  position: absolute;
-  width: 9%;
-  height: 38%;
-  left: 28%;
-  top: 31%;
-  background: #5d3830;
-  border-radius: 20%;
-}
-.rh-monster {
-  height: min(94%, 145px);
-  aspect-ratio: 1;
-  background: url('./assets/runner-monsters.webp') 0 var(--actor-row) / 1600% 1700%;
-}
-.rh-strum .rh-monster {
-  background-position-x: 66.6667%;
-  transform: translateY(-5px) rotate(4deg);
-}
-.rh-strum .rh-pasha {
-  transform: rotate(-2deg);
-}
-.rh-strum .rh-guitar {
-  transform: rotate(-22deg);
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  z-index: 1;
 }
 .rh-panel {
   border: 1px solid #526a6b;
@@ -419,13 +290,6 @@
   }
   .rh-pads button {
     min-height: 49px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rh-strum .rh-monster,
-  .rh-strum .rh-pasha,
-  .rh-strum .rh-guitar {
-    transform: none;
   }
 }
 /* Phone held sideways: the stage on the left, the guitar pads on the right. */

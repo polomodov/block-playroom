@@ -1,4 +1,6 @@
 import { enterCollectionGame } from '../collection-navigation.js';
+import { watchClassicCover } from '../classic-arcade-art.js';
+import { projection as view, drawTrack as road, themes } from './scene-art.js?v=jump-1';
 import { HEROES, WORLDS } from './worlds.js';
 import { saveGame, clearSavedGame, addResult, bindProgress } from './progress.js';
 import { createRun, restoreRun } from './engine.js?v=jump-1';
@@ -332,5 +334,7 @@ bindProgress({onResume(saved) {
   start(restored);
   return true;
 }});
+
+watchClassicCover({ view, road, themes });
 
 enterCollectionGame();

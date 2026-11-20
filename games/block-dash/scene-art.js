@@ -1,3 +1,4 @@
+import { stonePaving } from '../classic-arcade-art.js';
 // Near and far materials, side scenery, and the two original family-game panorama sheets.
 export const themes = {
   temple: {row:0, sky:'#abd6b6', haze:'#c2dcc0', land:'#375c48', shore:'#243e34', paving:['#79816a','#828871','#737d64'], edge:'#d5c68b', trim:'#86ecc0', wall:'#527a62', top:'#8fac77', side:'#334b44', props:[0,8], light:'#b6ffbc'},
@@ -75,6 +76,7 @@ function tileSkin(t,index) {
   if(tileSkins.has(key))return tileSkins.get(key);
   const skin=document.createElement('canvas');skin.width=192;skin.height=128;
   const g=skin.getContext('2d');
+  stonePaving(g, t.row, index);
   let seed=(key+2)*997;
   const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
   const grad=g.createLinearGradient(0,0,184,125);

@@ -1,3 +1,5 @@
+import { landmarkPosition } from './arcade-scenery.js';
+import { monsterPortrait } from './maze-portraits.js';
 import { heroNames } from './progress.js';
 
 const HEROES = Object.keys(heroNames);
@@ -76,8 +78,8 @@ const encounters = [
     title: 'Мшистый порог',
     className: 'temple',
     foes: [
-      ['Паук', 2, 5, 2],
-      ['Скелет', 4, 5, 2],
+      ['Паук', 'spider', 5, 2],
+      ['Скелет', 'skeleton', 5, 2],
     ],
     rewards: ['echo', 'comet', 'lantern'],
   },
@@ -86,9 +88,9 @@ const encounters = [
     title: 'За тайфуном',
     className: 'aqua',
     foes: [
-      ['Утопленник', 5, 6, 2],
-      ['Страж', 6, 5, 3],
-      ['Слизень', 3, 5, 1],
+      ['Утопленник', 'drowned', 6, 2],
+      ['Страж', 'guardian', 5, 3],
+      ['Слизень', 'slime', 5, 1],
     ],
     rewards: ['wave', 'echo', 'lantern'],
   },
@@ -97,9 +99,9 @@ const encounters = [
     title: 'Последний портал',
     className: 'end',
     foes: [
-      ['Эндермен', 9, 7, 2],
-      ['Шалкер', 16, 8, 3],
-      ['Призрак', 14, 6, 2],
+      ['Эндермен', 'enderman', 7, 2],
+      ['Шалкер', 'shulker', 8, 3],
+      ['Призрак', 'ghost', 6, 2],
     ],
     rewards: [],
   },
@@ -322,6 +324,28 @@ export function cardsTurn(prev, act) {
   } else if (!foe.hp) s.target = remaining;
   return s;
 }
+const cardScenes = {
+  spark: 'crystal_spires',
+  shield: 'stone_mask',
+  echo: 'carousel',
+  comet: 'exit_portal',
+  lantern: 'brazier',
+  wave: 'typhoon',
+};
+function cardArt(id) {
+  const hero = HEROES.find((key) => signature[key] === id);
+  if (hero)
+    return (
+      '<i class="deck-illustration family" aria-hidden="true" style="background-position:' +
+      HEROES.indexOf(hero) * 25 +
+      '% 0"></i>'
+    );
+  return (
+    '<i class="deck-illustration landmark" aria-hidden="true" style="background-position:' +
+    landmarkPosition(cardScenes[id]) +
+    '"></i>'
+  );
+}
 function cardButton(id, attr, disabled = false) {
   const c = catalog[id];
   return (
@@ -336,9 +360,11 @@ function cardButton(id, attr, disabled = false) {
     c.cost +
     '">' +
     c.cost +
-    '</span><i aria-hidden="true">' +
+    '</span><span class="deck-mark" aria-hidden="true">' +
     c.sign +
-    '</i><strong>' +
+    '</span>' +
+    cardArt(id) +
+    '<strong>' +
     c.name +
     '</strong><small>' +
     c.text +
@@ -373,7 +399,7 @@ export function mount(host, { players, saved, save, finish }) {
         const enemies = s.foes
           .map((f, i) => {
             if (!f.hp || f.lane !== lane) return '';
-            const [name, row] = room.foes[i];
+            const [name, kind] = room.foes[i];
             return (
               '<button type="button" class="deck-foe ' +
               (f.dance ? 'dancing' : '') +
@@ -388,9 +414,9 @@ export function mount(host, { players, saved, save, finish }) {
               ', удар ' +
               incoming(s, i) +
               '">' +
-              '<span class="deck-beast" aria-hidden="true" style="background-position:0 ' +
-              (row * 100) / 16 +
-              '%"></span><b>' +
+              '<span data-beast="' +
+              kind +
+              '"></span><b>' +
               name +
               '</b><small>♥ ' +
               f.hp +
@@ -461,6 +487,9 @@ export function mount(host, { players, saved, save, finish }) {
             '</div>'
           : '<button type="button" class="deck-retry" data-retry>Вернуться к началу комнаты</button>') +
       '</div></section>';
+    for (const placeholder of host.querySelectorAll('[data-beast]')) {
+      placeholder.replaceWith(monsterPortrait(placeholder.dataset.beast, 'deck-beast'));
+    }
     host.querySelector('.deck-note').textContent = s.note;
   }
   host.addEventListener(

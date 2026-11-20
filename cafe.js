@@ -1,3 +1,4 @@
+import { monsterPortrait } from './maze-portraits.js';
 import { heroNames } from './progress.js';
 
 export const menu = [
@@ -6,12 +7,12 @@ export const menu = [
   { name: 'Лимонад', plural: 'Лимонад', tool: 'Кувшин', time: 2.2, shelf: 11, color: '#98cb76' },
 ];
 const guests = [
-  ['Скелет', 4],
-  ['Ведьма', 8],
-  ['Паук', 2],
-  ['Зомби', 1],
-  ['Шалкер', 16],
-  ['Эндермен', 9],
+  ['Скелет', 'skeleton'],
+  ['Ведьма', 'witch'],
+  ['Паук', 'spider'],
+  ['Зомби', 'zombie'],
+  ['Шалкер', 'shulker'],
+  ['Эндермен', 'enderman'],
 ];
 const shifts = [
   {
@@ -225,10 +226,11 @@ export function mount(host, { saved, players, save, finish }) {
     opts = { signal: events.signal },
     hero = players[0];
   host.innerHTML =
-    '<section class="cafe-game"><header class="cafe-banner"><div><small>Кафе игрового центра</small><h2></h2><p class="cafe-chef"></p></div></header><div class="cafe-body"><div class="cafe-hud"></div><p class="cafe-note" role="status"></p><div class="cafe-main"><section><h3>Кухня</h3><div class="cafe-stations"></div><h3>Поднос</h3><div class="cafe-tray"></div></section><section><h3>Заказы гостей</h3><div class="cafe-orders"></div></section></div><button type="button" class="cafe-next"></button></div></section>';
+    '<section class="cafe-game"><header class="cafe-banner"><span class="cafe-avatar" aria-hidden="true"></span><div><small>Кафе игрового центра</small><h2></h2><p class="cafe-chef"></p></div></header><div class="cafe-body"><div class="cafe-hud"></div><p class="cafe-note" role="status"></p><div class="cafe-main"><section><h3>Кухня</h3><div class="cafe-stations"></div><h3>Поднос</h3><div class="cafe-tray"></div></section><section><h3>Заказы гостей</h3><div class="cafe-orders"></div></section></div><button type="button" class="cafe-next"></button></div></section>';
   const q = (sel) => host.querySelector(sel),
     note = q('.cafe-note'),
     next = q('.cafe-next');
+  q('.cafe-avatar').classList.add('face', 'face-' + hero);
   const stoveButtons = menu.map((food, i) => {
     const b = document.createElement('button');
     b.type = 'button';
@@ -301,14 +303,12 @@ export function mount(host, { saved, players, save, finish }) {
     for (const id of visible) {
       let el = orderEls.get(id);
       if (!el) {
-        const [name, sprite] = guests[(id + s.shift * 2) % guests.length];
+        const [name, type] = guests[(id + s.shift * 2) % guests.length];
         el = document.createElement('button');
         el.type = 'button';
         el.className = 'cafe-ticket';
         el.dataset.order = id;
-        const picture = document.createElement('span');
-        picture.className = 'cafe-guest';
-        picture.style.backgroundPosition = '0 ' + (sprite * 100) / 16 + '%';
+        const picture = monsterPortrait(type, 'cafe-guest');
         const copy = document.createElement('span'),
           guest = document.createElement('strong'),
           dish = document.createElement('small'),

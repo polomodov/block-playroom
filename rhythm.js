@@ -1,3 +1,6 @@
+import { drawLandmark } from './arcade-scenery.js';
+import { drawMazeMonster } from './games/block-maze/maze-monsters.js';
+
 const NOTES = [
   { name: 'До', key: 'A', hz: 261.63, color: '#ffab82', shape: '●' },
   { name: 'Ре', key: 'S', hz: 293.66, color: '#8dddc7', shape: '◆' },
@@ -10,7 +13,8 @@ const SONGS = [
     title: 'Эхо изумруда',
     place: 'Храм изумруда',
     partner: 'Паук',
-    monster: 2,
+    monster: 'spider',
+    props: ['brazier', 'stone_mask'],
     bpm: 94,
     sheet: 'world',
     panel: 0,
@@ -40,7 +44,8 @@ const SONGS = [
     title: 'Карусель',
     place: 'Игровой центр',
     partner: 'Скелет',
-    monster: 4,
+    monster: 'skeleton',
+    props: ['carousel', 'claw'],
     bpm: 108,
     sheet: 'world',
     panel: 1,
@@ -70,7 +75,8 @@ const SONGS = [
     title: 'Струны Края',
     place: 'Край',
     partner: 'Эндермен',
-    monster: 9,
+    monster: 'enderman',
+    props: ['crystal_spires', 'chorus_grove'],
     bpm: 100,
     sheet: 'realm',
     panel: 2,
@@ -263,7 +269,7 @@ export function mount(host, { saved, players = [], save, finish }) {
   const commit = () => save({ ...state });
   const events = new AbortController();
   host.innerHTML = `<div class="rhythm-stage"><div class="rh-head"><div><h2 class="rh-song"></h2><p class="rh-world"></p></div><button type="button" class="rh-sound" aria-pressed="false">Включить звук</button></div>
-  <div class="rh-backdrop"><div class="rh-lamps" aria-hidden="true"><i></i><i></i><i></i></div><div class="rh-band"><div class="rh-pasha" aria-hidden="true"><span class="rh-guitar"><i></i><b></b></span><i class="rh-pick"></i><i class="rh-fret"></i></div><div class="rh-monster" aria-hidden="true"></div></div>
+  <div class="rh-backdrop"><div class="rh-lamps" aria-hidden="true"><i></i><i></i><i></i></div><canvas class="rh-band" width="560" height="168" aria-label="Паша с гитарой и его партнёр по дуэту"></canvas>
   <div class="rh-score"></div></div>
   <div class="rh-panel"><label class="rh-song-select">Мелодия <select></select></label>
   <p class="rh-cue" role="status"></p><div class="rh-sequence" aria-label="Ноты фразы"></div><div class="rh-beat" aria-hidden="true"><span></span></div>
@@ -291,8 +297,44 @@ export function mount(host, { saved, players = [], save, finish }) {
     pads.append(btn);
     return btn;
   });
-  const beatBar = get('.rh-beat span'),
-    monster = get('.rh-monster');
+  const beatBar = get('.rh-beat span');
+  const band = get('.rh-band').getContext('2d');
+  const figures = new Image();
+  figures.src = new URL('./assets/maze-figures.webp', import.meta.url);
+  let guitarist;
+  // The guitar renderer builds Path2D outlines. Load it only on the browser stage.
+  import('./games/block-maze/maze-music.js').then(({ drawGuitarist }) => {
+    if (disposed) return;
+    guitarist = drawGuitarist;
+    drawStage();
+  }).catch(() => {
+    // A delayed or missing optional animation still leaves the playable rhythm chart and portrait.
+    if (!disposed) drawStage();
+  });
+  const quietMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function drawStage() {
+    const song = songOf(state.song);
+    const age = quietMotion ? 0.45 : (state.elapsed * song.bpm) / 120;
+    band.clearRect(0, 0, 560, 168);
+    const props = song.props;
+    drawLandmark(band, props[0], 8, 76, 112);
+    drawLandmark(band, props[1], 447, 76, 109);
+    band.save();
+    band.translate(208, 113);
+    band.scale(4.6, 4.6);
+    if (guitarist) guitarist(band, 0, 0, state.phase === 'choose' ? 0.48 : age % 4, false, false, figures);
+    else if (figures.naturalWidth) {
+      const cell = figures.naturalWidth / 5, height = figures.naturalHeight / 2;
+      band.drawImage(figures, 4 * cell, 0, cell, height, -8, -24, 16, 26);
+    }
+    band.restore();
+    band.save();
+    band.translate(352, 100);
+    band.scale(4.4, 4.4);
+    const partner = { type: song.monster, dance: state.phase === 'play' ? 1 : 0, dir: 'left' };
+    drawMazeMonster(band, partner, 0, 0, age, false, age);
+    band.restore();
+  }
   function pulse(note) {
     lit = note;
     flashUntil = state.elapsed + 0.18;
@@ -317,7 +359,7 @@ export function mount(host, { saved, players = [], save, finish }) {
     root.style.setProperty('--panorama', 'url("./assets/' + song.sheet + '-panoramas.webp")');
     root.style.setProperty('--sheet-height', panes * 100 + '%');
     root.style.setProperty('--panel-row', (song.panel / (panes - 1)) * 100 + '%');
-    monster.style.setProperty('--actor-row', (song.monster / 16) * 100 + '%');
+    drawStage();
     get('.rh-song').textContent = song.title;
     get('.rh-world').textContent = song.place;
     get('.rh-score').textContent = 'Фраза ' + (state.round + 1) + ' / 3 · ' + state.score + ' очк.';
@@ -466,6 +508,7 @@ export function mount(host, { saved, players = [], save, finish }) {
       const beat = ((state.elapsed - state.firstAt) * song.bpm) / 60;
       beatBar.style.transform = 'scaleX(' + Math.min(1, beat / (riff.at(-1)[1] + 0.7)) + ')';
     }
+    drawStage();
     if (lit >= 0 && state.elapsed >= flashUntil) clearPulse();
     if (['listen', 'play'].includes(state.phase) && now - lastSave >= 900) {
       lastSave = now;

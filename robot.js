@@ -1,3 +1,5 @@
+import { drawGem } from './games/block-maze/maze-materials.js';
+import { drawLandmark, material } from './arcade-scenery.js';
 // A token program runs on a deterministic turn-based map. Loop expansion retains
 // source positions so that errors and the execution light point to the written program.
 export const warehouses = [
@@ -180,71 +182,35 @@ function dot(g, x, y, r, c) {
   g.arc(x, y, r, 0, Math.PI * 2);
   g.fill();
 }
-function drawRack(g, x, y, k, n) {
-  const side = k * 0.08;
-  const paint = (a, b, w, h, c) => rect(g, x + a * k, y + b * k, w * k, h * k, c);
-  paint(0.06, 0.06, 0.92, 0.9, '#273d45');
-  paint(0.08, 0.08, 0.85, 0.76, '#8a7862');
-  paint(0.11, 0.1, 0.8, 0.08, '#c9a87c');
-  paint(0.13, 0.2, 0.73, 0.61, '#524651');
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < 3; col++) {
-      const px = x + k * (0.16 + col * 0.225),
-        py = y + k * (0.24 + row * 0.3),
-        w = 0.18 * k,
-        h = 0.2 * k;
-      const colors = ['#c98b59', '#899d9a', '#c8a069', '#9b7271'];
-      rect(g, px, py, w, h, colors[(n + row + col) % colors.length]);
-      rect(g, px + w * 0.44, py, w * 0.14, h * 0.55, '#dfc498');
+function drawShelves(g, rows, left, top, size, level) {
+  // Fixtures are fitted to contiguous wall cells, leaving every walkable tile visible.
+  const sections = ['warehouse', 'show_kitchen', 'living_room'];
+  for (const [row, cells] of rows.entries()) {
+    for (const wall of cells.matchAll(/#+/g)) {
+      const col = wall.index, end = col + wall[0].length;
+      for (let start = col; start < end;) {
+        const count = end - start === 3 ? 3 : Math.min(2, end - start);
+        const width = Math.min(count * size - 4, size * 1.55);
+        const name = sections[(row + start + level) % sections.length];
+        const x = left + (start + count * 0.5) * size - width / 2;
+        const height = Math.min(size * 0.9, (width * 2) / 3);
+        const y = top + (row + 0.5) * size - height / 2;
+        drawLandmark(g, name, x, y, width, height);
+        start += count;
+      }
     }
-    paint(0.12, 0.45 + row * 0.3, 0.76, 0.05, '#ad845c');
   }
-  for (const a of [0.08, 0.86]) {
-    paint(a, 0.12, 0.055, 0.77, '#b9b0a1');
-    paint(a, 0.84, 0.08, 0.08, '#5b5861');
-  }
-  rect(g, x + k * 0.44, y + k * 0.08, k * 0.14, side * 0.6, '#f6d5a0');
 }
-function gem(g, x, y, k) {
-  const r = k * 0.18;
-  poly(
-    g,
-    [
-      [x, y - r * 1.45],
-      [x + r, y - r * 0.3],
-      [x + r * 0.8, y + r * 0.6],
-      [x, y + r * 1.3],
-      [x - r, y + r * 0.3],
-      [x - r, y - r * 0.5],
-    ],
-    '#17575b',
-  );
-  poly(
-    g,
-    [
-      [x, y - r * 1.3],
-      [x + r * 0.86, y - r * 0.37],
-      [x, y + r * 1.05],
-      [x - r * 0.8, y - r * 0.35],
-    ],
-    '#65e7b3',
-  );
-  poly(
-    g,
-    [
-      [x, y - r * 1.3],
-      [x, y + r * 1.05],
-      [x - r * 0.8, y - r * 0.35],
-    ],
-    '#abffcf',
-  );
-}
+
 function drawRobot(g, s, time, animation, backdrop) {
   const rows = warehouses[s.level].rows,
     cols = rows[0].length;
   const k = Math.min((W - 36) / cols, (H - 42) / rows.length),
     left = (W - cols * k) / 2,
     top = (H - rows.length * k) / 2;
+  g.imageSmoothingEnabled = false;
+  const floor = material('store'),
+    wall = material('store', '#');
   const bg = g.createLinearGradient(0, 0, W, H);
   bg.addColorStop(0, '#29464e');
   bg.addColorStop(1, '#172c38');
@@ -252,7 +218,7 @@ function drawRobot(g, s, time, animation, backdrop) {
   g.fillRect(0, 0, W, H);
   if (backdrop.naturalWidth) {
     g.save();
-    g.globalAlpha = 0.16;
+    g.globalAlpha = 0.62;
     g.drawImage(
       backdrop,
       0,
@@ -275,12 +241,11 @@ function drawRobot(g, s, time, animation, backdrop) {
         tile = rows[row][col],
         i = idx(rows, col, row);
       if (tile === '#') {
-        drawRack(g, x, y, k, i);
+        g.drawImage(wall, 0, 0, 20, 20, x, y, k, k);
+        rect(g, x, y + k - 4, k, 4, '#725739');
         continue;
       }
-      rect(g, x, y, k, k, '#8a806c');
-      rect(g, x + 1, y + 1, k - 2, k - 2, (row + col) % 2 ? '#d2bb94' : '#e2caa6');
-      rect(g, x + 3, y + 3, k - 7, 2, '#f6dbb4');
+      g.drawImage(floor, (col % 3) * 20, (row % 3) * 20, 20, 20, x, y, k, k);
       if (tile === 'S') {
         rect(g, x + 4, y + 4, k - 8, k - 8, '#8bb6b3');
         poly(
@@ -297,8 +262,13 @@ function drawRobot(g, s, time, animation, backdrop) {
           '#d1e8d8',
         );
       }
-      if (tile === 'g' && !s.gems.includes(i))
-        gem(g, x + k * 0.5, y + k * 0.5 + Math.sin(time * 3 + i) * 1.3, k);
+      if (tile === 'g' && !s.gems.includes(i)) {
+        g.save();
+        g.translate(x + k / 2, y + k / 2 + Math.sin(time * 3 + i) * 1.3);
+        g.scale(k / 22, k / 22);
+        drawGem(g, 0, 0, Math.sin(time * 2 + i) > 0.6);
+        g.restore();
+      }
       if (tile === 'E') {
         rect(g, x + 4, y + 4, k - 8, k - 8, '#557774');
         rect(g, x + 7, y + 7, k - 14, k - 14, '#9bc9ab');
@@ -314,6 +284,7 @@ function drawRobot(g, s, time, animation, backdrop) {
         );
       }
     }
+  drawShelves(g, rows, left, top, k, s.level);
   const phase = Math.min(1, animation.t / 0.24),
     a = 1 - (1 - phase) ** 2;
   const fx = (animation.cell % cols) * (1 - a) + (s.cell % cols) * a,
@@ -326,11 +297,17 @@ function drawRobot(g, s, time, animation, backdrop) {
   g.translate(x, y);
   g.rotate(((animation.dir + diff * a) * Math.PI) / 2);
   const rr = (ax, ay, w, h, c) => rect(g, ax * k, ay * k, w * k, h * k, c);
-  dot(g, 0, k * 0.06, k * 0.36, '#685e51');
+  rr(-0.33, -0.22, 0.67, 0.6, '#191f28');
   rr(-0.39, -0.18, 0.12, 0.46, '#354453');
   rr(0.27, -0.18, 0.12, 0.46, '#354453');
-  dot(g, 0, 0, k * 0.32, '#36616a');
-  dot(g, 0, -k * 0.03, k * 0.29, '#d8e3d3');
+  rr(-0.31, -0.32, 0.62, 0.63, '#60939a');
+  rr(-0.28, -0.32, 0.53, 0.51, '#d9e7d9');
+  rr(-0.28, -0.32, 0.53, 0.055, '#f8fff1');
+  rr(0.24, -0.28, 0.07, 0.53, '#88b3ae');
+  for (const yy of [-0.1, 0.02, 0.14, 0.26]) {
+    rr(-0.39, yy, 0.1, 0.035, '#72918c');
+    rr(0.29, yy, 0.1, 0.035, '#72918c');
+  }
   rr(-0.22, -0.14, 0.44, 0.12, '#334650');
   rr(-0.13, -0.12, 0.08, 0.055, '#6cf0cf');
   rr(0.07, -0.12, 0.08, 0.055, '#6cf0cf');

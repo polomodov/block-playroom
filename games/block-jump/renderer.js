@@ -1,3 +1,4 @@
+import { platformGem as gem, jumpScenery } from '../classic-arcade-art.js';
 import { drawNetherEffects } from './nether-creature-art.js?v=living-worlds-1';
 import { drawDragon, drawDragonCloud, drawDragonWarning } from './dragon-art.js?v=dragon-flight-1';
 import { configureBoard } from './display.js';
@@ -47,25 +48,7 @@ function drawLandscape(c,t,scene,level,camera) {
   c.fillStyle=scene.haze; c.fillRect(0,0,WIDTH,HEIGHT);
   const density=scene.scenery.height/HEIGHT;
   c.drawImage(scene.scenery,-camera*.36,0,scene.scenery.width/density,HEIGHT);
-}
-
-const gemCut = [
-  ['#a9ffe1',new Path2D('M0 -5.75L3.1 -3.6 1.5 -1.75 -1.4 -1.75 -3.15 -3.6Z')],
-  ['#60ecad',new Path2D('M-3.15 -3.6L-1.4 -1.75 -1.4 2.7 0 5.75 -3.55 3.15Z')],
-  ['#22c789',new Path2D('M-1.4 -1.75L1.5 -1.75 1.5 2.7 0 5.75 -1.4 2.7Z')],
-  ['#118d72',new Path2D('M1.5 -1.75L3.1 -3.6 3.5 3.1 0 5.75 1.5 2.7Z')],
-];
-const gemRim=new Path2D('M0 -5.75L3.1 -3.6 3.5 3.1 0 5.75 -3.55 3.15 -3.15 -3.6Z');
-function gem(c,x,y,time) {
-  const cycle=time*2.8+x*.12;
-  c.save(); c.translate(x,y+Math.sin(cycle)*1.2); c.scale(.82+Math.cos(cycle)*.16,1);
-  c.lineWidth=1.25;c.strokeStyle='#195c52';c.lineJoin='round';c.stroke(gemRim);
-  for(const [ink,facet] of gemCut){c.fillStyle=ink;c.fill(facet);}
-  c.strokeStyle='#dcffe8';c.lineWidth=.57;c.beginPath();
-  c.moveTo(-3.1,-3.55);c.lineTo(-1.45,-1.75);c.lineTo(-1.45,1.65);c.stroke();
-  const shine=Math.sin(time*4.1+x);
-  if(shine>.72){const r=(shine-.72)*7;c.strokeStyle='#f5ffef';c.lineWidth=.6;c.beginPath();c.moveTo(2.85-r,-3.2);c.lineTo(2.85+r,-3.2);c.moveTo(2.85,-3.2-r*1.4);c.lineTo(2.85,-3.2+r*1.4);c.stroke();}
-  c.restore();
+  jumpScenery(c, level, camera);
 }
 
 function checkpoint(c,x,y,on,time) {

@@ -1,3 +1,6 @@
+import { drawLandmark, landmarkAtlas } from './arcade-scenery.js';
+import { drawMazeMonster } from './games/block-maze/maze-monsters.js';
+import { PREPARATION } from './games/block-maze/monster-rules.js';
 // The album stores the scene and shutter position so it can redraw a photograph offline.
 import { heroNames } from './progress.js';
 
@@ -8,7 +11,7 @@ export const assignments = [
     goal: 'Сними гаста, пока он надувает огненный шар.',
     sheet: 'realm',
     row: 0,
-    monster: 10,
+    monster: 'ghast',
     action: 'Гаст заряжает огненный шар!',
     idle: 'Гаст парит над лавой',
     color: '#ffae63',
@@ -19,7 +22,7 @@ export const assignments = [
     goal: 'Поймай момент, когда куб прижался к земле перед прыжком.',
     sheet: 'realm',
     row: 0,
-    monster: 11,
+    monster: 'magma_cube',
     action: 'Куб сжался перед прыжком!',
     idle: 'Куб осматривает берег',
     color: '#ffc25f',
@@ -30,7 +33,7 @@ export const assignments = [
     goal: 'Сними эндермена в кольце искр перед телепортацией.',
     sheet: 'realm',
     row: 2,
-    monster: 9,
+    monster: 'enderman',
     action: 'Появилось кольцо телепортации!',
     idle: 'Эндермен бродит между колоннами',
     color: '#d39dff',
@@ -148,9 +151,12 @@ function paintScene(g, images, stage, time) {
     const sourceX = available * (0.48 + 0.13 * Math.sin(time * 0.19 + stage));
     g.drawImage(panorama, sourceX, scene.row * h, sw, h, 0, 0, WIDTH, HEIGHT);
   }
+  const foreground = stage === 2 ? ['crystal_spires', 'chorus_grove'] : ['basalt_columns', 'crimson_fungi'];
+  drawLandmark(g, foreground[0], -50, HEIGHT - 140, 212);
+  drawLandmark(g, foreground[1], WIDTH - 171, HEIGHT - 126, 194);
   const shade = g.createLinearGradient(0, 0, 0, HEIGHT);
   shade.addColorStop(0, '#1b122100');
-  shade.addColorStop(1, '#17131d9c');
+  shade.addColorStop(1, '#17131d52');
   g.fillStyle = shade;
   g.fillRect(0, 0, WIDTH, HEIGHT);
   for (let i = 0; i < 18; i++) {
@@ -159,53 +165,28 @@ function paintScene(g, images, stage, time) {
     g.fillStyle = stage === 2 ? '#d3b2ff80' : '#ffd3948c';
     g.fillRect(x, y, 2 + (i % 3), 2 + (i % 3));
   }
-  let w = stage === 2 ? 114 : 130,
-    h = w;
-  if (stage === 1 && animal.special) {
-    w *= 1.28;
-    h *= 0.64;
-  }
-  const bottom = animal.y + (stage === 1 ? 42 : h * 0.5);
-  g.save();
-  g.shadowColor = '#130e1e';
-  g.shadowBlur = 8;
-  if (images.monsters.naturalWidth) {
-    const cell = images.monsters.naturalWidth / 16;
-    const frame = Math.floor(time * 5) % 8;
-    g.drawImage(
-      images.monsters,
-      frame * cell,
-      scene.monster * cell,
-      cell,
-      cell,
-      animal.x - w / 2,
-      bottom - h,
-      w,
-      h,
-    );
-  } else {
-    g.fillStyle = scene.color;
-    g.fillRect(animal.x - 28, animal.y - 28, 56, 56);
-  }
-  g.restore();
+  const subject = { type: scene.monster, dir: 'down' };
   if (animal.special) {
-    if (stage === 0) {
-      const radius = 8 + 15 * ((animal.beat - 2) / 2.3);
-      const glow = g.createRadialGradient(animal.x, animal.y + 14, 1, animal.x, animal.y + 14, radius * 1.7);
-      glow.addColorStop(0, '#ffffdb');
-      glow.addColorStop(0.35, '#ffe569');
-      glow.addColorStop(0.65, '#ff6d28db');
-      glow.addColorStop(1, '#ff542500');
-      g.fillStyle = glow;
-      g.fillRect(animal.x - radius * 2, animal.y + 14 - radius * 2, radius * 4, radius * 4);
-    } else {
-      for (let i = 0; i < 12; i++) {
-        const a = (i * TAU) / 12 + time * 2,
-          x = animal.x + Math.cos(a) * (stage === 2 ? 57 : 61),
-          y = animal.y + (stage === 2 ? 0 : 29) + Math.sin(a) * (stage === 2 ? 52 : 13);
-        g.fillStyle = i % 2 ? '#fff4ce' : scene.color;
-        g.fillRect(x, y, 4, 4);
-      }
+    const progress = (animal.beat - 2) / 2.3;
+    subject.windup = PREPARATION[subject.type] * Math.max(0.02, 1 - progress);
+    subject.aim = { dir: 'down' };
+  } else if (stage === 1 && animal.beat >= 4.3) {
+    subject.leap = { from: [0, 0], to: [1, 0], progress: (animal.beat - 4.3) / 2.1 };
+  }
+  // Both the viewfinder and saved print use the original maze animation at the shutter instant.
+  g.save();
+  g.translate(animal.x, animal.y);
+  const scale = stage === 2 ? 5 : 6;
+  g.scale(scale, scale);
+  drawMazeMonster(g, subject, 0, 0, time);
+  g.restore();
+  if (animal.special && stage !== 0) {
+    for (let i = 0; i < 12; i++) {
+      const a = (i * TAU) / 12 + time * 2,
+        x = animal.x + Math.cos(a) * (stage === 2 ? 57 : 61),
+        y = animal.y + (stage === 2 ? 0 : 29) + Math.sin(a) * (stage === 2 ? 52 : 13);
+      g.fillStyle = i % 2 ? '#fff4ce' : scene.color;
+      g.fillRect(x, y, 4, 4);
     }
   }
 }
@@ -248,7 +229,7 @@ export function mount(host, { players, saved, save, finish }) {
     canvas = q('.photo-field'),
     g = canvas.getContext('2d'),
     shutter = q('.photo-shutter');
-  const images = { realm: new Image(), monsters: new Image() };
+  const images = { realm: new Image() };
   const keys = new Set();
   let paused = false,
     disposed = false,
@@ -399,19 +380,10 @@ export function mount(host, { players, saved, save, finish }) {
     }
     raf = requestAnimationFrame(loop);
   }
-  for (const [key, file] of [
-    ['realm', 'realm-panoramas.webp'],
-    ['monsters', 'runner-monsters.webp'],
-  ]) {
-    images[key].addEventListener(
-      'load',
-      () => {
-        if (!disposed) update();
-      },
-      opts,
-    );
-    images[key].src = new URL('./assets/' + file, import.meta.url);
+  for (const image of [images.realm, landmarkAtlas()]) {
+    image.addEventListener('load', () => { if (!disposed) update(); }, opts);
   }
+  images.realm.src = new URL('./assets/realm-panoramas.webp', import.meta.url);
   update();
   raf = requestAnimationFrame(loop);
   return {

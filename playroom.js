@@ -121,13 +121,16 @@ function drawSetup() {
   for (const [id, name] of Object.entries(heroNames)) {
     if (mode === 'rhythm' && id !== 'pasha') continue;
     const b = document.createElement('button'),
-      f = document.createElement('span');
+      f = document.createElement('span'),
+      nameLabel = document.createElement('span');
     b.type = 'button';
     b.className = 'hero-pick';
     b.dataset.hero = id;
     f.className = 'face face-' + id;
     b.setAttribute('aria-pressed', team.includes(id));
-    b.append(f, document.createTextNode(name));
+    nameLabel.className = 'hero-label';
+    nameLabel.textContent = name;
+    b.append(f, nameLabel);
     b.addEventListener('click', () => {
       if (game.max === 1) teams[mode] = [id];
       else if (team.includes(id)) teams[mode] = team.filter((h) => h !== id);

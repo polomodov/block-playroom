@@ -93,7 +93,7 @@
 }
 .golf-player {
   display: grid;
-  grid-template-columns: 10px auto;
+  grid-template-columns: auto 1fr;
   align-items: center;
   column-gap: 0.4rem;
   border: 1px solid var(--golf-line);
@@ -101,12 +101,12 @@
   padding: 0.35rem 0.6rem;
   background: #182728;
 }
-.golf-player::before {
-  content: '';
-  width: 9px;
-  height: 9px;
-  border-radius: 100%;
-  background: var(--ball-color);
+.golf-player .face {
+  grid-row: span 2;
+  width: 36px;
+  height: 28px;
+  border-radius: 2px;
+  border-bottom: 2px solid var(--ball-color);
 }
 .golf-player.is-current {
   border-color: var(--ball-color);
