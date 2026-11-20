@@ -17,6 +17,8 @@ const route = [
 ];
 
 test('семь порталов дают шесть наград и ровно одну итоговую запись', async ({ page, isMobile }) => {
+  // The full mobile campaign uses over sixty real taps across seven rooms.
+  test.setTimeout(90000);
   await page.addInitScript(() => { Math.random = () => 27 / 4294967296; });
   await page.goto('./?game=cards');
   await page.locator('#start-mode').click();
