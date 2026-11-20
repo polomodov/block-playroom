@@ -1,0 +1,11 @@
+{
+  "name": "block-playroom-browser-tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "install-browsers": "playwright install --with-deps chromium webkit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0"
+  }
+}

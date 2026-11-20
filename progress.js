@@ -78,7 +78,7 @@ export function finishSlot(round, result) {
     slots = { ...profile.slots };
   if (slots[round.mode]?.id === round.id) delete slots[round.mode];
   const record = { ...round, summary: result.summary, score: result.score, at: Date.now() };
-  write({ slots, results: [record, ...profile.results.filter((r) => r.id !== record.id)].slice(0, 50) });
+  write({ slots, results: [record, ...profile.results.filter((r) => r && r.id !== record.id)].slice(0, 50) });
 }
 function readArcade(id) {
   try {
