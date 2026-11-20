@@ -1,9 +1,9 @@
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { extname, resolve, sep } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readFile, readdir } from 'node:fs/promises';
+import { extname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const root = fileURLToPath(new URL('../../', import.meta.url));
+const root = new URL('../../', import.meta.url);
 const scope = '/block-playroom/';
 const types = {
   '.html': 'text/html; charset=utf-8',
@@ -18,35 +18,39 @@ const types = {
   '.ttf': 'font/ttf',
 };
 
+// Build the response table from the checkout once. Requests only look up an
+// existing URL, and never select a filesystem path.
+async function collectFiles(files, directory = '') {
+  const entries = await readdir(new URL(directory || '.', root), { withFileTypes: true });
+  await Promise.all(
+    entries.map(async (entry) => {
+      const relative = directory + entry.name;
+      if (entry.isDirectory() && (directory || entry.name === 'assets' || entry.name === 'games')) {
+        await collectFiles(files, relative + '/');
+      } else if (entry.isFile()) {
+        const type = types[extname(entry.name)];
+        if (!type) return;
+        const file = { type, body: await readFile(new URL(relative, root)) };
+        files.set(scope + relative, file);
+        if (entry.name === 'index.html') files.set(scope + directory, file);
+      }
+    }),
+  );
+}
+
 export async function startGameServer({ port = 0, rejectRequest = () => false } = {}) {
-  const server = createServer(async (request, response) => {
+  const files = new Map();
+  await collectFiles(files);
+  const server = createServer((request, response) => {
     response.setHeader('Cache-Control', 'no-store');
     const { pathname } = new URL(request.url, 'http://localhost');
     if (rejectRequest(pathname)) {
       response.writeHead(503).end();
       return;
     }
-    if (!pathname.startsWith(scope)) {
-      response.writeHead(404).end();
-      return;
-    }
-    const relative = pathname.slice(scope.length) + (pathname.endsWith('/') ? 'index.html' : '');
-    const file = resolve(root, relative);
-    const type = types[extname(file)];
-    if (
-      !file.startsWith(resolve(root) + sep) ||
-      !type ||
-      (relative.includes('/') && !/^(assets|games)\//.test(relative))
-    ) {
-      response.writeHead(404).end();
-      return;
-    }
-    try {
-      const body = await readFile(file);
-      response.writeHead(200, { 'Content-Type': type }).end(body);
-    } catch {
-      response.writeHead(404).end();
-    }
+    const file = files.get(pathname);
+    if (file) response.writeHead(200, { 'Content-Type': file.type }).end(file.body);
+    else response.writeHead(404).end();
   });
   await new Promise((ready, reject) => {
     server.once('error', reject);

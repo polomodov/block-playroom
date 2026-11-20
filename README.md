@@ -49,8 +49,8 @@
 
 ```sh
 cd tests/browser
-npm ci
-npx playwright install --with-deps chromium webkit
+npm ci --ignore-scripts
+npm run install-browsers
 npm test
 ```
 

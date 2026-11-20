@@ -36,8 +36,8 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: tests/browser/package-lock.json
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npm ci --ignore-scripts
+      - run: npm run install-browsers
       - run: npm test
       - name: Трассировки упавших браузерных тестов
         if: failure()
