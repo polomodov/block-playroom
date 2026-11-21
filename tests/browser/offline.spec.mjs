@@ -100,6 +100,9 @@ test('весь пакет переживает отключение сервер
     await expect(page.locator('#lobby-sound')).toHaveAttribute('aria-pressed', 'true');
 
     await page.locator('[data-game-link="block-maze"]').click();
+    // The start button only works once game.js has loaded. Its progress panel
+    // fills the history list on load, so wait for that before pressing it.
+    await expect(page.locator('#game-history li').first()).toBeAttached();
     await page.locator('#play').click();
     if (hasTouch) await page.locator('[data-dir=right]').tap();
     else await page.keyboard.press('ArrowRight');
