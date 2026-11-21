@@ -154,11 +154,36 @@ const catalog = document.querySelector('.catalog');
 const coverCards = [...catalog.querySelectorAll('.cover-card')];
 const narrowCatalog = matchMedia('(max-width: 760px)');
 function placeSetup() {
-  const index = coverCards.findIndex((card) => card.dataset.mode === mode);
+  const shown = coverCards.filter((card) => !card.hidden);
+  const index = shown.findIndex((card) => card.dataset.mode === mode);
+  const setup = q('setup');
+  // The selected game may be outside the current filter. Its setup then waits after the list.
+  setup.hidden = index < 0;
+  if (index < 0) {
+    if (shown.length) shown.at(-1).after(setup);
+    return;
+  }
   const columns = narrowCatalog.matches ? 2 : 4;
-  const lastInRow = Math.min(coverCards.length, (Math.floor(index / columns) + 1) * columns) - 1;
-  coverCards[lastInRow].after(q('setup'));
+  const lastInRow = Math.min(shown.length, (Math.floor(index / columns) + 1) * columns) - 1;
+  shown[lastInRow].after(setup);
 }
+// Fifteen covers are about three screens on a phone. A filter keeps one kind of game together.
+const filterKey = 'family-games:/block-playroom/:catalog-filter';
+const filterButtons = [...document.querySelectorAll('[data-filter]')];
+function applyFilter(filter, remember = true) {
+  if (!filterButtons.some((b) => b.dataset.filter === filter)) filter = 'all';
+  for (const b of filterButtons) b.setAttribute('aria-pressed', String(b.dataset.filter === filter));
+  for (const card of coverCards)
+    card.hidden = filter !== 'all' && !card.dataset.tags.split(' ').includes(filter);
+  if (remember)
+    try {
+      localStorage.setItem(filterKey, filter);
+    } catch {
+      /* The filter is a convenience. Without storage it resets on the next visit. */
+    }
+  placeSetup();
+}
+for (const b of filterButtons) b.addEventListener('click', () => applyFilter(b.dataset.filter));
 narrowCatalog.addEventListener('change', placeSetup);
 function choose(id) {
   mode = id;
@@ -301,5 +326,13 @@ gameAudio.bindButton(q('lobby-sound'));
 gameAudio.bindButton(q('game-sound'));
 const refresh = bindProgress(openGame, drawSetup);
 
-placeSetup();
+let savedFilter = 'all';
+try {
+  savedFilter = localStorage.getItem(filterKey) || 'all';
+} catch {
+  /* Show every game when storage is unavailable. */
+}
+// A link to one game shows that game even if the remembered filter would hide it.
+const linked = Object.hasOwn(games, fromUrl) && document.querySelector('[data-mode="' + fromUrl + '"]');
+applyFilter(linked && !linked.dataset.tags.split(' ').includes(savedFilter) ? 'all' : savedFilter, false);
 if (Object.hasOwn(games, fromUrl)) q('setup').scrollIntoView({ block: 'center' });

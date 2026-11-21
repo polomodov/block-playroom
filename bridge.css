@@ -173,3 +173,31 @@
     min-height: 164px;
   }
 }
+
+/* Phone held sideways: the crossing fills the height, the task and parts sit beside it. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .br-game {
+    display: grid;
+    grid-template-columns: auto minmax(180px, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 10px;
+    height: calc(100svh - 62px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  .br-game > header { grid-column: 2; padding: 6px 8px; }
+  .br-game > header h2 { font-size: 1rem; }
+  .br-game .br-hint { font-size: 0.78rem; }
+  .br-game .br-work { display: contents; }
+  .br-game .br-board {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+    margin: 6px 0 0 6px;
+    width: min(calc(100vw - 260px - env(safe-area-inset-left) - env(safe-area-inset-right)),
+      calc((100svh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 2.141));
+    min-height: 0;
+  }
+  .br-game .br-board canvas { height: auto; min-height: 0; }
+  .br-game .br-controls { grid-column: 2; grid-row: 2; align-content: start; min-height: 0; overflow-y: auto; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 0; padding: 0 8px 8px; }
+  .br-game .br-controls > * { grid-column: 1; grid-row: auto; }
+  .br-game .br-go { justify-self: stretch; order: -1; }
+}

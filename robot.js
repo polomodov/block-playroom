@@ -2,6 +2,9 @@ import { drawGem } from './games/block-maze/maze-materials.js';
 import { drawLandmark, material } from './arcade-scenery.js';
 // A token program runs on a deterministic turn-based map. Loop expansion retains
 // source positions so that errors and the execution light point to the written program.
+// Decorative motion (ripples, sparkles, a swaying backdrop) stops when the player asks for less motion.
+const calmMotion = () => Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+
 export const warehouses = [
   {
     name: 'Отдел светильников',
@@ -288,9 +291,10 @@ function drawRobot(g, s, time, animation, backdrop) {
       }
       if (tile === 'g' && !s.gems.includes(i)) {
         g.save();
-        g.translate(x + k / 2, y + k / 2 + Math.sin(time * 3 + i) * 1.3);
+        const calm = calmMotion();
+        g.translate(x + k / 2, y + k / 2 + (calm ? 0 : Math.sin(time * 3 + i) * 1.3));
         g.scale(k / 22, k / 22);
-        drawGem(g, 0, 0, Math.sin(time * 2 + i) > 0.6);
+        drawGem(g, 0, 0, !calm && Math.sin(time * 2 + i) > 0.6);
         g.restore();
       }
       if (tile === 'E') {
@@ -356,7 +360,7 @@ export function mount(host, { saved, players = [], save, finish, cue = () => {} 
     hero +
     '"></span><div><small>Оператор · ' +
     heroes[hero] +
-    '</small><h2></h2></div></div><p class="rb-hint"></p></header><div class="rb-layout"><div class="rb-stage"><canvas width="700" height="368" aria-label="План склада со станцией и роботом"></canvas><div class="rb-count"></div></div><div class="rb-console"><h3>Пульт робота</h3><div class="rb-inputs"></div><div class="rb-label"><b>Программа</b><span class="rb-length"></span></div><div class="rb-program" role="group" aria-label="Очередь команд"></div><div class="rb-tools"><button type="button" data-tool="begin">В начало</button><button type="button" data-tool="delete">⌫ Удалить</button></div><p class="rb-status" role="status"></p><div class="rb-play"><button type="button" class="rb-main"></button><button type="button" class="rb-step">Один шаг</button></div></div></div></section>';
+    '</small><h2></h2></div></div><p class="rb-hint"></p></header><div class="rb-layout"><div class="rb-stage"><canvas width="700" height="368" aria-label="План склада со станцией и роботом"></canvas><div class="rb-count"></div></div><div class="rb-console"><h3>Пульт робота</h3><div class="rb-inputs"></div><div class="rb-label"><b>Программа</b><span class="rb-length"></span></div><div class="rb-program" role="group" aria-label="Очередь команд"></div><div class="rb-tools"><button type="button" data-tool="begin">В начало</button><button type="button" data-tool="delete" aria-keyshortcuts="Backspace">⌫ Удалить</button></div><p class="rb-status" role="status"></p><div class="rb-play"><button type="button" class="rb-main"></button><button type="button" class="rb-step" aria-keyshortcuts="S">Один шаг</button></div></div></div></section>';
   const q = (sel) => host.querySelector(sel),
     ctx = q('canvas').getContext('2d'),
     bg = new Image();
@@ -368,6 +372,7 @@ export function mount(host, { saved, players = [], save, finish, cue = () => {} 
     const b = document.createElement('button');
     b.dataset.cmd = key;
     b.type = 'button';
+    b.setAttribute('aria-keyshortcuts', { forward: 'ArrowUp', left: 'ArrowLeft', right: 'ArrowRight', loop: '3', end: ']' }[key]);
     const symbol = document.createElement('b');
     symbol.textContent = cmd.mark;
     b.append(symbol, document.createTextNode(cmd.name));
@@ -476,6 +481,35 @@ export function mount(host, { saved, players = [], save, finish, cue = () => {} 
       snap();
     }
   }
+  // Keyboard: arrows add moves, 3 and ] build a loop, Backspace deletes,
+  // Home jumps to the start of the program, Enter runs and S takes one step.
+  const shortcuts = {
+    ArrowUp: '[data-cmd=forward]',
+    ArrowLeft: '[data-cmd=left]',
+    ArrowRight: '[data-cmd=right]',
+    Digit3: '[data-cmd=loop]',
+    Numpad3: '[data-cmd=loop]',
+    BracketRight: '[data-cmd=end]',
+    Backspace: '[data-tool=delete]',
+    Home: '[data-tool=begin]',
+    Enter: '.rb-main',
+    NumpadEnter: '.rb-main',
+    KeyS: '.rb-step',
+  };
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      if (paused || disposed || e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      if (e.target.closest?.('input, select, textarea, dialog')) return;
+      // Enter on a focused button already presses that button.
+      if (e.code.endsWith('Enter') && e.target.closest?.('button')) return;
+      const button = Object.hasOwn(shortcuts, e.code) && q(shortcuts[e.code]);
+      if (!button || button.disabled || button.hidden) return;
+      e.preventDefault();
+      button.click();
+    },
+    opts,
+  );
   q('[data-tool=begin]').addEventListener(
     'click',
     () => {

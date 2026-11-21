@@ -101,3 +101,28 @@
   color: #ffe5b5;
   padding: 4px;
 }
+
+/* Phone held sideways: the viewfinder fills the height, the task and shutter sit beside it. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .photo-game {
+    display: grid;
+    grid-template-columns: auto minmax(190px, 1fr);
+    column-gap: 12px;
+    align-content: start;
+    padding-top: 8px;
+  }
+  .photo-game > * { grid-column: 2; }
+  .photo-game > .photo-field {
+    grid-column: 1;
+    grid-row: 1 / span 6;
+    width: min(calc(100vw - 250px - env(safe-area-inset-left) - env(safe-area-inset-right)),
+      calc((100svh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 2.331));
+    height: auto;
+  }
+  .photo-game > header { flex-wrap: wrap; gap: 2px 8px; }
+  .photo-game > header h2 { font-size: 1rem; }
+  .photo-game .photo-goal { font-size: 0.82rem; margin: 4px 0; }
+  .photo-game .photo-bar { flex-wrap: wrap; gap: 6px; }
+  .photo-game .photo-shutter { width: 100%; }
+  .photo-game .photo-hint { display: none; }
+}

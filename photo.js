@@ -4,6 +4,9 @@ import { PREPARATION } from './games/block-maze/monster-rules.js';
 // The album stores the scene and shutter position so it can redraw a photograph offline.
 import { heroNames } from './progress.js';
 
+// Decorative motion (ripples, sparkles, a swaying backdrop) stops when the player asks for less motion.
+const calmMotion = () => Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+
 export const assignments = [
   {
     name: 'Огни Нижнего мира',
@@ -183,7 +186,8 @@ function paintScene(g, images, stage, time) {
     const h = panorama.naturalHeight / (scene.sheet === 'world' ? 4 : 3),
       sw = (h * WIDTH) / HEIGHT,
       available = panorama.naturalWidth - sw;
-    const sourceX = available * (0.48 + 0.13 * Math.sin(time * 0.19 + stage));
+    const sway = calmMotion() ? 0 : 0.13 * Math.sin(time * 0.19 + stage);
+    const sourceX = available * (0.48 + sway);
     g.drawImage(panorama, sourceX, scene.row * h, sw, h, 0, 0, WIDTH, HEIGHT);
   }
   const foreground = scene.props || (stage === 2 ? ['crystal_spires', 'chorus_grove'] : ['basalt_columns', 'crimson_fungi']);

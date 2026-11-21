@@ -1,5 +1,4 @@
 import { enterCollectionGame } from '../collection-navigation.js';
-import { beginArcadeRound } from './progress.js';
 import { watchClassicCover } from '../classic-arcade-art.js';
 import { terrainLayer as floor } from './world-art.js?v=studio-1';
 import { LEVELS } from './levels.js?v=living-worlds-1';
@@ -7,7 +6,7 @@ import { createRun, restoreRun } from './physics.js?v=offline-1';
 import { drawRun } from './renderer.js?v=dragon-flight-1';
 import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
 import { performanceAge, playGuitar, stopGuitar } from './guitar.js?v=encore-1';
-import { bindProgress, loadSavedGame, saveGame, clearSavedGame, addResult } from './progress.js';
+import { beginArcadeRound, bindProgress, loadSavedGame, saveGame, clearSavedGame, addResult } from './progress.js';
 
 const byId = id => document.getElementById(id);
 const lobby = byId('lobby');

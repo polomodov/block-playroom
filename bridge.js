@@ -480,6 +480,18 @@ export function mount(host, { players = [], saved, save, finish, cue = () => {} 
     meter = q('.br-meter'),
     meterLabel = q('.br-meter-label'),
     gauge = q('meter');
+  // Arrow keys move between the sockets on the crossing in reading order,
+  // so a keyboard player does not have to Tab through every part.
+  places.addEventListener('keydown', (e) => {
+    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (!step || paused || disposed) return;
+    const sockets = [...places.querySelectorAll('button')].sort((a, b) =>
+      parseFloat(a.style.left) - parseFloat(b.style.left) || parseFloat(a.style.top) - parseFloat(b.style.top));
+    if (!sockets.length) return;
+    e.preventDefault();
+    const at = sockets.indexOf(document.activeElement);
+    sockets[(at + step + sockets.length) % sockets.length].focus({ preventScroll: true });
+  });
   const img = new Image();
   img.src = new URL('./assets/realm-panoramas.webp', import.meta.url);
   const actors = new Image();

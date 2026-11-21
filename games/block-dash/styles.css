@@ -12,7 +12,7 @@ button:disabled{cursor:default}
 .topbar{border-bottom:1px solid #2a383a;background:#111c1e}
 .topbar-inner,.shell,.arena{width:min(1190px,calc(100% - 64px));margin-inline:auto}
 .topbar-inner{height:64px;display:flex;align-items:center;gap:42px}
-.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-size:19px;font-weight:780;letter-spacing:-.045em;white-space:nowrap}
+.brand{display:flex;align-items:center;min-height:44px;gap:12px;text-decoration:none;font-size:19px;font-weight:780;letter-spacing:-.045em;white-space:nowrap}
 .brand strong{color:var(--mint);font-weight:780}
 .train-emblem{height:31px;width:32px;border-radius:8px;background:var(--mint);display:grid;place-content:center;position:relative;transform:rotate(-5deg)}
 .train-emblem i{width:16px;height:16px;background:#14292e;border-radius:4px 4px 3px 3px;position:relative;box-shadow:inset 0 0 0 1px #173337}
@@ -176,3 +176,7 @@ dialog .primary{width:100%;margin-top:4px}
  .game-controls{margin-top:4px}.pad-group button,.power-btn{height:35px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* Comfortable touch targets for small fingers. */
+details>summary{min-height:44px;box-sizing:border-box;padding-block:12px;cursor:pointer}
+header nav a,.related a{display:inline-flex;align-items:center;min-height:44px}

@@ -198,3 +198,29 @@
     min-height: 78px;
   }
 }
+
+/* Phone held sideways: a slim banner, the shift button beside the score and
+   smaller stations leave the kitchen, the tray and the orders on one screen. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .cafe-banner { min-height: 0; padding: 4px 14px; align-items: center; }
+  .cafe-banner .cafe-avatar { width: 36px; }
+  .cafe-banner h2 { font-size: 0.95rem; }
+  .cafe-banner small, .cafe-banner .cafe-chef { display: none; }
+  .cafe-banner::after { width: 52px; }
+  .cafe-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 10px;
+    padding-block: 4px;
+  }
+  .cafe-body > * { grid-column: 1 / -1; }
+  .cafe-body .cafe-hud { grid-column: 1; grid-row: 1; }
+  .cafe-body .cafe-note { grid-column: 1; grid-row: 2; font-size: 0.76rem; margin: 0 0 4px; }
+  .cafe-body .cafe-next { grid-column: 2; grid-row: 1 / span 2; align-self: center; margin: 0; padding-block: 6px; }
+  .cafe-main { gap: 10px; }
+  .cafe-game h3 { font-size: 0.85rem; margin-bottom: 3px; }
+  .cafe-stations { margin-bottom: 4px; }
+  .cafe-stove { padding: 4px; gap: 2px; }
+  .cafe-stove canvas { width: min(100%, 52px); }
+  .cafe-ticket { padding: 4px 7px; }
+}

@@ -101,7 +101,9 @@ nav,
   color: var(--lime);
 }
 .sibling-game {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   margin-top: 16px;
   padding: 8px 0;
   color: var(--muted);
@@ -1119,3 +1121,6 @@ dialog .primary {
     scroll-behavior: auto !important;
   }
 }
+
+/* Comfortable touch targets for small fingers. */
+details > summary { min-height: 44px; box-sizing: border-box; padding-block: 12px; cursor: pointer; }

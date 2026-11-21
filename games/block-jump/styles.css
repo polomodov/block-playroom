@@ -131,6 +131,9 @@ nav {
   text-underline-offset: 3px;
 }
 .sibling {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 0.9rem;
   margin-right: 10px;
 }
@@ -152,7 +155,8 @@ nav {
   padding: 7px 11px;
   font-size: 0.87rem;
   font-weight: 650;
-  min-height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   white-space: nowrap;
 }
 .tool:hover,
@@ -803,7 +807,8 @@ dialog p + p {
   }
   .tool {
     font-size: 0.79rem;
-    min-height: 32px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 4px 7px;
     gap: 4px;
   }
@@ -988,3 +993,6 @@ dialog p + p {
     min-height: 41px;
   }
 }
+
+/* Comfortable touch targets for small fingers. */
+details > summary { min-height: 44px; box-sizing: border-box; padding-block: 12px; cursor: pointer; }

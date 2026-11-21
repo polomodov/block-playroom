@@ -9,9 +9,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const releases = {
-  'block-maze': 'b0ef0d834e571df1f50081e4b6d7eed509c11101',
-  'block-jump': '7c88599b6db09b4be3ebe08a21b32b70d5296811',
-  'block-dash': '9ab83636d4fece6de85d6c863d6b797c2c1981d2',
+  'block-maze': '03f6d0b389535a35d361c6695fec96e356f3b764',
+  'block-jump': '10d2f6d3191e0d9dadce2dc7b934249186e87d30',
+  'block-dash': 'cf75d0b465b73d41570759790d76f4afd293ed7a',
 };
 const check = process.argv.includes('--check');
 const ignored = new Set(['manifest.webmanifest', 'offline.js', 'offline.css', 'audio.js', 'assets/app-192.png',
@@ -110,27 +110,16 @@ function adapt(path, bytes, name) {
   if (path === 'index.html') return Buffer.from(embedPage(bytes.toString(), name));
   if (name !== 'block-maze' && path.endsWith('.js')) bytes = Buffer.from(classicModule(path, bytes.toString(), name));
   if (path === 'game.js') {
-    const start = {
-      'block-maze': 'function start(hero, levelId) {',
-      'block-jump': 'function start() {',
-      'block-dash': 'if (!restored?.state) restored = null;',
-    }[name];
-    const claim = name === 'block-dash' ? 'if (!restored) beginArcadeRound();' : 'beginArcadeRound();';
-    const source = requiredReplace(bytes.toString(), start, start + '\n  ' + claim, name + '/game.js');
+    // Each arcade claims its round in progress.js. The library only adds the way back to the menu.
     return Buffer.from("import { enterCollectionGame } from '../collection-navigation.js';\n" +
-      "import { beginArcadeRound } from './progress.js';\n" + source + '\nenterCollectionGame();\n');
+      bytes.toString() + '\nenterCollectionGame();\n');
   }
   if (path === 'progress.js') {
-    const file = name + '/progress.js';
-    let source = requiredReplace(bytes.toString(),
+    // The standalone and packaged editions share one save, so the arcade's own
+    // progress.js (with its round ownership rules) is used as is, under the standalone key.
+    return Buffer.from(requiredReplace(bytes.toString(),
       "'family-games:' + new URL('.', import.meta.url).pathname + ':progress:1'",
-      "'family-games:/" + name + "/:progress:1'", file);
-    // Keep each edition's storage key and its hero/level labels. The library
-    // shares the history reader and assigns save ownership when a player starts or resumes.
-    source = requiredReplace(source, /let memory = \{saved:null, results:\[\]\};[\s\S]*$/,
-      'export const { beginArcadeRound, loadSavedGame, saveGame, clearSavedGame, addResult, bindProgress } =\n' +
-      '  arcadeProgress(key, heroes, levels);\n', file);
-    return Buffer.from("import { arcadeProgress } from '../arcade-progress.js';\n" + source);
+      "'family-games:/" + name + "/:progress:1'", name + '/progress.js'));
   }
   return bytes;
 }

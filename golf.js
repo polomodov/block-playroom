@@ -640,7 +640,10 @@ function drawBall(g, b, color, active) {
     ]);
 }
 
-function drawCourse(canvas, state, time, figures) {
+// Decorative motion (ripples, sparkles, a swaying backdrop) stops when the player asks for less motion.
+const calmMotion = () => Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+function drawCourse(canvas, state, clock, figures) {
+  const time = calmMotion() ? 0 : clock;
   const g = canvas.getContext('2d'),
     c = courses[state.hole],
     b = state.balls[state.turn];

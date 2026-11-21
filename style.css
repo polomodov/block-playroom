@@ -463,3 +463,24 @@ p {
   .playbar .sound-toggle { padding-inline: 9px; }
   .playbar .sound-toggle [data-label] { display: none; }
 }
+
+/* Catalog filter: one row of chips above the covers. */
+.catalog-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 clamp(8px, 1.4vw, 14px);
+}
+.catalog-filter button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  font-weight: 650;
+}
+.catalog-filter button[aria-pressed='true'] {
+  background: var(--warm);
+  border-color: var(--warm);
+  color: #182221;
+}

@@ -77,82 +77,88 @@
         <button type="button" id="continue-saved" hidden>Продолжить последнюю игру</button>
         <p id="save-notice" role="status" hidden>Не удалось сохранить партию в памяти устройства.</p>
       </section>
+      <div class="catalog-filter" role="group" aria-label="Какие игры показать">
+        <button type="button" data-filter="all" aria-pressed="true">Все</button>
+        <button type="button" data-filter="together" aria-pressed="false">Вместе</button>
+        <button type="button" data-filter="puzzle" aria-pressed="false">Подумать</button>
+        <button type="button" data-filter="arcade" aria-pressed="false">На реакцию</button>
+      </div>
       <div class="catalog" role="group" aria-label="Выберите игру">
-        <button type="button" class="cover-card" data-mode="race" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="race" data-tags="together arcade" aria-pressed="false">
           <span class="art art-extra art-race"></span>
           <span class="card-copy"><small>Картинг на время</small><strong>Гонки-призраки</strong><span>Выберите одну из семи трасс и передайте руль после финиша. Следующий гонщик сможет обогнать ваш призрак.</span></span>
         </button>
-        <button type="button" class="cover-card" data-mode="bridge" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="bridge" data-tags="puzzle" aria-pressed="false">
           <span class="art art-extra art-bridge"></span>
           <span class="card-copy"><small>Инженерная головоломка</small><strong>Мост над лавой</strong><span>Соедините берега и пустите по мосту вагонетку. Выдержат ли опоры?</span></span>
         </button>
-        <button type="button" class="cover-card" data-mode="tactics" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="tactics" data-tags="together puzzle" aria-pressed="false">
           <span class="art art-extra art-tactics"></span>
           <span class="card-copy"><small>Пошаговая тактика</small><strong>Ход команды</strong><span>Проведите двух героев через порталы. Монстры заранее показывают свой следующий ход.</span></span>
         </button>
-        <button type="button" class="cover-card" data-mode="cafe" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="cafe" data-tags="arcade" aria-pressed="false">
           <span class="art art-extra art-cafe"></span>
           <span class="card-copy"><small>Кулинарная игра</small><strong>Кафе для монстров</strong><span>Пеките вафли и блины, разливайте лимонад и успевайте отдавать заказы.</span></span>
         </button>
-        <button type="button" class="cover-card" data-mode="cards" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="cards" data-tags="puzzle" aria-pressed="false">
           <span class="art art-extra art-cards"></span>
           <span class="card-copy"><small>Сборка колоды</small><strong>Колода порталов</strong><span>Сыграйте карты семьи против монстров и выберите новую карту после победы.</span></span>
         </button>
-        <button type="button" class="cover-card" data-mode="pinball" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="pinball" data-tags="arcade" aria-pressed="false">
           <span class="art art-extra art-pinball"></span>
           <span class="card-copy"><small>Аркадный пинбол</small><strong>Пинбол миров</strong><span>Запустите шар пружиной, зажгите три мишени и возьмите джекпот на одном из семи столов.</span></span>
         </button>
-        <button type="button" class="cover-card" data-mode="photo" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="photo" data-tags="arcade" aria-pressed="false">
           <span class="art art-extra art-photo"></span>
           <span class="card-copy"><small>Фотоэкспедиция</small><strong>Фотоохота на монстров</strong><span>Соберите семь снимков. Ловите моменты, когда гаст заряжает шар, скелет натягивает лук, а крипер вспыхивает.</span></span>
         </button>
-        <button type="button" class="cover-card" data-mode="robot" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="robot" data-tags="puzzle" aria-pressed="false">
           <span class="art art-extra art-robot"></span>
           <span class="card-copy"><small>Программирование</small><strong>Робот за изумрудом</strong><span>Запрограммируйте робота на семи складах. Соберите изумруды и доставьте их на станцию.</span></span>
         </button>
-        <a class="cover-card" data-game-link="block-maze" href="./games/block-maze/">
+        <a class="cover-card" data-game-link="block-maze" data-tags="arcade" href="./games/block-maze/">
           <span class="art art-maze"></span>
           <span class="card-copy"
             ><small>Лабиринт</small><strong>Блок Аркада</strong
             ><span>Соберите изумруды и обхитрите монстров в семи мирах.</span></span
           >
         </a>
-        <a class="cover-card" data-game-link="block-jump" href="./games/block-jump/">
+        <a class="cover-card" data-game-link="block-jump" data-tags="arcade" href="./games/block-jump/">
           <span class="art art-jump"></span>
           <span class="card-copy"
             ><small>Платформер</small><strong>Блок Прыжок</strong
             ><span>Перепрыгивайте пропасти и доберитесь до флага.</span></span
           >
         </a>
-        <a class="cover-card" data-game-link="block-dash" href="./games/block-dash/">
+        <a class="cover-card" data-game-link="block-dash" data-tags="arcade" href="./games/block-dash/">
           <span class="art art-dash"></span>
           <span class="card-copy"
             ><small>Раннер</small><strong>Блок Экспресс</strong
             ><span>Меняйте дорожки, перепрыгивайте барьеры и проскальзывайте под арками.</span></span
           >
         </a>
-        <button type="button" class="cover-card" data-mode="coop" aria-pressed="true">
+        <button type="button" class="cover-card" data-mode="coop" data-tags="together puzzle" aria-pressed="true">
           <span class="art art-coop"></span
           ><span class="card-copy"
             ><small>Головоломка вдвоём</small><strong>Два ключа</strong
             ><span>Держите плиты и стройте переправы друг для друга.</span></span
           >
         </button>
-        <button type="button" class="cover-card" data-mode="golf" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="golf" data-tags="together" aria-pressed="false">
           <span class="art art-golf"></span
           ><span class="card-copy"
             ><small>Мини-гольф · 1–4 игрока</small><strong>Гольф семи миров</strong
             ><span>Проведите мяч через тайфун и порталы до флажка.</span></span
           >
         </button>
-        <button type="button" class="cover-card" data-mode="mystery" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="mystery" data-tags="puzzle" aria-pressed="false">
           <span class="art art-mystery"></span
           ><span class="card-copy"
             ><small>Детектив</small><strong>Куда делся изумруд?</strong
             ><span>Осмотрите магазин, соберите улики и раскройте тайник.</span></span
           >
         </button>
-        <button type="button" class="cover-card" data-mode="rhythm" aria-pressed="false">
+        <button type="button" class="cover-card" data-mode="rhythm" data-tags="arcade" aria-pressed="false">
           <span class="art art-rhythm"></span
           ><span class="card-copy"
             ><small>Музыка и ритм</small><strong>Гитарная репетиция</strong

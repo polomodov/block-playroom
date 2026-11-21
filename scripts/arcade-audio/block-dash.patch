@@ -1,16 +1,16 @@
 --- a/game.js
 +++ b/game.js
-@@ -6,7 +6,8 @@
- import { saveGame, clearSavedGame, addResult, bindProgress } from './progress.js';
+@@ -5,7 +5,8 @@
+ import { beginArcadeRound, saveGame, clearSavedGame, addResult, bindProgress } from './progress.js';
  import { createRun, restoreRun } from './engine.js?v=jump-1';
  import { drawRun } from './renderer.js?v=jump-1';
 -import { playSound, playSolo, setSoundEnabled, stopSolo } from './audio.js';
 +import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
 +import { playGuitar, stopGuitar } from './guitar.js';
-
+ 
  const byId = id => document.getElementById(id);
  const lobby = byId('lobby');
-@@ -21,7 +22,8 @@
+@@ -20,7 +21,8 @@
  let hero = HEROES.find(hero => hero.id === query.get('hero')) || HEROES[0];
  let run, frame, lastTime, gesture;
  let nextSave = 0;
@@ -18,9 +18,9 @@
 +let resumeAfterHelp = false;
 +const warnings = monsterAudio();
  const bests = new Map();
-
+ 
  function readBest(id) {
-@@ -139,11 +141,12 @@
+@@ -138,11 +140,12 @@
    const s = run.state;
    const lives = s.lives, gems = s.gems;
    if (lastTime !== undefined) run.update(Math.min(Math.max(0,(now-lastTime)/1000),.10));
@@ -34,7 +34,7 @@
      playSound('over');
      addResult({hero:hero.id, level:world.id, distance:s.distance, gems:s.gems, lives:s.lives, outcome:'over'});
      showResult();
-@@ -159,9 +162,11 @@
+@@ -158,9 +161,11 @@
    if (!restored?.state) restored = null;
    if (!restored) beginArcadeRound();
    stopLoop();
@@ -47,8 +47,8 @@
    nextSave=run.state.time + 1;
    saveGame(run.snapshot());
    bests.set(world.id, Math.max(bests.get(world.id) || 0,readBest(world.id)));
-@@ -196,7 +201,7 @@
-
+@@ -195,7 +200,7 @@
+ 
  function pause() {
    if (!run?.act('pause')) return;
 -  stopSolo();
@@ -56,7 +56,7 @@
    saveGame(run.snapshot());
    showResult();
  }
-@@ -205,6 +210,7 @@
+@@ -204,6 +209,7 @@
    if (!run?.act('resume')) return;
    if (dialog.open) dialog.close();
    syncMode();
@@ -64,8 +64,8 @@
    if (hero.id === 'pasha' && run.state.powerTime > 0) playSolo(5-run.state.powerTime);
    board.focus({preventScroll:true});
    lastTime = undefined;
-@@ -213,7 +219,7 @@
-
+@@ -212,7 +218,7 @@
+ 
  function returnToLobby() {
    stopLoop();
 -  stopSolo();
@@ -73,8 +73,8 @@
    saveBest();
    if (run && run.state.status !== 'over') saveGame(run.snapshot());
    if (dialog.open) dialog.close();
-@@ -229,10 +235,10 @@
-
+@@ -228,10 +234,10 @@
+ 
  function action(name) {
    if (!run?.act(name)) return;
 -  if (name === 'jump') playSound('jump');
@@ -86,7 +86,7 @@
      updateHud();
    }
  }
-@@ -247,19 +253,12 @@
+@@ -246,19 +252,12 @@
    if (run?.state.status === 'paused') continueRun();
    else returnToLobby();
  });
