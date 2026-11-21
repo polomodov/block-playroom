@@ -1119,3 +1119,7 @@ dialog .primary {
     scroll-behavior: auto !important;
   }
 }
+
+/* Comfortable touch targets for small fingers. */
+details > summary { min-height: 44px; box-sizing: border-box; padding-block: 12px; cursor: pointer; }
+.sibling-game { display: inline-flex; align-items: center; min-height: 44px; }

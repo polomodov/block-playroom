@@ -1,9 +1,8 @@
 import { enterCollectionGame } from '../collection-navigation.js';
-import { beginArcadeRound } from './progress.js';
-import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
 import { playGuitar, stopGuitar, performanceAge } from './guitar.js?v=encore-1';
+import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
 import { createGame, restoreGame } from './engine.js?v=offline-1';
-import { bindProgress, saveGame, clearSavedGame, addResult } from './progress.js';
+import { beginArcadeRound, bindProgress, saveGame, clearSavedGame, addResult } from './progress.js';
 import { LEVELS } from './levels.js?v=end-family-1';
 import { drawBoard, drawLandscape, drawMonsterPortrait, drawPortrait } from './art.js?v=dragon-flight-1';
 

@@ -988,3 +988,8 @@ dialog p + p {
     min-height: 41px;
   }
 }
+
+/* Comfortable touch targets for small fingers. */
+details > summary { min-height: 44px; box-sizing: border-box; padding-block: 12px; cursor: pointer; }
+.sibling { display: inline-flex; align-items: center; min-height: 44px; }
+.tool { min-width: 44px; min-height: 44px; }

@@ -176,3 +176,8 @@ dialog .primary{width:100%;margin-top:4px}
  .game-controls{margin-top:4px}.pad-group button,.power-btn{height:35px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+/* Comfortable touch targets for small fingers. */
+details>summary{min-height:44px;box-sizing:border-box;padding-block:12px;cursor:pointer}
+header nav a,.related a{display:inline-flex;align-items:center;min-height:44px}
+.brand{min-height:44px}

@@ -2,12 +2,12 @@
 +++ b/game.js
 @@ -1,5 +1,6 @@
  import { enterCollectionGame } from '../collection-navigation.js';
- import { beginArcadeRound } from './progress.js';
-+import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
  import { playGuitar, stopGuitar, performanceAge } from './guitar.js?v=encore-1';
++import { bindArcadeSound, monsterAudio, playSound } from '../arcade-audio.js';
  import { createGame, restoreGame } from './engine.js?v=offline-1';
- import { bindProgress, saveGame, clearSavedGame, addResult } from './progress.js';
-@@ -70,8 +71,7 @@
+ import { beginArcadeRound, bindProgress, saveGame, clearSavedGame, addResult } from './progress.js';
+ import { LEVELS } from './levels.js?v=end-family-1';
+@@ -69,8 +70,7 @@
  let previousTime;
  let lastSaveTime = 0;
  let swipe;
@@ -15,13 +15,12 @@
 -let audio;
 +const warnings = monsterAudio();
  let resumeAfterHelp = false;
-
-
+ 
+ 
 @@ -83,74 +83,6 @@
- function buttonText(button, text) {
    setText(button.querySelector('[data-label]') || button, text);
  }
--
+ 
 -function playNote(frequency, duration, type = 'triangle') {
 -  if (!soundEnabled || audio?.state !== 'running') return;
 -  const oscillator = audio.createOscillator();
@@ -89,15 +88,16 @@
 -    displaySound();
 -  }
 -});
-
+-
  function selectedValue(group) {
    return document.querySelector(`input[name="${group}"]:checked`).value;
-@@ -260,14 +192,15 @@
+ }
+@@ -259,14 +191,15 @@
    const elapsed = previousTime === undefined ? 0 : (time - previousTime) / 1000;
    previousTime = time;
    game.update(Math.min(0.1, elapsed));
 +  warnings.update(game.state);
-
+ 
    if (game.state.lives < previousLives) {
      stopGuitar();
 -    playNote(124, 0.28, 'sawtooth');
@@ -111,15 +111,15 @@
      const { hero, levelId, collected, lives, status } = game.state;
      addResult({ hero, level: levelId, gems: collected, lives, outcome: status });
      const next = game.nextSnapshot();
-@@ -282,6 +215,7 @@
+@@ -281,6 +214,7 @@
  }
-
+ 
  function run() {
 +  warnings.reset(game.state);
    cancelAnimationFrame(frame);
    previousTime = undefined;
    updateScreen();
-@@ -307,7 +241,7 @@
+@@ -306,7 +240,7 @@
    game.start();
    showArena();
    saveRun();
@@ -127,8 +127,8 @@
 +  playSound('start');
    run();
  }
-
-@@ -331,7 +265,7 @@
+ 
+@@ -330,7 +264,7 @@
  function pause() {
    if (game?.state.status !== 'playing') return;
    cancelAnimationFrame(frame);
@@ -137,7 +137,7 @@
    swipe = undefined;
    game.pause();
    saveRun();
-@@ -341,7 +275,7 @@
+@@ -340,7 +274,7 @@
  function resume() {
    if (game?.state.status !== 'paused') return;
    game.resume();
@@ -145,8 +145,8 @@
 +  playSolo(performanceAge(game.state));
    run();
  }
-
-@@ -353,12 +287,8 @@
+ 
+@@ -352,12 +286,8 @@
  function activate() {
    if (game?.state.status !== 'playing' || !game.activate()) return;
    saveRun();
@@ -161,7 +161,7 @@
    if (game.state.status === 'playing') updateHud();
    else updateScreen();
  }
-@@ -389,7 +319,7 @@
+@@ -388,7 +318,7 @@
      swipe = undefined;
      saveSelection(game.state.hero, game.state.levelId);
      document.title = LEVELS[game.state.levelId].title + ' · Блок Аркада';
@@ -170,7 +170,7 @@
      saveRun();
      run();
    } else {
-@@ -399,7 +329,7 @@
+@@ -398,7 +328,7 @@
  byId('menu').addEventListener('click', () => {
    saveRun();
    cancelAnimationFrame(frame);
@@ -179,7 +179,7 @@
    document.querySelector(`input[name="level"][value="${game.state.levelId}"]`).checked = true;
    showLevelPreview();
    game = undefined;
-@@ -513,7 +443,8 @@
+@@ -512,7 +442,8 @@
  }
  showLevelPreview();
  document.querySelectorAll('canvas[data-hero]').forEach((canvas) => drawPortrait(canvas, canvas.dataset.hero));
@@ -187,5 +187,5 @@
 +const { playSolo, hush } = bindArcadeSound(soundButton, playGuitar, stopGuitar,
 +  () => game?.state.status === 'playing' ? performanceAge(game.state) : null);
  bindProgress({ onResume: resumeSavedGame });
-
+ 
  enterCollectionGame();

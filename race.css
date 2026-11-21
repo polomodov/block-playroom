@@ -120,3 +120,30 @@
 .race-course:has(select:disabled) {
   display: none;
 }
+
+/* Phone held sideways: the track takes the full height, the controls sit beside it. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .race-game {
+    display: grid;
+    grid-template-columns: auto minmax(200px, 1fr);
+    column-gap: 10px;
+    align-content: start;
+  }
+  .race-game > * { grid-column: 2; }
+  .race-game > .race-track {
+    grid-column: 1;
+    grid-row: 1 / span 8;
+    width: min(calc(100vw - 250px - env(safe-area-inset-left) - env(safe-area-inset-right)),
+      calc((100svh - 66px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 1.712));
+    height: auto;
+  }
+  .race-game .race-top { padding: 4px 6px; min-height: 0; }
+  .race-game .race-top h2 { font-size: 1rem; }
+  .race-game .race-course { flex-wrap: wrap; height: auto; }
+  .race-game .race-course select { flex: 1; min-width: 0; }
+  .race-game .race-ribbon { flex-wrap: wrap; gap: 2px 8px; }
+  .race-game .race-status { margin: 4px 0; font-size: 0.8rem; }
+  .race-game .race-controls button { min-height: 40px; }
+  .race-game .race-go { min-height: 40px; margin-top: 6px; }
+  .race-game .race-help { display: none; }
+}
